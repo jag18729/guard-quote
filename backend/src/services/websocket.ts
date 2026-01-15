@@ -191,15 +191,33 @@ function isValidChannel(channel: SubscriptionChannel, type: ConnectionType): boo
  * Handle real-time price calculation for clients
  */
 async function handlePriceCalculation(client: WSClient, data: any) {
-  // This would call the ML prediction endpoint internally
-  // For now, send a placeholder response
+  // Send calculating state
   client.ws.send(JSON.stringify({
-    type: "price.update",
-    data: {
-      calculating: true,
-      timestamp: Date.now(),
-    },
+    type: "price.calculating",
+    data: { timestamp: Date.now() },
   }));
+
+  try {
+    // Import calculation logic inline to avoid circular deps
+    const { calculateQuote } = await import("./quote-calculator");
+    const result = await calculateQuote(data);
+
+    client.ws.send(JSON.stringify({
+      type: "price.update",
+      data: {
+        ...result,
+        timestamp: Date.now(),
+      },
+    }));
+  } catch (error: any) {
+    client.ws.send(JSON.stringify({
+      type: "price.error",
+      data: {
+        message: error.message || "Calculation failed",
+        timestamp: Date.now(),
+      },
+    }));
+  }
 }
 
 /**

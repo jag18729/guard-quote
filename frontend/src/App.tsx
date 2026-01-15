@@ -1,6 +1,7 @@
 import { BrowserRouter } from "react-router-dom";
 import AppRouter from "./router/index";
 import { ServiceStatusProvider } from "./context/ServiceStatusContext";
+import { AuthProvider } from "./context/AuthContext";
 
 console.log("[GuardQuote] App loading...");
 
@@ -9,9 +10,11 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <ServiceStatusProvider>
-        <AppRouter />
-      </ServiceStatusProvider>
+      <AuthProvider>
+        <ServiceStatusProvider>
+          <AppRouter />
+        </ServiceStatusProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

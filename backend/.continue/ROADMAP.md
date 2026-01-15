@@ -68,21 +68,21 @@ See: `.continue/PACKAGES.md` for full installation scripts
 
 ---
 
-## Phase 0: Client Page Enhancements (Priority: High)
+## Phase 0: Client Page Enhancements (Priority: High) ✅ COMPLETE
 
 ### 0.1 Live Quote Calculator
-- [ ] WebSocket connection for real-time price updates
-- [ ] Price recalculates instantly as user changes inputs
-- [ ] Show "calculating..." state during recalculation
-- [ ] Debounced input to prevent excessive API calls
+- [x] WebSocket connection for real-time price updates
+- [x] Price recalculates instantly as user changes inputs
+- [x] Show "calculating..." state during recalculation
+- [x] Debounced input (300ms) to prevent excessive API calls
 
 ### 0.2 Enhanced Quote Form
-- [ ] Multi-step wizard with progress indicator
-- [ ] Form validation with clear error messages
-- [ ] Save draft quote to localStorage
-- [ ] Guest quote vs. account-based quote
+- [x] Multi-step wizard with progress indicator (4 steps)
+- [x] Form validation with clear error messages (react-hook-form)
+- [x] Save draft quote to localStorage
+- [ ] Guest quote vs. account-based quote (future)
 
-### 0.3 Quote Status Tracking
+### 0.3 Quote Status Tracking (Future)
 - [ ] Public quote status page (via unique token)
 - [ ] Email notifications when status changes
 - [ ] SMS notifications (optional)
@@ -102,22 +102,22 @@ Server → Client:
 
 ---
 
-## Phase 1: Admin Dashboard (Priority: High)
+## Phase 1: Admin Dashboard (Priority: High) ✅ CORE COMPLETE
 
 ### 1.1 Admin Authentication
-- [ ] JWT middleware for admin routes
-- [ ] Admin login page
-- [ ] Session management
-- [ ] Role verification
+- [x] JWT middleware for admin routes
+- [x] Admin login page
+- [x] Session management (access + refresh tokens)
+- [x] Role verification (admin, sales, user)
 
 ### 1.2 User Management
-- [ ] User list with search/filter
-- [ ] Create/Edit user modal
-- [ ] Role assignment (admin, sales, viewer)
-- [ ] Soft delete users
-- [ ] Password reset flow
+- [x] User list with CRUD
+- [x] Create/Edit user modal
+- [x] Role assignment (admin, sales, user)
+- [x] Soft delete users (deactivate)
+- [ ] Password reset flow (future)
 
-### 1.3 Quote Management
+### 1.3 Quote Management (Placeholder)
 - [ ] Quote list with filters (status, date, client)
 - [ ] Quote detail view
 - [ ] Status workflow (draft → sent → accepted/rejected)

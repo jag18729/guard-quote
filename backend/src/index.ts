@@ -709,6 +709,215 @@ app.post("/ml/risk-assessment", async (c) => {
 });
 
 // ============================================
+// AUTHENTICATION
+// ============================================
+
+import { login, refreshAccessToken, getUserFromToken, verifyToken, createAdminUser, hashPassword } from "./services/auth";
+
+// Login
+app.post("/api/auth/login", async (c) => {
+  const { email, password } = await c.req.json();
+  if (!email || !password) {
+    return c.json({ error: "Email and password required" }, 400);
+  }
+  const result = await login(email, password);
+  if (!result.success) {
+    return c.json({ error: result.error }, 401);
+  }
+  return c.json({
+    user: result.user,
+    accessToken: result.accessToken,
+    refreshToken: result.refreshToken,
+  });
+});
+
+// Refresh token
+app.post("/api/auth/refresh", async (c) => {
+  const { refreshToken } = await c.req.json();
+  if (!refreshToken) {
+    return c.json({ error: "Refresh token required" }, 400);
+  }
+  const result = await refreshAccessToken(refreshToken);
+  if (!result.success) {
+    return c.json({ error: result.error }, 401);
+  }
+  return c.json({ user: result.user, accessToken: result.accessToken });
+});
+
+// Get current user
+app.get("/api/auth/me", async (c) => {
+  const authHeader = c.req.header("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return c.json({ error: "No token provided" }, 401);
+  }
+  const token = authHeader.slice(7);
+  const user = await getUserFromToken(token);
+  if (!user) {
+    return c.json({ error: "Invalid token" }, 401);
+  }
+  return c.json({ user });
+});
+
+// Logout (client-side token removal, but we log it)
+app.post("/api/auth/logout", async (c) => {
+  const authHeader = c.req.header("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.slice(7);
+    const payload = await verifyToken(token);
+    if (payload) {
+      await sql`
+        INSERT INTO audit_logs (user_id, action, details)
+        VALUES (${payload.userId}, 'logout', '{}'::jsonb)
+      `.catch(() => {});
+    }
+  }
+  return c.json({ success: true });
+});
+
+// Setup initial admin (only works if no admin exists)
+app.post("/api/auth/setup", async (c) => {
+  const admins = await sql`SELECT id FROM users WHERE role = 'admin' LIMIT 1`;
+  if (admins.length > 0) {
+    return c.json({ error: "Admin already exists" }, 400);
+  }
+  const { email, password, firstName, lastName } = await c.req.json();
+  if (!email || !password || !firstName || !lastName) {
+    return c.json({ error: "All fields required" }, 400);
+  }
+  const result = await createAdminUser(email, password, firstName, lastName);
+  if (!result.success) {
+    return c.json({ error: result.error }, 400);
+  }
+  return c.json({ success: true, message: "Admin user created" });
+});
+
+// Change password (authenticated)
+app.post("/api/auth/change-password", async (c) => {
+  const authHeader = c.req.header("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return c.json({ error: "Not authenticated" }, 401);
+  }
+  const token = authHeader.slice(7);
+  const user = await getUserFromToken(token);
+  if (!user) {
+    return c.json({ error: "Invalid token" }, 401);
+  }
+  const { currentPassword, newPassword } = await c.req.json();
+  if (!currentPassword || !newPassword) {
+    return c.json({ error: "Current and new password required" }, 400);
+  }
+  const users = await sql`SELECT password_hash FROM users WHERE id = ${user.id}`;
+  const isValid = await Bun.password.verify(currentPassword, users[0].password_hash);
+  if (!isValid) {
+    return c.json({ error: "Current password incorrect" }, 401);
+  }
+  const newHash = await hashPassword(newPassword);
+  await sql`UPDATE users SET password_hash = ${newHash}, updated_at = NOW() WHERE id = ${user.id}`;
+  return c.json({ success: true });
+});
+
+// ============================================
+// ADMIN-ONLY ENDPOINTS (with auth middleware)
+// ============================================
+
+// Helper: Require admin role
+async function requireAdmin(c: any): Promise<{ userId: number; role: string } | Response> {
+  const authHeader = c.req.header("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return c.json({ error: "Not authenticated" }, 401);
+  }
+  const token = authHeader.slice(7);
+  const payload = await verifyToken(token);
+  if (!payload) {
+    return c.json({ error: "Invalid token" }, 401);
+  }
+  if (payload.role !== "admin") {
+    return c.json({ error: "Admin access required" }, 403);
+  }
+  return { userId: payload.userId, role: payload.role };
+}
+
+// Admin: Get all users
+app.get("/api/admin/users", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+  const users = await sql`
+    SELECT id, email, first_name, last_name, role, is_active, created_at, last_login
+    FROM users ORDER BY created_at DESC
+  `;
+  return c.json(users);
+});
+
+// Admin: Create user
+app.post("/api/admin/users", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+  const body = await c.req.json();
+  const passwordHash = await hashPassword(body.password || "changeme123");
+  const result = await sql`
+    INSERT INTO users (email, password_hash, first_name, last_name, role)
+    VALUES (${body.email.toLowerCase()}, ${passwordHash}, ${body.firstName}, ${body.lastName}, ${body.role || 'user'})
+    RETURNING id
+  `;
+  return c.json({ success: true, id: result[0].id });
+});
+
+// Admin: Update user
+app.patch("/api/admin/users/:id", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+  const id = parseInt(c.req.param("id"));
+  const body = await c.req.json();
+  await sql`
+    UPDATE users
+    SET first_name = COALESCE(${body.firstName}, first_name),
+        last_name = COALESCE(${body.lastName}, last_name),
+        role = COALESCE(${body.role}, role),
+        is_active = COALESCE(${body.isActive}, is_active),
+        updated_at = NOW()
+    WHERE id = ${id}
+  `;
+  return c.json({ success: true });
+});
+
+// Admin: Delete user (soft delete)
+app.delete("/api/admin/users/:id", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+  const id = parseInt(c.req.param("id"));
+  if (id === auth.userId) {
+    return c.json({ error: "Cannot delete yourself" }, 400);
+  }
+  await sql`UPDATE users SET is_active = false, updated_at = NOW() WHERE id = ${id}`;
+  return c.json({ success: true });
+});
+
+// Admin: Dashboard stats
+app.get("/api/admin/stats", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+
+  const [quotes, clients, users, recentQuotes] = await Promise.all([
+    sql`SELECT COUNT(*) as total, SUM(total_price) as revenue FROM quotes`,
+    sql`SELECT COUNT(*) as total FROM clients`,
+    sql`SELECT COUNT(*) as total FROM users WHERE is_active = true`,
+    sql`
+      SELECT q.id, q.quote_number, q.total_price, q.status, q.created_at, c.company_name
+      FROM quotes q LEFT JOIN clients c ON q.client_id = c.id
+      ORDER BY q.created_at DESC LIMIT 5
+    `,
+  ]);
+
+  return c.json({
+    totalQuotes: parseInt(quotes[0].total) || 0,
+    totalRevenue: parseFloat(quotes[0].revenue) || 0,
+    totalClients: parseInt(clients[0].total) || 0,
+    totalUsers: parseInt(users[0].total) || 0,
+    recentQuotes,
+  });
+});
+
+// ============================================
 // WEBHOOKS
 // ============================================
 
@@ -771,6 +980,15 @@ async function createHmacSignature(payload: string, secret: string): Promise<str
 }
 
 // ============================================
+// WEBSOCKET INTEGRATION
+// ============================================
+
+import { handleOpen, handleMessage, handleClose, getWSStats } from "./services/websocket";
+
+// WebSocket stats endpoint
+app.get("/api/ws/stats", (c) => c.json(getWSStats()));
+
+// ============================================
 // START SERVER
 // ============================================
 
@@ -778,5 +996,37 @@ const port = process.env.PORT || 3000;
 
 console.log(`GuardQuote API v2.0 running on http://localhost:${port}`);
 console.log(`Connected to PostgreSQL on Raspberry Pi (192.168.2.70)`);
+console.log(`WebSocket available at ws://localhost:${port}/ws`);
 
-export default { port, fetch: app.fetch };
+export default {
+  port,
+  fetch(req: Request, server: any) {
+    const url = new URL(req.url);
+
+    // Handle WebSocket upgrade for /ws or /ws/client or /ws/admin
+    if (url.pathname === "/ws" || url.pathname.startsWith("/ws/")) {
+      const pathParts = url.pathname.split("/");
+      const connectionType = pathParts[2] === "admin" ? "admin" : "client";
+
+      const success = server.upgrade(req, {
+        data: { connectionType },
+      });
+
+      return success ? undefined : new Response("WebSocket upgrade failed", { status: 400 });
+    }
+
+    return app.fetch(req);
+  },
+  websocket: {
+    open(ws: any) {
+      const connectionType = ws.data?.connectionType || "client";
+      handleOpen(ws, connectionType);
+    },
+    message(ws: any, message: string | Buffer) {
+      handleMessage(ws, message);
+    },
+    close(ws: any) {
+      handleClose(ws);
+    },
+  },
+};

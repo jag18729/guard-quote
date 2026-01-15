@@ -240,6 +240,227 @@
   color: #4caf50;
 }
 
+/* Wizard Styles */
+.wizard {
+  max-width: 600px;
+}
+
+.wizardProgress {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.wizardProgress::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: 30px;
+  right: 30px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  z-index: 0;
+}
+
+.wizardStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 1;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.wizardStep:hover {
+  opacity: 0.8;
+}
+
+.stepNumber {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s;
+}
+
+.stepLabel {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  text-align: center;
+  max-width: 80px;
+}
+
+.stepActive .stepNumber {
+  background: linear-gradient(135deg, #552583, #FDB927);
+  border-color: #FDB927;
+  box-shadow: 0 0 15px rgba(253, 185, 39, 0.4);
+}
+
+.stepActive .stepLabel {
+  opacity: 1;
+  color: #FDB927;
+}
+
+.stepComplete .stepNumber {
+  background: #4caf50;
+  border-color: #4caf50;
+}
+
+.stepComplete .stepNumber::after {
+  content: "✓";
+}
+
+.wizardContent {
+  min-height: 280px;
+}
+
+.wizardNav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.navBtn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.navBtnPrev {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.navBtnPrev:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.navBtnNext {
+  background: linear-gradient(90deg, #552583, #FDB927);
+  margin-left: auto;
+}
+
+.navBtnNext:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(253, 185, 39, 0.3);
+}
+
+.navBtnNext:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Live Price Preview */
+.livePrice {
+  background: rgba(85, 37, 131, 0.2);
+  border: 1px solid rgba(253, 185, 39, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.livePriceLabel {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin-bottom: 0.25rem;
+}
+
+.livePriceValue {
+  font-size: 1.8rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #fff, #FDB927);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.livePriceCalculating {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.wsStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-top: 0.5rem;
+  justify-content: center;
+}
+
+.wsStatusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f44336;
+}
+
+.wsStatusDot.connected {
+  background: #4caf50;
+}
+
+/* Form Validation Errors */
+.fieldError {
+  color: #f44336;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.inputError {
+  border-color: #f44336 !important;
+}
+
+/* Draft Badge */
+.draftBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  margin-left: 1rem;
+}
+
+/* Summary Step */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.summaryItem {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.summaryItem label {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.summaryItem span {
+  font-weight: 500;
+}
+
 @media (max-width: 900px) {
   .container {
     flex-direction: column;
@@ -247,5 +468,19 @@
 
   .formSection {
     max-width: 100%;
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .wizardProgress::before {
+    left: 20px;
+    right: 20px;
+  }
+
+  .stepLabel {
+    font-size: 0.65rem;
+    max-width: 60px;
   }
 }

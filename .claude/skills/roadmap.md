@@ -26,7 +26,9 @@ Use this skill to understand what's been built, what's in progress, and what's p
 - Sidebar layout with navigation
 - Dashboard with stats overview
 - User management (CRUD)
-- **Service management** - Start/stop/restart Pi1 services from UI
+- **Service management** - Compact LED-status cards, click-to-manage
+- **SSH redundancy** - Retry logic with exponential backoff (3 attempts)
+- **Automated backups** - Daily PostgreSQL, Redis, config backups at 2 AM
 
 ## Current Features
 
@@ -43,14 +45,27 @@ Use this skill to understand what's been built, what's in progress, and what's p
 
 ### Service Management
 Manage Pi1 services from the admin UI:
-- **Systemd**: PostgreSQL, Redis, PgBouncer, fail2ban, UFW
+- **Compact LED cards** - Green (running), Amber (stopped), Red (error), Purple (planned)
+- **Click-to-manage** - Select a card to reveal action buttons
+- **Systemd**: PostgreSQL, Redis, PgBouncer, fail2ban, UFW, Pi-hole
 - **Docker**: Prometheus, Grafana, Alertmanager, Node Exporter, Loki, Promtail
+- **Planned**: Traefik, OpenLDAP, Keycloak, Vault, MinIO
 - Actions: Start, Stop, Restart, View Logs, Remediate
 - System info: hostname, uptime, load, memory, disk, CPU temp
+- SSH retry logic: 3 attempts with exponential backoff
+
+### Backups
+Automated daily backups at 2 AM on Pi1:
+- **PostgreSQL** - Full dump (pg_dump -Fc)
+- **Redis** - RDB snapshot
+- **Configs** - postgresql, pg_hba, pgbouncer, fail2ban, pihole
+- **Retention** - Local: 3 days, Remote (Pi0): 7 days
+- **Script** - `/home/johnmarston/backup-guardquote.sh`
 
 ## Pending / Not Yet Implemented
 
 ### Phase 1 Remaining
+- [ ] **Pi0 SSH setup** - Add keys for backup replication (see `pi0-setup.md`)
 - [ ] Quote management page (`/admin/quotes`)
 - [ ] Client management page (`/admin/clients`)
 - [ ] Analytics page (`/admin/analytics`)
@@ -78,11 +93,12 @@ Manage Pi1 services from the admin UI:
 - Fix: `ALTER TABLE users ADD COLUMN last_login TIMESTAMP;`
 
 ### Performance
-- Services page initial load ~5s (11 SSH calls in parallel)
-- Could batch into single SSH call for further optimization
+- Services page initial load ~5s (17 services, parallel SSH calls)
+- SSH retry adds latency on connection failures (up to 6s extra)
 
 ### Network
 - UFW may need rules added for 192.168.1.x network if developing from there
+- Pi0 SSH not configured yet - backups stored locally only
 
 ## Technical Debt
 
@@ -105,5 +121,5 @@ Manage Pi1 services from the admin UI:
 
 ---
 
-*Last updated: January 14, 2026*
-*Current commit: 6935f7d*
+*Last updated: January 15, 2026*
+*Current commit: 116d3b6*

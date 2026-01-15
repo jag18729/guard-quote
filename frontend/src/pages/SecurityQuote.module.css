@@ -181,6 +181,12 @@
   color: #FDB927;
 }
 
+.demoBadge {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+  border: 1px solid rgba(255, 152, 0, 0.4);
+}
+
 .riskLevel {
   display: inline-block;
   padding: 0.5rem 1.5rem;

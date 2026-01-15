@@ -1,4 +1,4 @@
-import BackgroundWrapper from "../components/BackgroundWrapper";
+import BackgroundWrapper from "./BackgroundWrapper";
 import styles from "./Loading.module.css";
 
 export default function Loading() {

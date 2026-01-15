@@ -1,13 +1,17 @@
 import { BrowserRouter } from "react-router-dom";
-import AppRouter from "./router/index";       // this auto-loads index.tsx
-import BackgroundWrapper from "./components/BackgroundWrapper";
+import AppRouter from "./router/index";
+import { ServiceStatusProvider } from "./context/ServiceStatusContext";
+
+console.log("[GuardQuote] App loading...");
 
 export default function App() {
+  console.log("[GuardQuote] App rendering...");
+
   return (
     <BrowserRouter>
-      <BackgroundWrapper>
+      <ServiceStatusProvider>
         <AppRouter />
-      </BackgroundWrapper>
+      </ServiceStatusProvider>
     </BrowserRouter>
   );
 }

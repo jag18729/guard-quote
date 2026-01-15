@@ -14,6 +14,7 @@ app.use("*", cors());
 app.get("/", (c) => c.json({ status: "ok", service: "GuardQuote API", version: "1.0.0" }));
 
 app.get("/health", (c) => c.json({ status: "healthy", database: "connected" }));
+app.get("/api/health", (c) => c.json({ status: "healthy", database: "connected", service: "GuardQuote API" }));
 
 // Users routes
 app.get("/api/users", async (c) => {

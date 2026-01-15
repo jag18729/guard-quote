@@ -1,0 +1,353 @@
+{
+  "name": "GuardQuote Backend",
+  "description": "ML-powered security guard quoting system with PostgreSQL backend on Pi cluster",
+  "version": "2.1.0",
+  "tasks": {
+    "upcoming": [
+      {
+        "id": "infrastructure-setup",
+        "title": "Infrastructure Setup",
+        "description": "Configure Pi cluster with required services",
+        "priority": "critical",
+        "status": "in_progress",
+        "subtasks": [
+          "Verify PostgreSQL 15 on Pi (192.168.2.70)",
+          "Configure rsyslog on syslog server (192.168.2.101)",
+          "Install Redis on Pi for caching",
+          "Set up pgbouncer for connection pooling",
+          "Configure fail2ban on all servers",
+          "Set up UFW firewall rules",
+          "Install node_exporter for Prometheus"
+        ]
+      },
+      {
+        "id": "admin-dashboard",
+        "title": "Admin Dashboard",
+        "description": "Full CRUD admin interface with services monitoring",
+        "priority": "high",
+        "status": "planned",
+        "subtasks": [
+          "Create admin authentication middleware (JWT)",
+          "Build user management CRUD",
+          "Build quote management with status workflow",
+          "Build client management interface",
+          "Add ML training data management",
+          "Create analytics dashboard with Recharts",
+          "Build services monitor panel (real-time)",
+          "Build infrastructure monitor panel",
+          "Add centralized log viewer",
+          "Create backup management UI",
+          "Add webhook configuration UI",
+          "Implement audit logging"
+        ]
+      },
+      {
+        "id": "client-page-enhancements",
+        "title": "Client Page Enhancements",
+        "description": "Public quote interface with real-time features",
+        "priority": "high",
+        "status": "planned",
+        "subtasks": [
+          "Add WebSocket for live price updates",
+          "Implement multi-step wizard",
+          "Add form validation with Zod",
+          "Create public quote status tracking",
+          "Add localStorage draft saving",
+          "Implement guard availability checker",
+          "Generate PDF quote downloads"
+        ]
+      },
+      {
+        "id": "auth-system",
+        "title": "Authentication & Authorization",
+        "description": "JWT auth with RBAC, future LDAP integration",
+        "priority": "critical",
+        "status": "planned",
+        "subtasks": [
+          "Implement JWT token generation/validation",
+          "Add refresh token rotation",
+          "Create role-based middleware (admin, sales, viewer, ml_engineer)",
+          "Add password hashing with Argon2",
+          "Implement session management with Redis",
+          "Add rate limiting on auth endpoints",
+          "Prepare LDAP/AD integration hooks"
+        ]
+      },
+      {
+        "id": "monitoring-stack",
+        "title": "Monitoring & Observability",
+        "description": "Prometheus, Grafana, and alerting",
+        "priority": "high",
+        "status": "planned",
+        "subtasks": [
+          "Install Prometheus on monitoring server",
+          "Install Grafana for dashboards",
+          "Configure node_exporter on all Pi nodes",
+          "Configure postgres_exporter",
+          "Set up Alertmanager for notifications",
+          "Create GuardQuote metrics endpoint",
+          "Build Grafana dashboards for business metrics"
+        ]
+      },
+      {
+        "id": "security-hardening",
+        "title": "Security Hardening",
+        "description": "Secure the infrastructure",
+        "priority": "high",
+        "status": "planned",
+        "subtasks": [
+          "Configure UFW on all servers",
+          "Install and configure fail2ban",
+          "Set up SSH key-only authentication",
+          "Enable PostgreSQL SSL connections",
+          "Add HTTPS with Let's Encrypt",
+          "Implement CSRF protection",
+          "Add request signing for webhooks"
+        ]
+      },
+      {
+        "id": "backup-system",
+        "title": "Backup & Recovery",
+        "description": "Automated backups with retention",
+        "priority": "high",
+        "status": "planned",
+        "subtasks": [
+          "Configure pg_dump scheduled backups",
+          "Set up pg_basebackup for WAL archiving",
+          "Implement backup rotation (7-day retention)",
+          "Add backup verification tests",
+          "Create disaster recovery runbook",
+          "Set up off-site backup (optional S3)"
+        ]
+      },
+      {
+        "id": "ml-model-improvements",
+        "title": "ML Model Enhancements",
+        "description": "Improve prediction accuracy",
+        "priority": "medium",
+        "status": "planned",
+        "subtasks": [
+          "Add seasonal pricing adjustments",
+          "Implement competitor price tracking",
+          "Add historical acceptance rate weighting",
+          "Create A/B testing for pricing",
+          "Build model retraining pipeline",
+          "Add feature importance analysis"
+        ]
+      },
+      {
+        "id": "api-gateway",
+        "title": "API Gateway (Future)",
+        "description": "Centralized API management",
+        "priority": "low",
+        "status": "future",
+        "subtasks": [
+          "Evaluate Kong vs Traefik vs Nginx",
+          "Set up reverse proxy",
+          "Implement rate limiting at gateway",
+          "Add API key management",
+          "Configure request/response logging",
+          "Set up load balancing"
+        ]
+      },
+      {
+        "id": "siem-integration",
+        "title": "SIEM Integration (Future)",
+        "description": "Security event monitoring",
+        "priority": "low",
+        "status": "future",
+        "subtasks": [
+          "Evaluate Wazuh vs OSSEC",
+          "Configure log forwarding to SIEM",
+          "Set up intrusion detection rules",
+          "Create security dashboards",
+          "Configure automated alerting"
+        ]
+      },
+      {
+        "id": "ldap-integration",
+        "title": "LDAP/AD Integration (Future)",
+        "description": "Enterprise directory integration",
+        "priority": "low",
+        "status": "future",
+        "subtasks": [
+          "Install OpenLDAP or connect to AD",
+          "Configure SSSD for authentication",
+          "Map LDAP groups to app roles",
+          "Implement SSO flow",
+          "Add user sync from directory"
+        ]
+      }
+    ]
+  },
+  "infrastructure": {
+    "network": "192.168.2.0/24",
+    "servers": {
+      "pi-db": {
+        "name": "Database Server",
+        "host": "192.168.2.70",
+        "os": "Raspberry Pi OS (Debian)",
+        "services": ["postgresql-15", "redis-server", "pgbouncer", "node_exporter"],
+        "ssh_user": "johnmarston"
+      },
+      "syslog": {
+        "name": "Syslog & Monitoring",
+        "host": "192.168.2.101",
+        "os": "Ubuntu/Debian",
+        "services": ["rsyslog", "prometheus", "grafana", "alertmanager", "node_exporter"],
+        "ssh_user": "user"
+      },
+      "local": {
+        "name": "Development",
+        "host": "localhost",
+        "os": "macOS",
+        "services": ["bun", "guardquote-api"]
+      }
+    },
+    "future_servers": {
+      "gateway": {
+        "name": "API Gateway",
+        "services": ["nginx", "kong", "certbot"]
+      },
+      "ldap": {
+        "name": "Directory Server",
+        "services": ["slapd", "sssd"]
+      },
+      "siem": {
+        "name": "Security Monitoring",
+        "services": ["wazuh-manager", "suricata"]
+      }
+    }
+  },
+  "packages": {
+    "pi-db": {
+      "required": [
+        "postgresql-15",
+        "postgresql-contrib-15",
+        "redis-server",
+        "pgbouncer"
+      ],
+      "monitoring": [
+        "prometheus-node-exporter",
+        "prometheus-postgres-exporter"
+      ],
+      "security": [
+        "fail2ban",
+        "ufw"
+      ],
+      "utilities": [
+        "htop",
+        "iotop",
+        "ncdu",
+        "tmux",
+        "git"
+      ]
+    },
+    "syslog": {
+      "logging": [
+        "rsyslog",
+        "rsyslog-relp",
+        "logrotate"
+      ],
+      "monitoring": [
+        "prometheus",
+        "prometheus-node-exporter",
+        "prometheus-alertmanager",
+        "grafana"
+      ],
+      "security": [
+        "fail2ban",
+        "ufw"
+      ],
+      "utilities": [
+        "htop",
+        "nethogs",
+        "tcpdump",
+        "nmap"
+      ]
+    },
+    "future": {
+      "gateway": [
+        "nginx",
+        "nginx-extras",
+        "certbot",
+        "python3-certbot-nginx"
+      ],
+      "ldap": [
+        "slapd",
+        "ldap-utils",
+        "sssd",
+        "sssd-ldap"
+      ],
+      "siem": [
+        "wazuh-manager",
+        "wazuh-agent",
+        "suricata"
+      ]
+    }
+  },
+  "context": {
+    "stack": {
+      "runtime": "Bun 1.3.6",
+      "framework": "Hono",
+      "database": "PostgreSQL 15",
+      "cache": "Redis 7",
+      "orm": "postgres.js / Bun.SQL",
+      "frontend": "React 18 + TypeScript + Vite",
+      "ui": "TailwindCSS + shadcn/ui"
+    },
+    "ports": {
+      "api": 3000,
+      "postgresql": 5432,
+      "redis": 6379,
+      "syslog_udp": 514,
+      "prometheus": 9090,
+      "grafana": 3001,
+      "node_exporter": 9100,
+      "postgres_exporter": 9187
+    },
+    "database": {
+      "host": "192.168.2.70",
+      "name": "guardquote",
+      "user": "guardquote",
+      "tables": [
+        "users",
+        "clients",
+        "quotes",
+        "event_types",
+        "locations",
+        "ml_training_data",
+        "webhooks",
+        "webhook_logs",
+        "quote_status_history",
+        "refresh_tokens",
+        "audit_logs"
+      ]
+    },
+    "services": {
+      "websocket": {
+        "channels": ["quotes", "clients", "system", "alerts", "services", "webhooks", "ml"]
+      },
+      "cache": {
+        "strategy": "redis_with_memory_fallback",
+        "ttl": {
+          "ml_predictions": 300,
+          "event_types": 3600,
+          "locations": 3600,
+          "dashboard_stats": 60,
+          "sessions": 86400
+        }
+      },
+      "logging": {
+        "syslog_host": "192.168.2.101",
+        "syslog_port": 514,
+        "facility": "local0"
+      },
+      "backup": {
+        "schedule": "0 2 * * *",
+        "retention_days": 7,
+        "destination": "local_and_ssh"
+      }
+    }
+  }
+}

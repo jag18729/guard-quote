@@ -1,6 +1,6 @@
 # GuardQuote Roadmap
 
-## Current State (v2.1.0)
+## Current State (v2.2.0)
 - [x] PostgreSQL backend on Raspberry Pi (192.168.2.70)
 - [x] ML prediction endpoints
 - [x] 500+ training data samples
@@ -9,7 +9,11 @@
 - [x] Basic CRUD operations
 - [x] Service layer (WebSocket, Cache, Monitor, Backup, Logging)
 - [x] Infrastructure monitoring support
-- [x] Syslog integration (192.168.2.101)
+- [x] Redis caching (192.168.2.70:6379)
+- [x] PgBouncer connection pooling (192.168.2.70:6432)
+- [x] Prometheus + Grafana + Alertmanager (Docker on Pi1)
+- [x] fail2ban + UFW security hardening
+- [x] Loki + Promtail logging (Docker on Pi1)
 
 ---
 
@@ -21,41 +25,43 @@
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐ │
-│  │    Pi1      │    │   Syslog    │    │    Dev      │    │   Future    │ │
+│  │    Pi1      │    │    Pi0      │    │    Dev      │    │   Future    │ │
 │  │ 192.168.2.70│    │192.168.2.101│    │  (Local)    │    │    .x       │ │
-│  │     ●       │    │      ●      │    │      ●      │    │      ◌      │ │
+│  │     ●       │    │      ◌      │    │      ●      │    │      ◌      │ │
 │  ├─────────────┤    ├─────────────┤    ├─────────────┤    ├─────────────┤ │
-│  │ PostgreSQL  │◀───│   rsyslog   │◀───│  Bun/Hono   │    │   Nginx     │ │
-│  │ Redis       │    │ Prometheus  │    │  API Server │    │   Kong      │ │
-│  │ PgBouncer   │    │  Grafana    │    │  WebSocket  │    │   LDAP      │ │
-│  │ NodeExport  │    │ Alertmgr    │    │             │    │   SIEM      │ │
+│  │ PostgreSQL  │    │  (SSH fix   │◀───│  Bun/Hono   │    │   Nginx     │ │
+│  │ Redis       │    │   needed)   │    │  API Server │    │   Kong      │ │
+│  │ PgBouncer   │    │             │    │  WebSocket  │    │   LDAP      │ │
+│  │ Prometheus  │    │             │    │             │    │   SIEM      │ │
+│  │ Grafana     │    │             │    │             │    │             │ │
+│  │ Alertmanager│    │             │    │             │    │             │ │
+│  │ Loki        │    │             │    │             │    │             │ │
+│  │ fail2ban    │    │             │    │             │    │             │ │
 │  └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘ │
 │                                                                             │
-│  Legend: ● = Active   ◌ = Planned                                          │
+│  Legend: ● = Active   ◌ = Planned/Offline                                   │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Phase -1: Infrastructure Setup (Priority: Critical) ★ IN PROGRESS
+## Phase -1: Infrastructure Setup (Priority: Critical) ✅ COMPLETE
 
 ### Pi1 Database Server (192.168.2.70)
 - [x] PostgreSQL 15 installed and configured
-- [ ] Install Redis for caching
-- [ ] Configure PgBouncer for connection pooling
-- [ ] Install prometheus-node-exporter
-- [ ] Install prometheus-postgres-exporter
-- [ ] Configure fail2ban
-- [ ] Configure UFW firewall
+- [x] Install Redis for caching (redis-server 7.0.15, password: guardquote_redis_2024)
+- [x] Configure PgBouncer for connection pooling (port 6432)
+- [x] Install prometheus-node-exporter (via Docker)
+- [x] Install prometheus (via Docker on Pi1)
+- [x] Install Grafana (via Docker on Pi1, port 3000)
+- [x] Install Alertmanager (via Docker on Pi1, port 9093)
+- [x] Configure fail2ban (sshd jail active)
+- [x] Configure UFW firewall (LAN-only for services)
 
 ### Syslog Server (192.168.2.101)
-- [ ] Configure rsyslog for GuardQuote logs
-- [ ] Install Prometheus
-- [ ] Install Grafana
-- [ ] Install Alertmanager
-- [ ] Install prometheus-node-exporter
-- [ ] Configure fail2ban
-- [ ] Configure UFW firewall
+- [ ] SSH access needs to be fixed (key auth failing)
+- [x] Monitoring stack moved to Pi1 (Prometheus, Grafana, Alertmanager)
+- [ ] Configure rsyslog for GuardQuote logs (optional - Loki/Promtail on Pi1)
 
 ### Package Installation Reference
 See: `.continue/PACKAGES.md` for full installation scripts

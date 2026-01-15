@@ -1,0 +1,51 @@
+/* Global Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Global Font Settings */
+:root {
+  --font-body: 'PT Sans', sans-serif;
+  --font-headline: 'Space Grotesk', sans-serif;
+  color: white;
+  font-family: var(--font-body);
+}
+
+/* App root sizing */
+html,
+body,
+#root {
+  min-height: 100%;
+  width: 100%;
+}
+
+/* Body baseline */
+body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: transparent;
+}
+
+/* Headline font usage */
+h1,
+h2,
+h3,
+.title {
+  font-family: var(--font-headline);
+}
+
+/* Link Reset */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Button Reset */
+button {
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  background-color: transparent;
+}

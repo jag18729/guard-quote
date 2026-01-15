@@ -1,0 +1,193 @@
+/* PAGE STRUCTURE — DO NOT SCROLL HERE */
+.pageWrapper {
+  min-height: 100vh;
+  width: 100%;
+  padding: 3.5rem 1.5rem;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+
+  color: #fff;
+  position: relative;
+  z-index: 10;
+
+  overflow-x: hidden;   /* 🔒 hard lock */
+  overflow-y: visible; /* let global bg handle scroll */
+}
+
+/* FORM CONTAINER */
+.formBox {
+  width: 540px;
+  max-width: 100%;
+  padding: 2.7rem;
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+
+  box-shadow: 0 0 35px rgba(93, 33, 204, 0.25);
+  position: relative;
+
+  overflow: visible; /* 🔑 DO NOT clip glows */
+  animation: fadeIn 0.55s ease-out forwards;
+}
+
+/* LED BORDER — NON-INTERACTIVE */
+.formBox::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+
+  background: linear-gradient(135deg, #5f23ff, #fdb927, #5f23ff);
+  background-size: 240% 240%;
+  animation: borderLED 6s linear infinite;
+
+  mask: linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+
+  pointer-events: none;
+}
+
+@keyframes borderLED {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* HEADERS */
+.title {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 900;
+  background: linear-gradient(90deg, #5f23ff, #fdb927);
+  -webkit-background-clip: text;
+  color: transparent;
+  margin-bottom: 0.4rem;
+}
+
+.subtitle {
+  text-align: center;
+  opacity: 0.85;
+  margin-bottom: 2rem;
+}
+
+/* FORM FIELDS */
+.field {
+  margin-bottom: 1.35rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.45rem;
+  opacity: 0.88;
+  font-weight: 500;
+}
+
+/* INPUTS */
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 0.85rem;
+  border-radius: 8px;
+
+  background: rgba(25, 20, 40, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
+
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+select option {
+  background: #0c0916;
+  color: #fff;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #fdb927;
+  box-shadow: 0 0 12px rgba(253, 185, 39, 0.55);
+  outline: none;
+}
+
+/* CHECKBOX */
+.checkboxWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
+.checkboxWrapper input {
+  accent-color: #fdb927;
+}
+
+/* SUBMIT */
+.submitBtn {
+  width: 100%;
+  padding: 1rem;
+  margin-top: 1.35rem;
+
+  background: linear-gradient(135deg, #5f23ff, #fdb927);
+  border-radius: 8px;
+
+  border: none;
+  font-weight: 800;
+  color: #1b1527;
+  cursor: pointer;
+
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.submitBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(253, 185, 39, 0.55);
+}
+
+/* BACK BUTTON */
+.backBtn {
+  position: absolute;
+  top: 22px;
+  left: 22px;
+
+  padding: 0.55rem 1.15rem;
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(253, 185, 39, 0.5);
+
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+
+  z-index: 20;
+}
+
+.backBtn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 0 14px rgba(253, 185, 39, 0.5);
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  .formBox {
+    padding: 1.9rem;
+  }
+
+  .title {
+    font-size: 1.7rem;
+  }
+}

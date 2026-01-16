@@ -1,125 +1,163 @@
-# GuardQuote Roadmap Skill
+# GuardQuote Roadmap
 
-Use this skill to understand what's been built, what's in progress, and what's planned next.
+Project status, completed work, and planned features.
 
-## Completed Phases
+## Current State (v2.3.0)
 
-### Phase -1: Infrastructure Setup
-- PostgreSQL 15 on Pi1 with connection pooling (PgBouncer)
-- Redis 7 for caching/sessions
-- Monitoring stack: Prometheus, Grafana, Alertmanager, Loki/Promtail
-- UFW firewall configuration
-- fail2ban for SSH protection
+**What's Working:**
+- Client quote wizard with WebSocket real-time pricing
+- Admin dashboard with auth, user management, service monitoring
+- ML Engine with trained models (R² 0.82, 84% risk accuracy)
+- CI/CD pipeline on self-hosted GitHub Actions runner
+- PostgreSQL on Pi1 with automated backups to Pi0
 
-### Phase 0: Client Page Enhancements
-- Multi-step quote wizard (4 steps: Event, Location, Security, Review)
-- Live price calculation via WebSocket
-- Form validation with react-hook-form
-- LocalStorage draft saving with auto-restore
-- Debounced price updates (300ms)
+## ✅ Completed
 
-### Phase 1: Admin Dashboard
-- JWT authentication with refresh tokens
-- Argon2 password hashing
-- Admin login page
-- Protected routes with AdminGuard
-- Sidebar layout with navigation
-- Dashboard with stats overview
-- User management (CRUD)
-- **Service management** - Compact LED-status cards, click-to-manage
-- **SSH redundancy** - Retry logic with exponential backoff (3 attempts)
-- **Automated backups** - Daily PostgreSQL, Redis, config backups at 2 AM
+### Infrastructure (Pi Cluster)
 
-## Current Features
+| Component | Status | Details |
+|-----------|--------|---------|
+| PostgreSQL 15 | ✅ Pi1 | PgBouncer pooling, 5432/6432 |
+| Redis 7 | ✅ Pi1 | Sessions/cache, 6379 |
+| Monitoring | ✅ Pi1 | Prometheus, Grafana, Loki |
+| Security | ✅ Pi1 | UFW, fail2ban, Pi-hole |
+| GitHub Runner | ✅ Pi0 | Self-hosted actions runner |
+| Backup Replication | ✅ Pi0 | Daily sync from Pi1 |
 
-### Client-Facing
-- Security quote wizard at `/quote/security`
-- Live price updates as form changes
-- Draft persistence across sessions
+### Client Application
 
-### Admin Panel
-- Login at `/admin/login`
-- Dashboard at `/admin`
-- User management at `/admin/users`
-- Service management at `/admin/services`
+| Feature | Route | Description |
+|---------|-------|-------------|
+| Quote Wizard | `/quote/security` | 4-step form with validation |
+| Live Pricing | WebSocket | 300ms debounced updates |
+| Draft Persistence | localStorage | Auto-save/restore |
 
-### Service Management
-Manage Pi1 services from the admin UI:
-- **Compact LED cards** - Green (running), Amber (stopped), Red (error), Purple (planned)
-- **Click-to-manage** - Select a card to reveal action buttons
-- **Systemd**: PostgreSQL, Redis, PgBouncer, fail2ban, UFW, Pi-hole
-- **Docker**: Prometheus, Grafana, Alertmanager, Node Exporter, Loki, Promtail
-- **Planned**: Traefik, OpenLDAP, Keycloak, Vault, MinIO
-- Actions: Start, Stop, Restart, View Logs, Remediate
-- System info: hostname, uptime, load, memory, disk, CPU temp
-- SSH retry logic: 3 attempts with exponential backoff
+### Admin Dashboard
 
-### Backups
-Automated daily backups at 2 AM on Pi1:
-- **PostgreSQL** - Full dump (pg_dump -Fc)
-- **Redis** - RDB snapshot
-- **Configs** - postgresql, pg_hba, pgbouncer, fail2ban, pihole
-- **Retention** - Local: 3 days, Remote (Pi0): 7 days
-- **Script** - `/home/johnmarston/backup-guardquote.sh`
+| Feature | Route | Description |
+|---------|-------|-------------|
+| Authentication | `/admin/login` | JWT + refresh tokens, Argon2 |
+| Dashboard | `/admin` | Stats overview |
+| Users | `/admin/users` | CRUD management |
+| Services | `/admin/services` | LED status, start/stop/logs |
 
-## Pending / Not Yet Implemented
+### ML Engine
 
-### Phase 1 Remaining
-- [ ] **Pi0 SSH setup** - Add keys for backup replication (see `pi0-setup.md`)
+| Model | Algorithm | Performance |
+|-------|-----------|-------------|
+| Price Prediction | Gradient Boosting | R² 0.82, MAE 8.2% |
+| Risk Assessment | Random Forest | 84% accuracy |
+| Acceptance | Logistic Regression | 74% baseline |
+
+**Training Data:** 1,100 records with 2026 pricing benchmarks
+**Event Types:** 7 (tech_summit, music_festival, vip_protection, etc.)
+
+### CI/CD (GitHub Actions)
+
+| Workflow | Trigger | Runner | Purpose |
+|----------|---------|--------|---------|
+| `pr-check.yml` | PR/Push | ubuntu-latest | Lint, type check |
+| `train-ml.yml` | Weekly/Manual | Pi0 | Retrain models |
+| `integration.yml` | Push main | Pi0 | Test vs Pi1 services |
+
+## 🔄 In Progress
+
+### Admin Completion
 - [ ] Quote management page (`/admin/quotes`)
 - [ ] Client management page (`/admin/clients`)
-- [ ] Analytics page (`/admin/analytics`)
+- [ ] Analytics dashboard (`/admin/analytics`)
 - [ ] Settings page (`/admin/settings`)
-- [ ] Fix `last_login` column in users table
 
-### Phase 2: Advanced Features (Planned)
-- [ ] Email notifications (quote confirmation, reminders)
-- [ ] PDF quote generation
-- [ ] Payment integration
-- [ ] Client portal with quote history
-- [ ] Scheduling/calendar integration
+### ML Pipeline
+- [ ] Train models on PostgreSQL (currently MySQL connector in train_models.py)
+- [ ] Model versioning with timestamps
+- [ ] A/B testing framework for price recommendations
 
-### Phase 3: Scaling (Future)
-- [ ] Multi-tenant support
-- [ ] Role-based permissions (admin, manager, viewer)
-- [ ] Audit logging
-- [ ] API rate limiting
-- [ ] Load balancing
+## 📋 Backlog (Prioritized)
 
-## Known Issues
+### High Priority
 
-### Database
-- `last_login` column doesn't exist in users table
-- Fix: `ALTER TABLE users ADD COLUMN last_login TIMESTAMP;`
+| Item | Domain | Effort | Impact |
+|------|--------|--------|--------|
+| Fix train_models.py DB connector | ML | S | Blocker |
+| Add `last_login` to users | Backend | S | Feature |
+| Move Pi credentials to env vars | Backend | S | Security |
+| Unit tests for quote calculator | Backend | M | Quality |
+| Integration tests in CI | DevOps | M | Quality |
 
-### Performance
-- Services page initial load ~5s (17 services, parallel SSH calls)
-- SSH retry adds latency on connection failures (up to 6s extra)
+### Medium Priority
 
-### Network
-- UFW may need rules added for 192.168.1.x network if developing from there
-- Pi0 SSH not configured yet - backups stored locally only
+| Item | Domain | Effort | Impact |
+|------|--------|--------|--------|
+| PDF quote generation | Backend | M | Feature |
+| Email notifications | Backend | M | Feature |
+| Client portal with history | Full-stack | L | Feature |
+| HTTPS/TLS setup | Infra | M | Security |
+| API rate limiting | Backend | S | Security |
 
-## Technical Debt
+### Lower Priority
 
-1. **Placeholder admin pages** - Quotes, Clients, Analytics, Settings are stubs
-2. **No tests** - Should add unit and integration tests
-3. **Hardcoded credentials** - Pi credentials in `pi-services.ts` should be env vars
-4. **No HTTPS** - Local dev only, need TLS for production
+| Item | Domain | Effort | Impact |
+|------|--------|--------|--------|
+| Payment integration | Full-stack | L | Revenue |
+| Calendar integration | Full-stack | M | Feature |
+| Multi-tenant support | Full-stack | XL | Scale |
+| Role-based permissions | Backend | M | Feature |
+| Mobile responsiveness | Frontend | M | UX |
 
-## API Endpoints Status
+## 🐛 Known Issues
 
-| Endpoint | Status |
-|----------|--------|
-| Auth (login, refresh, me) | Working |
-| Admin stats | Working |
-| Admin users | Working (except last_login) |
-| Admin services | Working |
-| Quotes CRUD | Working |
-| Clients CRUD | Working |
-| WebSocket price calc | Working |
+| Issue | Severity | Workaround |
+|-------|----------|------------|
+| `last_login` column missing | Low | `ALTER TABLE users ADD COLUMN last_login TIMESTAMP;` |
+| Services page ~5s load | Low | SSH parallelization in place |
+| train_models.py uses MySQL | Medium | Manually use psycopg2 scripts |
+
+## 🔧 Technical Debt
+
+| Item | Priority | Notes |
+|------|----------|-------|
+| Admin pages are stubs | High | Quotes, Clients, Analytics need UI |
+| No test coverage | High | Add pytest for ML, bun test for backend |
+| Hardcoded credentials | Medium | Extract to env vars in `pi-services.ts` |
+| Local dev only (HTTP) | Low | Need TLS for production |
+| Mixed DB connectors | Medium | Standardize on psycopg2 for PostgreSQL |
+
+## 🔮 Future Vision (Unscheduled)
+
+**Platform:**
+- Kubernetes deployment on Pi cluster
+- Auto-scaling based on quote volume
+- Geographic load balancing
+
+**ML/AI:**
+- Dynamic pricing based on demand
+- Competitor price monitoring
+- Natural language quote requests
+- Anomaly detection for fraud
+
+**Business:**
+- White-label solution
+- API for third-party integrations
+- Marketplace for security providers
+- Mobile app (React Native)
+
+## API Status
+
+| Endpoint | Status | Notes |
+|----------|--------|-------|
+| `POST /api/auth/login` | ✅ | JWT tokens |
+| `POST /api/auth/refresh` | ✅ | Token refresh |
+| `GET /api/auth/me` | ✅ | Current user |
+| `GET /api/admin/stats` | ✅ | Dashboard data |
+| `CRUD /api/admin/users` | ⚠️ | Missing last_login |
+| `GET /api/admin/services` | ✅ | Pi1 services |
+| `CRUD /api/quotes` | ✅ | Quote management |
+| `WS /ws` | ✅ | Real-time pricing |
+| `POST /api/v1/quote` | ✅ | ML prediction (8000) |
+| `POST /api/v1/risk-assessment` | ✅ | Risk scoring (8000) |
 
 ---
 
 *Last updated: January 15, 2026*
-*Current commit: 116d3b6*
+*Commit: 2439e95*

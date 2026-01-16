@@ -1,0 +1,46 @@
+name: Test Pi0 Runner
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-runner:
+    runs-on: [self-hosted, pi0]
+
+    steps:
+      - name: System Info
+        run: |
+          echo "=== Pi0 Runner Test ==="
+          echo "Hostname: $(hostname)"
+          echo "OS: $(uname -a)"
+          echo "User: $(whoami)"
+          echo "Date: $(date)"
+
+      - name: Check Tools
+        run: |
+          echo "=== Installed Tools ==="
+          echo "Bun: $(~/.bun/bin/bun --version)"
+          echo "Python: $(python3 --version)"
+          echo "psql: $(psql --version)"
+
+      - name: Test Pi1 Connectivity
+        run: |
+          echo "=== Pi1 Services ==="
+          nc -zv 192.168.2.70 5432 && echo "PostgreSQL: OK"
+          nc -zv 192.168.2.70 6379 && echo "Redis: OK"
+
+      - name: Test Database Connection
+        env:
+          PGPASSWORD: ${{ secrets.PI1_DB_PASSWORD }}
+        run: |
+          echo "=== Database Test ==="
+          psql -h 192.168.2.70 -U guardquote -d guardquote -c "SELECT COUNT(*) as training_records FROM ml_training_data_2026;"
+
+      - name: Test Python ML
+        run: |
+          echo "=== Python ML Test ==="
+          python3 -c "import pandas; import numpy; import sklearn; print('ML packages OK')"
+
+      - name: Summary
+        run: |
+          echo "✅ Pi0 Runner test completed successfully!"

@@ -1,0 +1,132 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PI1_HOST: 192.168.2.70
+
+jobs:
+  integration:
+    runs-on: self-hosted  # Must be on local network to reach Pi1
+
+    services:
+      # Use Pi1 PostgreSQL directly instead of container
+      # Connection via environment variables
+
+    env:
+      DATABASE_URL: postgresql://guardquote:${{ secrets.PI1_DB_PASSWORD }}@192.168.2.70:5432/guardquote_test
+      REDIS_URL: redis://:${{ secrets.PI1_REDIS_PASSWORD }}@192.168.2.70:6379/1
+      ML_ENGINE_URL: http://localhost:8000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify Pi1 services
+        run: |
+          echo "Checking PostgreSQL..."
+          nc -zv $PI1_HOST 5432 || exit 1
+
+          echo "Checking Redis..."
+          nc -zv $PI1_HOST 6379 || exit 1
+
+          echo "Checking PgBouncer..."
+          nc -zv $PI1_HOST 6432 || exit 1
+
+          echo "All Pi1 services reachable!"
+
+      - name: Create test database
+        run: |
+          PGPASSWORD=${{ secrets.PI1_DB_PASSWORD }} psql \
+            -h $PI1_HOST -U guardquote -d postgres \
+            -c "DROP DATABASE IF EXISTS guardquote_test;" \
+            -c "CREATE DATABASE guardquote_test;"
+
+      - name: Run migrations
+        run: |
+          PGPASSWORD=${{ secrets.PI1_DB_PASSWORD }} psql \
+            -h $PI1_HOST -U guardquote -d guardquote_test \
+            -f backend/src/db/schema.sql
+
+      - name: Seed test data
+        run: |
+          PGPASSWORD=${{ secrets.PI1_DB_PASSWORD }} psql \
+            -h $PI1_HOST -U guardquote -d guardquote_test \
+            -f ml-engine/data/seed_2026.sql
+
+      - name: Install backend dependencies
+        run: cd backend && bun install
+
+      - name: Install ML engine
+        run: |
+          cd ml-engine
+          pip install -e .
+          pip install psycopg2-binary pytest pytest-asyncio httpx
+
+      - name: Start ML engine
+        run: |
+          cd ml-engine
+          DB_HOST=$PI1_HOST DB_NAME=guardquote_test \
+          uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+          curl -f http://localhost:8000/health || exit 1
+
+      - name: Run backend integration tests
+        run: |
+          cd backend
+          DATABASE_URL=$DATABASE_URL bun run test:integration
+
+      - name: Run ML engine integration tests
+        run: |
+          cd ml-engine
+          DB_HOST=$PI1_HOST DB_NAME=guardquote_test \
+          pytest tests/integration/ -v
+
+      - name: Test ML API endpoints
+        run: |
+          # Health check
+          curl -f http://localhost:8000/health
+
+          # Event types
+          curl -f http://localhost:8000/api/v1/event-types
+
+          # Generate a test quote
+          curl -f -X POST http://localhost:8000/api/v1/quote \
+            -H "Content-Type: application/json" \
+            -d '{
+              "event_datetime": "2026-03-15T14:00:00",
+              "event_type": "corporate",
+              "zip_code": "94102",
+              "num_guards": 4,
+              "hours": 8
+            }'
+
+      - name: Cleanup test database
+        if: always()
+        run: |
+          PGPASSWORD=${{ secrets.PI1_DB_PASSWORD }} psql \
+            -h $PI1_HOST -U guardquote -d postgres \
+            -c "DROP DATABASE IF EXISTS guardquote_test;"
+
+      - name: Push test metrics
+        if: success()
+        run: |
+          curl -X POST http://$PI1_HOST:9091/metrics/job/guardquote_tests \
+            --data-binary @- <<EOF
+          guardquote_integration_tests_passed 1
+          guardquote_integration_tests_timestamp $(date +%s)
+          EOF

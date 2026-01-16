@@ -1,0 +1,122 @@
+name: ML Model Training
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'  # Weekly Sunday 3am UTC
+  workflow_dispatch:
+    inputs:
+      record_count:
+        description: 'Number of training records to generate'
+        required: false
+        default: '1100'
+      force_retrain:
+        description: 'Force retrain even if data unchanged'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  DB_HOST: 192.168.2.70
+  DB_PORT: 5432
+  DB_USER: guardquote
+  DB_NAME: guardquote
+  PROMETHEUS_PUSHGATEWAY: http://192.168.2.70:9091
+
+jobs:
+  train:
+    runs-on: self-hosted  # Requires runner on local network to reach Pi1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          cd ml-engine
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install psycopg2-binary
+
+      - name: Verify Pi1 connectivity
+        run: |
+          nc -zv $DB_HOST $DB_PORT || { echo "Cannot reach PostgreSQL"; exit 1; }
+
+      - name: Generate training data
+        env:
+          DB_PASSWORD: ${{ secrets.PI1_DB_PASSWORD }}
+        run: |
+          cd ml-engine
+          python scripts/generate_training_data_2026.py
+
+      - name: Train models
+        id: train
+        env:
+          DB_PASSWORD: ${{ secrets.PI1_DB_PASSWORD }}
+        run: |
+          cd ml-engine
+          python scripts/train_models.py 2>&1 | tee training.log
+
+          # Extract metrics for reporting
+          R2=$(grep -oP "R² Score: \K[\d.]+" training.log | head -1 || echo "0")
+          MAE=$(grep -oP "MAE: \$\K[\d,.]+" training.log | head -1 || echo "0")
+
+          echo "r2_score=$R2" >> $GITHUB_OUTPUT
+          echo "mae=$MAE" >> $GITHUB_OUTPUT
+
+      - name: Push metrics to Prometheus
+        if: success()
+        run: |
+          cat <<EOF | curl --data-binary @- $PROMETHEUS_PUSHGATEWAY/metrics/job/guardquote_ml/instance/github_actions
+          # HELP guardquote_model_r2_score R-squared score of the price model
+          # TYPE guardquote_model_r2_score gauge
+          guardquote_model_r2_score ${{ steps.train.outputs.r2_score }}
+          # HELP guardquote_model_trained_at Unix timestamp of last training
+          # TYPE guardquote_model_trained_at gauge
+          guardquote_model_trained_at $(date +%s)
+          EOF
+
+      - name: Upload trained models
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-models-${{ github.run_number }}
+          path: ml-engine/models/trained/
+          retention-days: 90
+
+      - name: Upload training logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-logs-${{ github.run_number }}
+          path: ml-engine/training.log
+          retention-days: 30
+
+      - name: Send alert on failure
+        if: failure()
+        run: |
+          curl -X POST http://192.168.2.70:9093/api/v2/alerts \
+            -H "Content-Type: application/json" \
+            -d '[{
+              "labels": {
+                "alertname": "MLTrainingFailed",
+                "severity": "warning",
+                "service": "guardquote-ml"
+              },
+              "annotations": {
+                "summary": "ML model training failed",
+                "description": "GitHub Actions workflow failed: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              }
+            }]'
+
+      - name: Summary
+        run: |
+          echo "## ML Training Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| R² Score | ${{ steps.train.outputs.r2_score }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| MAE | \$${{ steps.train.outputs.mae }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Records | ${{ github.event.inputs.record_count || '1100' }} |" >> $GITHUB_STEP_SUMMARY

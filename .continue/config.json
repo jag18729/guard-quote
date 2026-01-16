@@ -1,0 +1,83 @@
+{
+  "models": [
+    {
+      "title": "Claude 3.5 Sonnet",
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022",
+      "apiKey": ""
+    }
+  ],
+  "tabAutocompleteModel": {
+    "title": "Codestral",
+    "provider": "mistral",
+    "model": "codestral-latest"
+  },
+  "customCommands": [
+    {
+      "name": "test",
+      "description": "Run tests for the current file",
+      "prompt": "Write unit tests for the selected code. Use the testing framework already in use in this project (Bun test for TypeScript, pytest for Python)."
+    },
+    {
+      "name": "review",
+      "description": "Review code for issues",
+      "prompt": "Review this code for bugs, security issues, and improvements. Focus on:\n1. Error handling\n2. Type safety\n3. Performance\n4. Security vulnerabilities"
+    },
+    {
+      "name": "doc",
+      "description": "Generate documentation",
+      "prompt": "Generate comprehensive documentation for this code including:\n1. Description of what it does\n2. Parameters and return values\n3. Usage examples"
+    }
+  ],
+  "contextProviders": [
+    {
+      "name": "code",
+      "params": {}
+    },
+    {
+      "name": "docs",
+      "params": {}
+    },
+    {
+      "name": "diff",
+      "params": {}
+    },
+    {
+      "name": "terminal",
+      "params": {}
+    },
+    {
+      "name": "problems",
+      "params": {}
+    },
+    {
+      "name": "folder",
+      "params": {}
+    },
+    {
+      "name": "codebase",
+      "params": {}
+    }
+  ],
+  "slashCommands": [
+    {
+      "name": "edit",
+      "description": "Edit selected code"
+    },
+    {
+      "name": "comment",
+      "description": "Add comments to code"
+    },
+    {
+      "name": "share",
+      "description": "Export to markdown"
+    },
+    {
+      "name": "cmd",
+      "description": "Generate shell command"
+    }
+  ],
+  "embeddingsProvider": {
+    "provider": "transformers.js"
+  }
+}

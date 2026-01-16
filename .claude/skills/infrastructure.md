@@ -51,22 +51,34 @@ Use this skill when working with GuardQuote infrastructure, SSH connections, or 
 - Alertmanager (9093) - 192.168.2.0/24 only
 - Node Exporter (9100) - 192.168.2.0/24 only
 
-### Pi0 - Syslog Server (Not Currently Accessible)
+### Pi0 - GitHub Actions Runner
 | Property | Value |
 |----------|-------|
 | Hostname | pi0 |
 | IP | 192.168.2.101 |
-| SSH User | rafaeljg (key auth) or johnmarston |
-| SSH Key | ~/.ssh/pi0 |
-| Status | SSH access needs to be fixed |
+| SSH User | rafaeljg |
+| SSH Password | adm1npassw0rD |
+| SSH Command | `ssh pi0` or `sshpass -p 'adm1npassw0rD' ssh rafaeljg@192.168.2.101` |
+| Role | Self-hosted GitHub Actions runner |
 
-**Planned Services:**
-- rsyslog (UDP 514)
-- Additional monitoring if needed
+**Services:**
+| Service | Status | Purpose |
+|---------|--------|---------|
+| GitHub Actions Runner | To configure | CI/CD jobs |
+| rsyslog | Planned | Log aggregation |
+
+**Runner Setup:** See `/runner-setup.md` skill for installation steps
 
 ## Quick Commands
 
-### SSH to Pi1
+### SSH to Pi0 (Runner)
+```bash
+ssh pi0
+# or with password
+sshpass -p 'adm1npassw0rD' ssh rafaeljg@192.168.2.101
+```
+
+### SSH to Pi1 (Database)
 ```bash
 ssh pi1
 # or with password

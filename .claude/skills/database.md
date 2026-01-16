@@ -67,26 +67,97 @@ CREATE TABLE quotes (
 ```
 
 ### event_types
-Event categories with base pricing.
+Event categories with 2026 pricing benchmarks.
 ```sql
 CREATE TABLE event_types (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(100) UNIQUE NOT NULL,
-  base_rate DECIMAL(10,2),
-  risk_factor DECIMAL(4,2),
-  description TEXT
+  code VARCHAR(50) UNIQUE NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  base_rate DECIMAL(10,2) NOT NULL,
+  risk_multiplier DECIMAL(4,2) DEFAULT 1.0,
+  created_at TIMESTAMP DEFAULT NOW()
 );
 ```
 
+**2026 Event Types:**
+| Code | Name | Base Rate | Risk Multiplier |
+|------|------|-----------|-----------------|
+| tech_summit | Tech Summit | $55/hr | 1.10x |
+| music_festival | Music Festival | $65/hr | 1.80x |
+| vip_protection | VIP Protection | $110/hr | 1.00x |
+| gov_rally | Government Rally | $58/hr | 2.00x |
+| industrial | Industrial Site | $45/hr | 1.50x |
+| retail_lp | Retail Loss Prevention | $32/hr | 1.40x |
+| social_wedding | Social Wedding | $40/hr | 0.90x |
+
 ### locations
-Service areas with risk modifiers.
+Service areas with risk zones.
 ```sql
 CREATE TABLE locations (
   id SERIAL PRIMARY KEY,
-  city VARCHAR(100),
-  state VARCHAR(50),
-  zip_code VARCHAR(20),
-  risk_modifier DECIMAL(4,2) DEFAULT 1.0
+  zip_code VARCHAR(10) UNIQUE NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  state VARCHAR(2) NOT NULL,
+  risk_zone VARCHAR(20) DEFAULT 'medium',
+  rate_modifier DECIMAL(4,2) DEFAULT 1.0,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**Risk Zone Modifiers:**
+| City | ZIP Prefix | Risk Zone | Modifier |
+|------|------------|-----------|----------|
+| San Francisco | 941xx | high | 1.35x |
+| New York | 100xx | high | 1.40x |
+| Austin | 787xx | medium | 1.15x |
+| Miami | 331xx | medium | 1.20x |
+| Chicago | 606xx | high | 1.30x |
+
+## ML Tables
+
+### ml_training_data_2026
+Training data for ML models (1100 records).
+```sql
+CREATE TABLE ml_training_data_2026 (
+  id SERIAL PRIMARY KEY,
+  event_type VARCHAR(50) NOT NULL,
+  state VARCHAR(2) NOT NULL,
+  zip_code VARCHAR(10),
+  risk_zone VARCHAR(20),
+  num_guards INTEGER NOT NULL,
+  hours_per_guard DECIMAL(5,2) NOT NULL,
+  crowd_size INTEGER,
+  tier VARCHAR(20) DEFAULT 'standard',  -- standard, armed, executive
+  is_weekend BOOLEAN DEFAULT FALSE,
+  is_holiday BOOLEAN DEFAULT FALSE,
+  is_night BOOLEAN DEFAULT FALSE,
+  has_vehicle BOOLEAN DEFAULT FALSE,
+  price DECIMAL(12,2) NOT NULL,
+  accepted BOOLEAN DEFAULT TRUE,
+  satisfaction INTEGER,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**Current Stats:**
+- Records: 1,100
+- Price range: $253.55 - $517,538.10
+- Acceptance rate: 74%
+- Tier distribution: Standard 541, Armed 404, Executive 155
+
+### ai_workflow_logs
+Audit trail for AI-assisted workflows.
+```sql
+CREATE TABLE ai_workflow_logs (
+  id SERIAL PRIMARY KEY,
+  workflow_type VARCHAR(50) NOT NULL,
+  input_data JSONB,
+  output_data JSONB,
+  model_version VARCHAR(50),
+  confidence_score DECIMAL(5,4),
+  execution_time_ms INTEGER,
+  created_at TIMESTAMP DEFAULT NOW()
 );
 ```
 
@@ -133,6 +204,46 @@ SELECT
   COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved,
   SUM(CASE WHEN status = 'approved' THEN final_price ELSE 0 END) as revenue
 FROM quotes;
+```
+
+### ML training data summary
+```sql
+SELECT
+  event_type,
+  COUNT(*) as records,
+  ROUND(AVG(price)::numeric, 2) as avg_price,
+  ROUND(AVG(num_guards)::numeric, 1) as avg_guards,
+  ROUND(SUM(accepted::int)::float / COUNT(*) * 100, 1) as accept_rate
+FROM ml_training_data_2026
+GROUP BY event_type
+ORDER BY records DESC;
+```
+
+### ML data by tier
+```sql
+SELECT
+  tier,
+  COUNT(*) as count,
+  ROUND(AVG(price)::numeric, 2) as avg_price,
+  MIN(price) as min_price,
+  MAX(price) as max_price
+FROM ml_training_data_2026
+GROUP BY tier;
+```
+
+### Event types with pricing
+```sql
+SELECT code, name, base_rate, risk_multiplier
+FROM event_types
+ORDER BY base_rate DESC;
+```
+
+### Locations by risk zone
+```sql
+SELECT zip_code, city, state, risk_zone, rate_modifier
+FROM locations
+WHERE risk_zone = 'high'
+ORDER BY rate_modifier DESC;
 ```
 
 ### Create admin user

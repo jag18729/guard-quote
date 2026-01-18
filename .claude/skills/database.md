@@ -6,7 +6,7 @@ Use this skill when working with the database, running queries, or managing sche
 
 | Property | Value |
 |----------|-------|
-| Host | 192.168.2.70 (Pi1) |
+| Host | 100.66.167.62 (Pi1) |
 | Port | 5432 (direct) or 6432 (PgBouncer) |
 | Database | guardquote |
 | User | guardquote |
@@ -14,7 +14,7 @@ Use this skill when working with the database, running queries, or managing sche
 
 **Connection String (PgBouncer - recommended):**
 ```
-postgresql://guardquote:WPU8bj3nbwFyZFEtHZQz@192.168.2.70:6432/guardquote
+postgresql://guardquote:WPU8bj3nbwFyZFEtHZQz@100.66.167.62:6432/guardquote
 ```
 
 ## Schema
@@ -166,7 +166,7 @@ CREATE TABLE ai_workflow_logs (
 ### Connect via psql
 ```bash
 # From local machine
-psql postgresql://guardquote:WPU8bj3nbwFyZFEtHZQz@192.168.2.70:5432/guardquote
+psql postgresql://guardquote:WPU8bj3nbwFyZFEtHZQz@100.66.167.62:5432/guardquote
 
 # From Pi1
 ssh pi1 "sudo -u postgres psql guardquote"
@@ -277,7 +277,7 @@ bunx drizzle-kit check
 ## Troubleshooting
 
 ### Connection timeout
-1. Check Pi1 is reachable: `ping 192.168.2.70`
+1. Check Pi1 is reachable: `ping 100.66.167.62`
 2. Check PostgreSQL running: `ssh pi1 "systemctl status postgresql"`
 3. Check UFW allows your IP: `ssh pi1 "sudo ufw status"`
 4. Check pg_hba.conf: `ssh pi1 "sudo cat /etc/postgresql/15/main/pg_hba.conf"`

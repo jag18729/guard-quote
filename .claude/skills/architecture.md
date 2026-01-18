@@ -61,7 +61,7 @@ guard-quote/
 - **Forms**: react-hook-form
 - **Styling**: CSS Modules
 
-### Database (Pi1 - 192.168.2.70)
+### Database (Pi1 - 100.66.167.62)
 - **PostgreSQL**: Port 5432 (direct) or 6432 (PgBouncer)
 - **Redis**: Port 6379 (caching, sessions)
 - **Connection pooling**: PgBouncer

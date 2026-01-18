@@ -53,26 +53,41 @@ curl -X POST http://localhost:3000/api/quotes \
 
 ### Generate Quote
 ```bash
+# Required: event_type, location_zip, num_guards, hours, date
+# Optional: is_armed (false), requires_vehicle (false), crowd_size (0)
 curl -X POST http://localhost:8000/api/v1/quote \
   -H "Content-Type: application/json" \
   -d '{
-    "event_datetime": "2026-03-15T14:00:00",
     "event_type": "corporate",
-    "zip_code": "94102",
+    "location_zip": "94102",
     "num_guards": 4,
-    "hours": 8
+    "hours": 8,
+    "date": "2026-03-15T14:00:00"
   }'
-```
 
-### Risk Assessment
-```bash
-curl -X POST http://localhost:8000/api/v1/risk-assessment \
+# Concert with crowd size (returns critical risk level)
+curl -X POST http://localhost:8000/api/v1/quote \
   -H "Content-Type: application/json" \
   -d '{
     "event_type": "concert",
-    "zip_code": "90001",
+    "location_zip": "90001",
+    "num_guards": 6,
+    "hours": 12,
+    "date": "2026-04-20T19:00:00",
     "crowd_size": 5000
   }'
+```
+
+### Event Types
+- `corporate`, `concert`, `sports`, `private`, `construction`, `retail`, `residential`
+
+### Risk Levels
+- `low`, `medium`, `high`, `critical`
+
+### Health Check
+```bash
+curl http://localhost:8000/api/v1/health
+# Returns: {"status":"healthy","version":"0.1.0","model_loaded":true}
 ```
 
 ## Database Schema

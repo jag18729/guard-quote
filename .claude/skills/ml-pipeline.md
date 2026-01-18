@@ -21,9 +21,9 @@ When user provides Gemini/AI output with training specs:
 
 ## Database Connection
 
-PostgreSQL on Pi1 (192.168.2.70):
+PostgreSQL on Pi1 via Tailscale:
 ```
-Host: 192.168.2.70
+Host: 100.66.167.62 (Tailscale) or 192.168.2.70 (local)
 Port: 5432
 Database: guardquote
 User: guardquote
@@ -32,8 +32,32 @@ Password: WPU8bj3nbwFyZFEtHZQz
 
 Test connection:
 ```bash
-psql postgresql://guardquote:WPU8bj3nbwFyZFEtHZQz@192.168.2.70:5432/guardquote -c "SELECT 1"
+psql postgresql://guardquote:WPU8bj3nbwFyZFEtHZQz@100.66.167.62:5432/guardquote -c "SELECT 1"
 ```
+
+## ML Engine API Schema
+
+### QuoteRequest (POST /api/v1/quote)
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| event_type | enum | Yes | corporate, concert, sports, private, construction, retail, residential |
+| location_zip | string | Yes | 5-10 chars |
+| num_guards | int | Yes | 1-100 |
+| hours | float | Yes | 1-24 |
+| date | datetime | Yes | ISO 8601 format |
+| is_armed | bool | No | Default: false |
+| requires_vehicle | bool | No | Default: false |
+| crowd_size | int | No | Default: 0 |
+
+### QuoteResponse
+| Field | Type | Notes |
+|-------|------|-------|
+| base_price | float | Calculated base |
+| risk_multiplier | float | Applied multiplier |
+| final_price | float | base_price × risk_multiplier |
+| risk_level | enum | low, medium, high, critical |
+| confidence_score | float | 0-1 |
+| breakdown | object | Model details, risk factors |
 
 ## Current Schema Reference
 

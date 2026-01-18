@@ -6,9 +6,31 @@ Get up and running in 10 minutes. Demo-ready setup for all team members.
 
 | Tool | Version | Install |
 |------|---------|---------|
+| Tailscale | Latest | `brew install tailscale` or https://tailscale.com/download |
 | Bun | 1.3+ | `curl -fsSL https://bun.sh/install \| bash` |
 | Python | 3.12+ | `brew install python@3.12` or system package |
 | Git | 2.x | Pre-installed on macOS/Linux |
+
+## 0. Join Team VPN (2 min)
+
+**You should have received a Tailscale invite email. Accept it first.**
+
+```bash
+# Install Tailscale
+brew install tailscale   # macOS
+# or: curl -fsSL https://tailscale.com/install.sh | sh   # Linux
+
+# Authenticate (join jag18729.github tailnet)
+sudo tailscale up
+# Opens browser → Login with GitHub → Accept invite
+```
+
+Once connected, you can reach Pi1 services from anywhere:
+- PostgreSQL: `100.x.x.x:5432` (Tailscale IP)
+- Redis: `100.x.x.x:6379`
+- Grafana: `100.x.x.x:3000`
+
+Check your connection: `tailscale status`
 
 ## 1. Clone & Setup (5 min)
 

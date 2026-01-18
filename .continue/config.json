@@ -1,32 +1,66 @@
 {
+  "name": "GuardQuote",
   "models": [
     {
-      "title": "Claude 3.5 Sonnet",
+      "title": "Claude Sonnet 4",
       "provider": "anthropic",
-      "model": "claude-3-5-sonnet-20241022",
+      "model": "claude-sonnet-4-20250514",
+      "apiKey": ""
+    },
+    {
+      "title": "Claude Opus 4",
+      "provider": "anthropic",
+      "model": "claude-opus-4-20250514",
+      "apiKey": ""
+    },
+    {
+      "title": "GPT-4o",
+      "provider": "openai",
+      "model": "gpt-4o",
       "apiKey": ""
     }
   ],
   "tabAutocompleteModel": {
     "title": "Codestral",
     "provider": "mistral",
-    "model": "codestral-latest"
+    "model": "codestral-latest",
+    "apiKey": ""
   },
   "customCommands": [
     {
       "name": "test",
-      "description": "Run tests for the current file",
-      "prompt": "Write unit tests for the selected code. Use the testing framework already in use in this project (Bun test for TypeScript, pytest for Python)."
+      "description": "Write tests for selected code",
+      "prompt": "Write unit tests for the selected code.\n\nProject testing frameworks:\n- Backend (TypeScript): Use `bun test` with `import { test, expect } from 'bun:test'`\n- ML Engine (Python): Use `pytest` with fixtures\n- Frontend: Use `vitest` with React Testing Library\n\nFollow existing test patterns in the codebase."
     },
     {
       "name": "review",
-      "description": "Review code for issues",
-      "prompt": "Review this code for bugs, security issues, and improvements. Focus on:\n1. Error handling\n2. Type safety\n3. Performance\n4. Security vulnerabilities"
+      "description": "Security & code review",
+      "prompt": "Review this code for:\n1. Security vulnerabilities (SQL injection, XSS, auth issues)\n2. Error handling completeness\n3. Type safety (TypeScript strict, Pydantic models)\n4. Performance issues\n5. GuardQuote-specific: Check JWT handling, database queries, ML input validation"
     },
     {
       "name": "doc",
       "description": "Generate documentation",
-      "prompt": "Generate comprehensive documentation for this code including:\n1. Description of what it does\n2. Parameters and return values\n3. Usage examples"
+      "prompt": "Generate documentation for this code:\n1. Description of functionality\n2. Parameters and return types\n3. Usage examples\n4. For API endpoints: Include curl examples\n5. For ML functions: Include feature descriptions"
+    },
+    {
+      "name": "api",
+      "description": "Generate API endpoint",
+      "prompt": "Generate a Hono API endpoint for this functionality.\n\nFollow GuardQuote patterns:\n- Use `sql` template literal for PostgreSQL queries\n- Add proper error handling with try/catch\n- Include authentication check with `requireAdmin()` if admin-only\n- Add webhook trigger if needed\n- Return consistent JSON structure"
+    },
+    {
+      "name": "ml",
+      "description": "ML feature or model code",
+      "prompt": "Generate ML code for GuardQuote.\n\nContext:\n- Price prediction: Gradient Boosting, 15 features\n- Risk assessment: Random Forest, 4 levels (low/medium/high/critical)\n- Training data: ml_training_data_2026 table\n- Models saved as pickle to models/trained/\n\nUse scikit-learn, pandas, and follow existing patterns in ml-engine/scripts/"
+    },
+    {
+      "name": "schema",
+      "description": "Generate Zod/Pydantic schema",
+      "prompt": "Generate a validation schema.\n\nFor TypeScript (backend): Use Zod with transforms for field mapping.\nFor Python (ML engine): Use Pydantic BaseModel.\n\nFollow patterns in backend/src/schemas/ and ml-engine/src/models/"
+    },
+    {
+      "name": "ssh",
+      "description": "Generate SSH/Pi command",
+      "prompt": "Generate a command for the Raspberry Pi cluster.\n\nInfrastructure:\n- Pi1 (100.66.167.62): PostgreSQL, Redis, Grafana, Prometheus\n- Pi0 (192.168.2.101): GitHub Actions runner\n\nUse sshpass for automation or recommend Tailscale approach."
     }
   ],
   "contextProviders": [
@@ -57,6 +91,14 @@
     {
       "name": "codebase",
       "params": {}
+    },
+    {
+      "name": "url",
+      "params": {}
+    },
+    {
+      "name": "search",
+      "params": {}
     }
   ],
   "slashCommands": [
@@ -75,9 +117,21 @@
     {
       "name": "cmd",
       "description": "Generate shell command"
+    },
+    {
+      "name": "commit",
+      "description": "Generate commit message"
     }
   ],
   "embeddingsProvider": {
     "provider": "transformers.js"
-  }
+  },
+  "docs": [
+    {
+      "name": "GuardQuote Skills",
+      "startUrl": ".claude/skills/",
+      "faviconUrl": ""
+    }
+  ],
+  "allowAnonymousTelemetry": false
 }

@@ -2,19 +2,27 @@
 
 ## Quick Links
 
-### Infrastructure
-- **Pi1 (Database):** 192.168.2.70
+### Infrastructure (via Tailscale VPN)
+- **Pi1 (Database):** `100.66.167.62` (Tailscale) / `192.168.2.70` (local)
   - PostgreSQL: 5432
   - Redis: 6379
   - Grafana: 3000
-- **Pi0 (Runner):** 192.168.2.101
+  - Prometheus: 9090
+- **Pi0 (Runner):** `192.168.2.101` (local, pending Tailscale)
   - GitHub Actions self-hosted runner
+  - Backup storage
+
+### Tailscale
+- **Tailnet:** jag18729.github
+- **Tailnet ID:** T1mz7GfThV11CNTRL
+- **Admin:** https://login.tailscale.com/admin
 
 ### Credentials
 | Service | User | Password |
 |---------|------|----------|
 | PostgreSQL | guardquote | WPU8bj3nbwFyZFEtHZQz |
 | Redis | - | guardquote_redis_2024 |
+| Admin Login | admin@guardquote.com | admin123 |
 | Pi1 SSH | johnmarston | 481526 |
 | Pi0 SSH | rafaeljg | adm1npassw0rD |
 
@@ -135,14 +143,22 @@ gh workflow run integration.yml
 
 ### Database connection failed
 ```bash
-# Check Pi1 is reachable
-ping 192.168.2.70
+# Check Tailscale is running
+tailscale status
 
-# Check PostgreSQL is running
-ssh pi1 "systemctl status postgresql"
+# Ping Pi1 via Tailscale
+tailscale ping pi1
 
-# Test connection
-psql postgresql://guardquote:WPU8bj3nbwFyZFEtHZQz@192.168.2.70:5432/guardquote -c "SELECT 1"
+# Test PostgreSQL connection
+psql postgresql://guardquote:WPU8bj3nbwFyZFEtHZQz@100.66.167.62:5432/guardquote -c "SELECT 1"
+```
+
+### Not on Tailscale yet?
+```bash
+# Install and join
+brew install tailscale
+sudo tailscale up
+# Login with GitHub → join jag18729.github tailnet
 ```
 
 ### ML Engine import errors
@@ -150,13 +166,25 @@ psql postgresql://guardquote:WPU8bj3nbwFyZFEtHZQz@192.168.2.70:5432/guardquote -
 cd ml-engine
 source .venv/bin/activate
 pip install -e .
+pip install psycopg2-binary  # If PostgreSQL errors
 ```
 
 ### GitHub Actions failing
 ```bash
-# Check runner status
-ssh pi0 "systemctl status actions.runner.*"
+# Check runner status on Pi0
+ssh rafaeljg@192.168.2.101 "systemctl status actions.runner.*"
 
 # View runner logs
-ssh pi0 "journalctl -u actions.runner.* -f"
+ssh rafaeljg@192.168.2.101 "journalctl -u actions.runner.* -f"
+```
+
+### Services not starting
+```bash
+# Check all ports
+lsof -i :3000  # Backend
+lsof -i :5173  # Frontend
+lsof -i :8000  # ML Engine
+
+# Kill if needed
+kill -9 <PID>
 ```

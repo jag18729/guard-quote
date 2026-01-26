@@ -1,0 +1,294 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote AWS Directory Service - Managed Microsoft AD for enterprise integration'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  DirectoryName:
+    Description: Fully qualified domain name (e.g., corp.guardquote.com)
+    Type: String
+    Default: corp.guardquote.local
+
+  DirectoryShortName:
+    Description: NetBIOS name (e.g., GUARDQUOTE)
+    Type: String
+    Default: GUARDQUOTE
+    MaxLength: 15
+
+  DirectoryEdition:
+    Description: AWS Managed Microsoft AD edition
+    Type: String
+    Default: Standard
+    AllowedValues:
+      - Standard
+      - Enterprise
+
+  AdminPassword:
+    Description: Admin password for the directory
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    MaxLength: 64
+
+  VpcId:
+    Description: VPC ID
+    Type: AWS::EC2::VPC::Id
+
+  PrivateSubnet1:
+    Description: Private Subnet 1 ID
+    Type: AWS::EC2::Subnet::Id
+
+  PrivateSubnet2:
+    Description: Private Subnet 2 ID
+    Type: AWS::EC2::Subnet::Id
+
+  EnableSso:
+    Description: Enable AWS SSO integration
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+
+  CreateDhcpOptions:
+    Description: Create DHCP options set for AD DNS
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+Conditions:
+  IsEnterprise: !Equals [!Ref DirectoryEdition, 'Enterprise']
+  CreateDHCP: !Equals [!Ref CreateDhcpOptions, 'true']
+
+Resources:
+  # Security Group for Directory Service
+  DirectorySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${EnvironmentName}-directory-sg
+      GroupDescription: Security group for AWS Managed Microsoft AD
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        # DNS
+        - IpProtocol: tcp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 10.0.0.0/8
+          Description: DNS TCP
+        - IpProtocol: udp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 10.0.0.0/8
+          Description: DNS UDP
+        # Kerberos
+        - IpProtocol: tcp
+          FromPort: 88
+          ToPort: 88
+          CidrIp: 10.0.0.0/8
+          Description: Kerberos TCP
+        - IpProtocol: udp
+          FromPort: 88
+          ToPort: 88
+          CidrIp: 10.0.0.0/8
+          Description: Kerberos UDP
+        # NTP
+        - IpProtocol: udp
+          FromPort: 123
+          ToPort: 123
+          CidrIp: 10.0.0.0/8
+          Description: NTP
+        # RPC
+        - IpProtocol: tcp
+          FromPort: 135
+          ToPort: 135
+          CidrIp: 10.0.0.0/8
+          Description: RPC
+        # NetBIOS
+        - IpProtocol: tcp
+          FromPort: 137
+          ToPort: 139
+          CidrIp: 10.0.0.0/8
+          Description: NetBIOS TCP
+        - IpProtocol: udp
+          FromPort: 137
+          ToPort: 138
+          CidrIp: 10.0.0.0/8
+          Description: NetBIOS UDP
+        # LDAP
+        - IpProtocol: tcp
+          FromPort: 389
+          ToPort: 389
+          CidrIp: 10.0.0.0/8
+          Description: LDAP TCP
+        - IpProtocol: udp
+          FromPort: 389
+          ToPort: 389
+          CidrIp: 10.0.0.0/8
+          Description: LDAP UDP
+        # LDAPS
+        - IpProtocol: tcp
+          FromPort: 636
+          ToPort: 636
+          CidrIp: 10.0.0.0/8
+          Description: LDAPS
+        # SMB
+        - IpProtocol: tcp
+          FromPort: 445
+          ToPort: 445
+          CidrIp: 10.0.0.0/8
+          Description: SMB
+        # Kerberos password change
+        - IpProtocol: tcp
+          FromPort: 464
+          ToPort: 464
+          CidrIp: 10.0.0.0/8
+          Description: Kerberos password TCP
+        - IpProtocol: udp
+          FromPort: 464
+          ToPort: 464
+          CidrIp: 10.0.0.0/8
+          Description: Kerberos password UDP
+        # Global Catalog
+        - IpProtocol: tcp
+          FromPort: 3268
+          ToPort: 3269
+          CidrIp: 10.0.0.0/8
+          Description: Global Catalog
+        # Dynamic RPC
+        - IpProtocol: tcp
+          FromPort: 49152
+          ToPort: 65535
+          CidrIp: 10.0.0.0/8
+          Description: Dynamic RPC
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-directory-sg
+
+  # AWS Managed Microsoft AD
+  ManagedAD:
+    Type: AWS::DirectoryService::MicrosoftAD
+    Properties:
+      Name: !Ref DirectoryName
+      ShortName: !Ref DirectoryShortName
+      Password: !Ref AdminPassword
+      Edition: !Ref DirectoryEdition
+      VpcSettings:
+        VpcId: !Ref VpcId
+        SubnetIds:
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+
+  # DHCP Options Set for AD DNS
+  ADDhcpOptions:
+    Type: AWS::EC2::DHCPOptions
+    Condition: CreateDHCP
+    Properties:
+      DomainName: !Ref DirectoryName
+      DomainNameServers: !GetAtt ManagedAD.DnsIpAddresses
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-ad-dhcp-options
+
+  ADDhcpOptionsAssociation:
+    Type: AWS::EC2::VPCDHCPOptionsAssociation
+    Condition: CreateDHCP
+    Properties:
+      VpcId: !Ref VpcId
+      DhcpOptionsId: !Ref ADDhcpOptions
+
+  # Secrets Manager Secret for AD credentials
+  ADSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub ${EnvironmentName}/guardquote/directory-service
+      Description: !Sub AWS Managed AD credentials for ${EnvironmentName}
+      SecretString: !Sub |
+        {
+          "directoryId": "${ManagedAD}",
+          "domainName": "${DirectoryName}",
+          "shortName": "${DirectoryShortName}",
+          "adminUsername": "Admin",
+          "adminPassword": "${AdminPassword}",
+          "dnsIpAddresses": ${ManagedAD.DnsIpAddresses}
+        }
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # CloudWatch Log Group for AD logs
+  ADLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/directoryservice/${ManagedAD}
+      RetentionInDays: 30
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # IAM Role for AD log subscription
+  ADLogSubscriptionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${EnvironmentName}-ad-log-subscription-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ds.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ADLogPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                Resource: !GetAtt ADLogGroup.Arn
+
+Outputs:
+  DirectoryId:
+    Description: Directory ID
+    Value: !Ref ManagedAD
+    Export:
+      Name: !Sub ${EnvironmentName}-DirectoryId
+
+  DirectoryName:
+    Description: Directory FQDN
+    Value: !Ref DirectoryName
+    Export:
+      Name: !Sub ${EnvironmentName}-DirectoryName
+
+  DirectoryShortName:
+    Description: Directory NetBIOS name
+    Value: !Ref DirectoryShortName
+    Export:
+      Name: !Sub ${EnvironmentName}-DirectoryShortName
+
+  DnsIpAddresses:
+    Description: DNS IP Addresses
+    Value: !Join [',', !GetAtt ManagedAD.DnsIpAddresses]
+    Export:
+      Name: !Sub ${EnvironmentName}-DirectoryDnsIps
+
+  DirectorySecurityGroup:
+    Description: Directory Security Group ID
+    Value: !Ref DirectorySecurityGroup
+    Export:
+      Name: !Sub ${EnvironmentName}-DirectorySecurityGroup
+
+  ADSecretArn:
+    Description: AD Credentials Secret ARN
+    Value: !Ref ADSecret
+    Export:
+      Name: !Sub ${EnvironmentName}-ADSecretArn

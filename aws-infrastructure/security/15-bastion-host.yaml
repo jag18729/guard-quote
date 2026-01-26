@@ -1,0 +1,354 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote Bastion Host - Secure SSH jump server with Session Manager'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  VpcId:
+    Description: VPC ID
+    Type: AWS::EC2::VPC::Id
+
+  PublicSubnetId:
+    Description: Public Subnet ID for bastion host
+    Type: AWS::EC2::Subnet::Id
+
+  BastionSecurityGroupId:
+    Description: Security Group ID for bastion host
+    Type: AWS::EC2::SecurityGroup::Id
+
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+      - t4g.micro
+      - t4g.small
+
+  KeyPairName:
+    Description: EC2 Key Pair name (leave empty to use SSM only)
+    Type: String
+    Default: ''
+
+  AllowedSSHCidr:
+    Description: CIDR block allowed for SSH access (use 0.0.0.0/0 for anywhere)
+    Type: String
+    Default: 0.0.0.0/0
+
+  EnableElasticIP:
+    Description: Allocate Elastic IP for consistent access
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  EnableSSMAccess:
+    Description: Enable AWS Systems Manager Session Manager access
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  RootVolumeSize:
+    Description: Root volume size in GB
+    Type: Number
+    Default: 20
+    MinValue: 8
+    MaxValue: 100
+
+  EnableCloudWatchAgent:
+    Description: Install and configure CloudWatch Agent
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+Conditions:
+  HasKeyPair: !Not [!Equals [!Ref KeyPairName, '']]
+  UseElasticIP: !Equals [!Ref EnableElasticIP, 'true']
+  UseSSM: !Equals [!Ref EnableSSMAccess, 'true']
+  UseCWAgent: !Equals [!Ref EnableCloudWatchAgent, 'true']
+
+Mappings:
+  RegionAMI:
+    us-east-1:
+      HVM64: ami-0c7217cdde317cfec  # Amazon Linux 2023
+    us-east-2:
+      HVM64: ami-05fb0b8c1424f266b
+    us-west-1:
+      HVM64: ami-0ce2cb35386fc22e9
+    us-west-2:
+      HVM64: ami-008fe2fc65df48dac
+    eu-west-1:
+      HVM64: ami-0905a3c97561e0b69
+    eu-central-1:
+      HVM64: ami-0faab6bdbac9486fb
+    ap-southeast-1:
+      HVM64: ami-0df7a207adb9748c7
+    ap-northeast-1:
+      HVM64: ami-0d52744d6551d851e
+
+Resources:
+  # IAM Role for Bastion
+  BastionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${EnvironmentName}-bastion-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !If [UseSSM, 'arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore', !Ref AWS::NoValue]
+        - !If [UseCWAgent, 'arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy', !Ref AWS::NoValue]
+      Policies:
+        - PolicyName: BastionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:DescribeTags
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/bastion/*
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${EnvironmentName}/guardquote/*
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-bastion-role
+
+  BastionInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub ${EnvironmentName}-bastion-profile
+      Roles:
+        - !Ref BastionRole
+
+  # Bastion Host
+  BastionInstance:
+    Type: AWS::EC2::Instance
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          default:
+            - install_packages
+            - configure_logging
+            - configure_security
+        install_packages:
+          packages:
+            yum:
+              postgresql15: []
+              redis6: []
+              jq: []
+              htop: []
+              tmux: []
+          commands:
+            01_install_session_manager:
+              command: |
+                if ! command -v session-manager-plugin &> /dev/null; then
+                  yum install -y https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
+                fi
+        configure_logging:
+          files:
+            /etc/awslogs/awslogs.conf:
+              content: !Sub |
+                [general]
+                state_file = /var/lib/awslogs/agent-state
+
+                [/var/log/secure]
+                datetime_format = %b %d %H:%M:%S
+                file = /var/log/secure
+                buffer_duration = 5000
+                log_stream_name = {instance_id}/var/log/secure
+                initial_position = start_of_file
+                log_group_name = /aws/bastion/${EnvironmentName}
+
+                [/var/log/messages]
+                datetime_format = %b %d %H:%M:%S
+                file = /var/log/messages
+                buffer_duration = 5000
+                log_stream_name = {instance_id}/var/log/messages
+                initial_position = start_of_file
+                log_group_name = /aws/bastion/${EnvironmentName}
+              mode: '000644'
+              owner: root
+              group: root
+          services:
+            sysvinit:
+              awslogs:
+                enabled: true
+                ensureRunning: true
+                files:
+                  - /etc/awslogs/awslogs.conf
+        configure_security:
+          commands:
+            01_disable_password_auth:
+              command: |
+                sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+                systemctl restart sshd
+            02_set_idle_timeout:
+              command: |
+                echo "TMOUT=900" >> /etc/profile.d/timeout.sh
+                echo "readonly TMOUT" >> /etc/profile.d/timeout.sh
+                echo "export TMOUT" >> /etc/profile.d/timeout.sh
+            03_enable_command_logging:
+              command: |
+                echo 'export PROMPT_COMMAND="history -a; $PROMPT_COMMAND"' >> /etc/profile.d/history.sh
+                echo 'export HISTTIMEFORMAT="%Y-%m-%d %H:%M:%S "' >> /etc/profile.d/history.sh
+    Properties:
+      ImageId: !FindInMap [RegionAMI, !Ref AWS::Region, HVM64]
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref BastionInstanceProfile
+      KeyName: !If [HasKeyPair, !Ref KeyPairName, !Ref AWS::NoValue]
+      SubnetId: !Ref PublicSubnetId
+      SecurityGroupIds:
+        - !Ref BastionSecurityGroupId
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: !Ref RootVolumeSize
+            VolumeType: gp3
+            Encrypted: true
+            DeleteOnTermination: true
+      MetadataOptions:
+        HttpTokens: required
+        HttpEndpoint: enabled
+        HttpPutResponseHopLimit: 1
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum update -y
+          yum install -y aws-cfn-bootstrap
+
+          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource BastionInstance --region ${AWS::Region}
+
+          # Install CloudWatch Agent if enabled
+          if [ "${EnableCloudWatchAgent}" = "true" ]; then
+            yum install -y amazon-cloudwatch-agent
+            /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s
+          fi
+
+          # Create MOTD
+          cat > /etc/motd << 'EOF'
+          ╔═══════════════════════════════════════════════════════════════╗
+          ║           GuardQuote Bastion Host - ${EnvironmentName}        ║
+          ║                                                               ║
+          ║  WARNING: All connections are logged and monitored            ║
+          ║  Unauthorized access is strictly prohibited                   ║
+          ╚═══════════════════════════════════════════════════════════════╝
+          EOF
+
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource BastionInstance --region ${AWS::Region}
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-bastion
+        - Key: Environment
+          Value: !Ref EnvironmentName
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT10M
+
+  # Elastic IP
+  BastionEIP:
+    Type: AWS::EC2::EIP
+    Condition: UseElasticIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-bastion-eip
+
+  BastionEIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Condition: UseElasticIP
+    Properties:
+      InstanceId: !Ref BastionInstance
+      AllocationId: !GetAtt BastionEIP.AllocationId
+
+  # CloudWatch Log Group
+  BastionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/bastion/${EnvironmentName}
+      RetentionInDays: 90
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # CloudWatch Alarms
+  BastionCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-bastion-cpu-high
+      AlarmDescription: Bastion host CPU is high
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref BastionInstance
+
+  BastionStatusAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-bastion-status-check
+      AlarmDescription: Bastion host status check failed
+      MetricName: StatusCheckFailed
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref BastionInstance
+
+Outputs:
+  BastionInstanceId:
+    Description: Bastion Instance ID
+    Value: !Ref BastionInstance
+    Export:
+      Name: !Sub ${EnvironmentName}-BastionInstanceId
+
+  BastionPublicIP:
+    Description: Bastion Public IP
+    Value: !If [UseElasticIP, !Ref BastionEIP, !GetAtt BastionInstance.PublicIp]
+    Export:
+      Name: !Sub ${EnvironmentName}-BastionPublicIP
+
+  BastionPrivateIP:
+    Description: Bastion Private IP
+    Value: !GetAtt BastionInstance.PrivateIp
+    Export:
+      Name: !Sub ${EnvironmentName}-BastionPrivateIP
+
+  SSHCommand:
+    Description: SSH command to connect to bastion
+    Value: !If
+      - UseElasticIP
+      - !Sub ssh -i ${KeyPairName}.pem ec2-user@${BastionEIP}
+      - !Sub ssh -i ${KeyPairName}.pem ec2-user@${BastionInstance.PublicIp}
+
+  SSMCommand:
+    Condition: UseSSM
+    Description: SSM Session Manager command
+    Value: !Sub aws ssm start-session --target ${BastionInstance} --region ${AWS::Region}

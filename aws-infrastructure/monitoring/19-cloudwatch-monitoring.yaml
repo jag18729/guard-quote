@@ -1,0 +1,488 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote CloudWatch Monitoring - Dashboards, Alarms, and Logs'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  LogRetentionDays:
+    Description: CloudWatch Logs retention period in days
+    Type: Number
+    Default: 30
+    AllowedValues: [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653]
+
+  AlertEmailAddress:
+    Description: Email address for alerts
+    Type: String
+    Default: ''
+
+  CreateAlertTopic:
+    Description: Create SNS topic for alerts
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  EnableAnomalyDetection:
+    Description: Enable CloudWatch anomaly detection
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+Conditions:
+  CreateTopic: !Equals [!Ref CreateAlertTopic, 'true']
+  HasEmail: !Not [!Equals [!Ref AlertEmailAddress, '']]
+  UseAnomalyDetection: !Equals [!Ref EnableAnomalyDetection, 'true']
+
+Resources:
+  # SNS Topic for Alerts
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Condition: CreateTopic
+    Properties:
+      TopicName: !Sub ${EnvironmentName}-guardquote-monitoring-alerts
+      DisplayName: !Sub GuardQuote ${EnvironmentName} Monitoring Alerts
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  AlertEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasEmail
+    Properties:
+      TopicArn: !If [CreateTopic, !Ref AlertTopic, !Ref AWS::NoValue]
+      Protocol: email
+      Endpoint: !Ref AlertEmailAddress
+
+  # CloudWatch Log Groups
+  BackendLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /guardquote/${EnvironmentName}/backend
+      RetentionInDays: !Ref LogRetentionDays
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Service
+          Value: backend
+
+  FrontendLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /guardquote/${EnvironmentName}/frontend
+      RetentionInDays: !Ref LogRetentionDays
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Service
+          Value: frontend
+
+  MLEngineLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /guardquote/${EnvironmentName}/ml-engine
+      RetentionInDays: !Ref LogRetentionDays
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Service
+          Value: ml-engine
+
+  APIGatewayLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /guardquote/${EnvironmentName}/api-gateway
+      RetentionInDays: !Ref LogRetentionDays
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Service
+          Value: api-gateway
+
+  # Metric Filters for Error Detection
+  BackendErrorMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref BackendLogGroup
+      FilterPattern: '?ERROR ?error ?Error ?Exception ?exception'
+      MetricTransformations:
+        - MetricName: BackendErrors
+          MetricNamespace: GuardQuote/Application
+          MetricValue: '1'
+          DefaultValue: 0
+          Dimensions:
+            - Key: Environment
+              Value: !Ref EnvironmentName
+
+  Backend5xxMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref BackendLogGroup
+      FilterPattern: '[..., status_code=5*, ...]'
+      MetricTransformations:
+        - MetricName: Backend5xxErrors
+          MetricNamespace: GuardQuote/Application
+          MetricValue: '1'
+          DefaultValue: 0
+          Dimensions:
+            - Key: Environment
+              Value: !Ref EnvironmentName
+
+  MLEnginePredictionLatency:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref MLEngineLogGroup
+      FilterPattern: '[timestamp, level, message="Prediction", latency_ms, ...]'
+      MetricTransformations:
+        - MetricName: MLPredictionLatency
+          MetricNamespace: GuardQuote/ML
+          MetricValue: '$latency_ms'
+          Dimensions:
+            - Key: Environment
+              Value: !Ref EnvironmentName
+
+  # CloudWatch Alarms
+  BackendErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-backend-errors-high
+      AlarmDescription: Backend is generating too many errors
+      MetricName: BackendErrors
+      Namespace: GuardQuote/Application
+      Dimensions:
+        - Name: Environment
+          Value: !Ref EnvironmentName
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 10
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !If [CreateTopic, !Ref AlertTopic, !Ref AWS::NoValue]
+
+  Backend5xxAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-backend-5xx-errors
+      AlarmDescription: Backend is returning 5xx errors
+      MetricName: Backend5xxErrors
+      Namespace: GuardQuote/Application
+      Dimensions:
+        - Name: Environment
+          Value: !Ref EnvironmentName
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !If [CreateTopic, !Ref AlertTopic, !Ref AWS::NoValue]
+
+  HighLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-api-high-latency
+      AlarmDescription: API response latency is high
+      MetricName: MLPredictionLatency
+      Namespace: GuardQuote/ML
+      Dimensions:
+        - Name: Environment
+          Value: !Ref EnvironmentName
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 5000
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !If [CreateTopic, !Ref AlertTopic, !Ref AWS::NoValue]
+
+  # Anomaly Detection Alarms
+  RequestCountAnomalyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: UseAnomalyDetection
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-request-count-anomaly
+      AlarmDescription: Unusual number of requests detected
+      Metrics:
+        - Id: m1
+          MetricStat:
+            Metric:
+              MetricName: RequestCount
+              Namespace: GuardQuote/Application
+              Dimensions:
+                - Name: Environment
+                  Value: !Ref EnvironmentName
+            Period: 300
+            Stat: Sum
+          ReturnData: false
+        - Id: ad1
+          Expression: ANOMALY_DETECTION_BAND(m1, 2)
+          Label: AnomalyDetectionBand
+          ReturnData: true
+      ThresholdMetricId: ad1
+      ComparisonOperator: LessThanLowerOrGreaterThanUpperThreshold
+      EvaluationPeriods: 3
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !If [CreateTopic, !Ref AlertTopic, !Ref AWS::NoValue]
+
+  # Main Dashboard
+  GuardQuoteDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub ${EnvironmentName}-GuardQuote-Overview
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 1,
+              "properties": {
+                "markdown": "# GuardQuote Dashboard - ${EnvironmentName}\n"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 1,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "title": "API Request Count",
+                "metrics": [
+                  ["GuardQuote/Application", "RequestCount", "Environment", "${EnvironmentName}"]
+                ],
+                "period": 300,
+                "stat": "Sum",
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 1,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "title": "API Errors",
+                "metrics": [
+                  ["GuardQuote/Application", "BackendErrors", "Environment", "${EnvironmentName}", {"color": "#d62728"}],
+                  [".", "Backend5xxErrors", ".", ".", {"color": "#ff7f0e"}]
+                ],
+                "period": 300,
+                "stat": "Sum",
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 1,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "title": "ML Prediction Latency",
+                "metrics": [
+                  ["GuardQuote/ML", "MLPredictionLatency", "Environment", "${EnvironmentName}"]
+                ],
+                "period": 300,
+                "stat": "Average",
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 7,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Health Check Status",
+                "metrics": [
+                  ["GuardQuote/HealthChecks", "HealthCheckStatus", "Environment", "${EnvironmentName}"]
+                ],
+                "period": 60,
+                "stat": "Minimum",
+                "region": "${AWS::Region}",
+                "yAxis": {"left": {"min": 0, "max": 1}}
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 7,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Infrastructure Count",
+                "metrics": [
+                  ["GuardQuote/Infrastructure", "EC2InstanceCount", "Environment", "${EnvironmentName}"],
+                  [".", "RDSInstanceCount", ".", "."],
+                  [".", "ElastiCacheClusterCount", ".", "."]
+                ],
+                "period": 3600,
+                "stat": "Maximum",
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "alarm",
+              "x": 0,
+              "y": 13,
+              "width": 24,
+              "height": 4,
+              "properties": {
+                "title": "Active Alarms",
+                "alarms": [
+                  "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:${EnvironmentName}-backend-errors-high",
+                  "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:${EnvironmentName}-backend-5xx-errors",
+                  "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:${EnvironmentName}-api-high-latency"
+                ]
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 17,
+              "width": 24,
+              "height": 6,
+              "properties": {
+                "title": "Recent Errors",
+                "query": "SOURCE '/guardquote/${EnvironmentName}/backend' | fields @timestamp, @message | filter @message like /ERROR|Exception/ | sort @timestamp desc | limit 50",
+                "region": "${AWS::Region}"
+              }
+            }
+          ]
+        }
+
+  # Service-specific Dashboard
+  MLDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub ${EnvironmentName}-GuardQuote-ML
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 1,
+              "properties": {
+                "markdown": "# ML Engine Dashboard - ${EnvironmentName}\n"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 1,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Prediction Latency (p50, p95, p99)",
+                "metrics": [
+                  ["GuardQuote/ML", "MLPredictionLatency", "Environment", "${EnvironmentName}", {"stat": "p50"}],
+                  ["...", {"stat": "p95"}],
+                  ["...", {"stat": "p99"}]
+                ],
+                "period": 300,
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 1,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Prediction Count",
+                "metrics": [
+                  ["GuardQuote/ML", "PredictionCount", "Environment", "${EnvironmentName}"]
+                ],
+                "period": 300,
+                "stat": "Sum",
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "log",
+              "x": 0,
+              "y": 7,
+              "width": 24,
+              "height": 8,
+              "properties": {
+                "title": "ML Engine Logs",
+                "query": "SOURCE '/guardquote/${EnvironmentName}/ml-engine' | fields @timestamp, @message | sort @timestamp desc | limit 100",
+                "region": "${AWS::Region}"
+              }
+            }
+          ]
+        }
+
+  # CloudWatch Insights Query Definitions
+  ErrorAnalysisQuery:
+    Type: AWS::Logs::QueryDefinition
+    Properties:
+      Name: !Sub ${EnvironmentName}-GuardQuote-Error-Analysis
+      LogGroupNames:
+        - !Ref BackendLogGroup
+        - !Ref MLEngineLogGroup
+      QueryString: |
+        fields @timestamp, @message, @logStream
+        | filter @message like /ERROR|Exception|error/
+        | stats count(*) as error_count by bin(1h)
+        | sort @timestamp desc
+
+  LatencyAnalysisQuery:
+    Type: AWS::Logs::QueryDefinition
+    Properties:
+      Name: !Sub ${EnvironmentName}-GuardQuote-Latency-Analysis
+      LogGroupNames:
+        - !Ref BackendLogGroup
+        - !Ref MLEngineLogGroup
+      QueryString: |
+        fields @timestamp, @message
+        | parse @message /latency[=:](?<latency>\d+)/
+        | stats avg(latency) as avg_latency, max(latency) as max_latency, pct(latency, 95) as p95_latency by bin(5m)
+        | sort @timestamp desc
+
+Outputs:
+  AlertTopicArn:
+    Condition: CreateTopic
+    Description: SNS Alert Topic ARN
+    Value: !Ref AlertTopic
+    Export:
+      Name: !Sub ${EnvironmentName}-MonitoringAlertTopicArn
+
+  BackendLogGroupName:
+    Description: Backend Log Group Name
+    Value: !Ref BackendLogGroup
+    Export:
+      Name: !Sub ${EnvironmentName}-BackendLogGroupName
+
+  BackendLogGroupArn:
+    Description: Backend Log Group ARN
+    Value: !GetAtt BackendLogGroup.Arn
+    Export:
+      Name: !Sub ${EnvironmentName}-BackendLogGroupArn
+
+  MLEngineLogGroupName:
+    Description: ML Engine Log Group Name
+    Value: !Ref MLEngineLogGroup
+    Export:
+      Name: !Sub ${EnvironmentName}-MLEngineLogGroupName
+
+  DashboardURL:
+    Description: CloudWatch Dashboard URL
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${EnvironmentName}-GuardQuote-Overview
+    Export:
+      Name: !Sub ${EnvironmentName}-DashboardURL

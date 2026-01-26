@@ -1,0 +1,63 @@
+# GuardGuote API Proxy Worker
+# "The typo that became a brand"
+
+name = "guardguote-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Account Configuration
+account_id = "f05c20eb5ba2358bcaaa727a2a1941df"
+
+# Production Environment
+[env.production]
+name = "guardguote-api"
+routes = [
+  { pattern = "api.guardguote.com/*", zone_id = "eb102164a37376b6d67cdc51da01194a" },
+  { pattern = "guardguote.com/api/*", zone_id = "eb102164a37376b6d67cdc51da01194a" }
+]
+
+[env.production.vars]
+ENVIRONMENT = "production"
+AWS_ORIGIN = "https://aws-alb.guardguote.com"
+PI1_ORIGIN = "https://pi1.guardguote.com"
+FAILOVER_TIMEOUT_MS = "5000"
+
+# Staging Environment
+[env.staging]
+name = "guardguote-api-staging"
+routes = [
+  { pattern = "api-staging.guardguote.com/*", zone_id = "eb102164a37376b6d67cdc51da01194a" }
+]
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+AWS_ORIGIN = "https://aws-alb-staging.guardguote.com"
+PI1_ORIGIN = "https://pi1.guardguote.com"
+FAILOVER_TIMEOUT_MS = "10000"
+
+# KV Namespaces for health status and config
+[[kv_namespaces]]
+binding = "HEALTH_KV"
+id = "create-with-wrangler"  # Run: wrangler kv:namespace create HEALTH_KV
+
+[[kv_namespaces]]
+binding = "CONFIG_KV"
+id = "create-with-wrangler"  # Run: wrangler kv:namespace create CONFIG_KV
+
+# Durable Objects for rate limiting (optional)
+# [[durable_objects.bindings]]
+# name = "RATE_LIMITER"
+# class_name = "RateLimiter"
+
+# Analytics Engine (optional)
+# [[analytics_engine_datasets]]
+# binding = "ANALYTICS"
+
+# Build configuration
+[build]
+command = "npm run build"
+
+# Development
+[dev]
+port = 8787
+local_protocol = "http"

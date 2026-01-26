@@ -1,0 +1,284 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote Aurora Serverless v2 PostgreSQL Cluster'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  DBClusterIdentifier:
+    Description: Aurora cluster identifier
+    Type: String
+    Default: guardquote-aurora
+
+  DBName:
+    Description: Database name
+    Type: String
+    Default: guardquote
+
+  DBMasterUsername:
+    Description: Master username
+    Type: String
+    Default: guardquote_admin
+    NoEcho: true
+
+  DBMasterPassword:
+    Description: Master password
+    Type: String
+    NoEcho: true
+    MinLength: 8
+
+  DBSubnetGroupName:
+    Description: Database subnet group
+    Type: String
+
+  VPCSecurityGroup:
+    Description: Security group for Aurora
+    Type: AWS::EC2::SecurityGroup::Id
+
+  MinACU:
+    Description: Minimum Aurora Capacity Units
+    Type: Number
+    Default: 0.5
+    AllowedValues: [0.5, 1, 2, 4, 8, 16, 32, 64, 128]
+
+  MaxACU:
+    Description: Maximum Aurora Capacity Units
+    Type: Number
+    Default: 16
+    AllowedValues: [1, 2, 4, 8, 16, 32, 64, 128, 256]
+
+  BackupRetentionPeriod:
+    Description: Backup retention period in days
+    Type: Number
+    Default: 7
+
+  EnableDataAPI:
+    Description: Enable Data API for serverless queries
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  EnableGlobalWriteForwarding:
+    Description: Enable global write forwarding
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+
+  DeletionProtection:
+    Description: Enable deletion protection
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+Conditions:
+  IsProd: !Equals [!Ref EnvironmentName, 'prod']
+  EnableAPI: !Equals [!Ref EnableDataAPI, 'true']
+  EnableDeletionProtection: !Equals [!Ref DeletionProtection, 'true']
+
+Resources:
+  # KMS Key
+  AuroraKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub KMS key for ${EnvironmentName} Aurora encryption
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-aurora-key
+
+  # Parameter Groups
+  AuroraClusterParameterGroup:
+    Type: AWS::RDS::DBClusterParameterGroup
+    Properties:
+      Family: aurora-postgresql16
+      Description: !Sub Aurora PostgreSQL cluster parameters for ${EnvironmentName}
+      Parameters:
+        log_statement: all
+        log_min_duration_statement: 1000
+        shared_preload_libraries: pg_stat_statements,auto_explain
+        auto_explain.log_min_duration: 1000
+        rds.force_ssl: 1
+
+  AuroraParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Family: aurora-postgresql16
+      Description: !Sub Aurora PostgreSQL instance parameters for ${EnvironmentName}
+      Parameters:
+        log_statement: all
+
+  # Aurora Cluster
+  AuroraCluster:
+    Type: AWS::RDS::DBCluster
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBClusterIdentifier: !Sub ${EnvironmentName}-${DBClusterIdentifier}
+      Engine: aurora-postgresql
+      EngineMode: provisioned
+      EngineVersion: '16.4'
+      DatabaseName: !Ref DBName
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBClusterParameterGroupName: !Ref AuroraClusterParameterGroup
+      DBSubnetGroupName: !Ref DBSubnetGroupName
+      VpcSecurityGroupIds:
+        - !Ref VPCSecurityGroup
+      StorageEncrypted: true
+      KmsKeyId: !Ref AuroraKMSKey
+      BackupRetentionPeriod: !Ref BackupRetentionPeriod
+      PreferredBackupWindow: '03:00-04:00'
+      PreferredMaintenanceWindow: 'sun:04:00-sun:05:00'
+      DeletionProtection: !If [EnableDeletionProtection, true, false]
+      EnableHttpEndpoint: !If [EnableAPI, true, false]
+      EnableCloudwatchLogsExports:
+        - postgresql
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: !Ref MinACU
+        MaxCapacity: !Ref MaxACU
+      CopyTagsToSnapshot: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${DBClusterIdentifier}
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Writer Instance (Serverless v2)
+  AuroraWriter:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub ${EnvironmentName}-${DBClusterIdentifier}-writer
+      DBClusterIdentifier: !Ref AuroraCluster
+      DBInstanceClass: db.serverless
+      Engine: aurora-postgresql
+      DBParameterGroupName: !Ref AuroraParameterGroup
+      PubliclyAccessible: false
+      AutoMinorVersionUpgrade: true
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      PerformanceInsightsKMSKeyId: !Ref AuroraKMSKey
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt MonitoringRole.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${DBClusterIdentifier}-writer
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Reader Instance (Serverless v2)
+  AuroraReader:
+    Type: AWS::RDS::DBInstance
+    Condition: IsProd
+    Properties:
+      DBInstanceIdentifier: !Sub ${EnvironmentName}-${DBClusterIdentifier}-reader
+      DBClusterIdentifier: !Ref AuroraCluster
+      DBInstanceClass: db.serverless
+      Engine: aurora-postgresql
+      DBParameterGroupName: !Ref AuroraParameterGroup
+      PubliclyAccessible: false
+      AutoMinorVersionUpgrade: true
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      PerformanceInsightsKMSKeyId: !Ref AuroraKMSKey
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt MonitoringRole.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${DBClusterIdentifier}-reader
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Monitoring Role
+  MonitoringRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${EnvironmentName}-aurora-monitoring-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: monitoring.rds.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+
+  # Secrets Manager
+  AuroraSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub ${EnvironmentName}/guardquote/aurora
+      Description: !Sub Aurora credentials for ${EnvironmentName}
+      SecretString: !Sub |
+        {
+          "username": "${DBMasterUsername}",
+          "password": "${DBMasterPassword}",
+          "engine": "aurora-postgresql",
+          "host": "${AuroraCluster.Endpoint.Address}",
+          "port": ${AuroraCluster.Endpoint.Port},
+          "dbname": "${DBName}",
+          "dbClusterIdentifier": "${AuroraCluster}",
+          "readerEndpoint": "${AuroraCluster.ReadEndpoint.Address}"
+        }
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # CloudWatch Alarms
+  ServerlessCapacityAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-aurora-capacity-high
+      AlarmDescription: Aurora Serverless capacity is near maximum
+      MetricName: ServerlessDatabaseCapacity
+      Namespace: AWS/RDS
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: !Sub '${MaxACU}'
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: DBClusterIdentifier
+          Value: !Ref AuroraCluster
+
+Outputs:
+  ClusterIdentifier:
+    Description: Aurora Cluster Identifier
+    Value: !Ref AuroraCluster
+    Export:
+      Name: !Sub ${EnvironmentName}-AuroraClusterId
+
+  ClusterEndpoint:
+    Description: Aurora Cluster Writer Endpoint
+    Value: !GetAtt AuroraCluster.Endpoint.Address
+    Export:
+      Name: !Sub ${EnvironmentName}-AuroraEndpoint
+
+  ClusterReaderEndpoint:
+    Description: Aurora Cluster Reader Endpoint
+    Value: !GetAtt AuroraCluster.ReadEndpoint.Address
+    Export:
+      Name: !Sub ${EnvironmentName}-AuroraReaderEndpoint
+
+  ClusterPort:
+    Description: Aurora Cluster Port
+    Value: !GetAtt AuroraCluster.Endpoint.Port
+    Export:
+      Name: !Sub ${EnvironmentName}-AuroraPort
+
+  SecretArn:
+    Description: Aurora Secret ARN
+    Value: !Ref AuroraSecret
+    Export:
+      Name: !Sub ${EnvironmentName}-AuroraSecretArn

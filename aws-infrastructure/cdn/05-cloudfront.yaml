@@ -1,0 +1,328 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote CloudFront CDN with S3 origin and ALB origin'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  DomainName:
+    Description: Custom domain name (e.g., guardquote.com)
+    Type: String
+    Default: ''
+
+  ACMCertificateArn:
+    Description: ACM Certificate ARN in us-east-1 for CloudFront
+    Type: String
+    Default: ''
+
+  ALBDNSName:
+    Description: ALB DNS Name for API origin
+    Type: String
+
+  S3BucketName:
+    Description: S3 bucket for static assets
+    Type: String
+
+  S3BucketRegionalDomainName:
+    Description: S3 bucket regional domain name
+    Type: String
+
+  PriceClass:
+    Description: CloudFront price class
+    Type: String
+    Default: PriceClass_100
+    AllowedValues:
+      - PriceClass_100
+      - PriceClass_200
+      - PriceClass_All
+
+  DefaultTTL:
+    Description: Default TTL in seconds
+    Type: Number
+    Default: 86400
+
+  EnableWAF:
+    Description: Enable AWS WAF
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+
+  WAFWebACLArn:
+    Description: WAF Web ACL ARN
+    Type: String
+    Default: ''
+
+Conditions:
+  HasCustomDomain: !Not [!Equals [!Ref DomainName, '']]
+  HasCertificate: !Not [!Equals [!Ref ACMCertificateArn, '']]
+  UseWAF: !And
+    - !Equals [!Ref EnableWAF, 'true']
+    - !Not [!Equals [!Ref WAFWebACLArn, '']]
+
+Resources:
+  # Origin Access Control for S3
+  S3OriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub ${EnvironmentName}-guardquote-oac
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  # CloudFront Distribution
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub GuardQuote ${EnvironmentName} distribution
+        DefaultRootObject: index.html
+        PriceClass: !Ref PriceClass
+        HttpVersion: http2and3
+        IPV6Enabled: true
+
+        Aliases:
+          - !If [HasCustomDomain, !Ref DomainName, !Ref AWS::NoValue]
+          - !If [HasCustomDomain, !Sub 'www.${DomainName}', !Ref AWS::NoValue]
+
+        ViewerCertificate:
+          !If
+            - HasCertificate
+            - AcmCertificateArn: !Ref ACMCertificateArn
+              MinimumProtocolVersion: TLSv1.2_2021
+              SslSupportMethod: sni-only
+            - CloudFrontDefaultCertificate: true
+
+        WebACLId: !If [UseWAF, !Ref WAFWebACLArn, !Ref AWS::NoValue]
+
+        Origins:
+          # S3 Origin for static assets
+          - Id: S3Origin
+            DomainName: !Ref S3BucketRegionalDomainName
+            OriginAccessControlId: !Ref S3OriginAccessControl
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+
+          # ALB Origin for API
+          - Id: ALBOrigin
+            DomainName: !Ref ALBDNSName
+            CustomOriginConfig:
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+              OriginReadTimeout: 60
+              OriginKeepaliveTimeout: 5
+
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          CachePolicyId: !Ref StaticAssetsCachePolicy
+          ResponseHeadersPolicyId: !Ref SecurityHeadersPolicy
+
+        CacheBehaviors:
+          # API routes - no caching
+          - PathPattern: /api/*
+            TargetOriginId: ALBOrigin
+            ViewerProtocolPolicy: https-only
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachedMethods:
+              - GET
+              - HEAD
+            CachePolicyId: !Ref APICachePolicy
+            OriginRequestPolicyId: !Ref APIOriginRequestPolicy
+            ResponseHeadersPolicyId: !Ref SecurityHeadersPolicy
+
+          # ML routes
+          - PathPattern: /ml/*
+            TargetOriginId: ALBOrigin
+            ViewerProtocolPolicy: https-only
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachePolicyId: !Ref APICachePolicy
+            OriginRequestPolicyId: !Ref APIOriginRequestPolicy
+
+          # Static assets with long cache
+          - PathPattern: /static/*
+            TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+            Compress: true
+            CachePolicyId: !Ref LongCachePolicy
+
+          # Assets folder
+          - PathPattern: /assets/*
+            TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+            Compress: true
+            CachePolicyId: !Ref LongCachePolicy
+
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 10
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 10
+
+        Logging:
+          Bucket: !Sub ${S3BucketName}.s3.amazonaws.com
+          Prefix: !Sub cloudfront-logs/${EnvironmentName}/
+          IncludeCookies: false
+
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-guardquote-cdn
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Cache Policies
+  StaticAssetsCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub ${EnvironmentName}-static-assets-policy
+        DefaultTTL: !Ref DefaultTTL
+        MaxTTL: 31536000
+        MinTTL: 1
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: none
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: none
+          EnableAcceptEncodingGzip: true
+          EnableAcceptEncodingBrotli: true
+
+  APICachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub ${EnvironmentName}-api-cache-policy
+        DefaultTTL: 0
+        MaxTTL: 1
+        MinTTL: 0
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: none
+          HeadersConfig:
+            HeaderBehavior: whitelist
+            Headers:
+              - Authorization
+              - Accept
+              - Content-Type
+          QueryStringsConfig:
+            QueryStringBehavior: all
+          EnableAcceptEncodingGzip: true
+          EnableAcceptEncodingBrotli: true
+
+  LongCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub ${EnvironmentName}-long-cache-policy
+        DefaultTTL: 604800
+        MaxTTL: 31536000
+        MinTTL: 86400
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: none
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: none
+          EnableAcceptEncodingGzip: true
+          EnableAcceptEncodingBrotli: true
+
+  # Origin Request Policies
+  APIOriginRequestPolicy:
+    Type: AWS::CloudFront::OriginRequestPolicy
+    Properties:
+      OriginRequestPolicyConfig:
+        Name: !Sub ${EnvironmentName}-api-origin-request-policy
+        CookiesConfig:
+          CookieBehavior: all
+        HeadersConfig:
+          HeaderBehavior: allViewer
+        QueryStringsConfig:
+          QueryStringBehavior: all
+
+  # Security Headers Policy
+  SecurityHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub ${EnvironmentName}-security-headers
+        SecurityHeadersConfig:
+          ContentSecurityPolicy:
+            ContentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.amazonaws.com"
+            Override: false
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: DENY
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: strict-origin-when-cross-origin
+            Override: true
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: true
+            Preload: true
+            Override: true
+          XSSProtection:
+            ModeBlock: true
+            Protection: true
+            Override: true
+
+Outputs:
+  DistributionId:
+    Description: CloudFront Distribution ID
+    Value: !Ref CloudFrontDistribution
+    Export:
+      Name: !Sub ${EnvironmentName}-CloudFrontDistributionId
+
+  DistributionDomainName:
+    Description: CloudFront Distribution Domain Name
+    Value: !GetAtt CloudFrontDistribution.DomainName
+    Export:
+      Name: !Sub ${EnvironmentName}-CloudFrontDomainName
+
+  DistributionURL:
+    Description: CloudFront Distribution URL
+    Value: !Sub https://${CloudFrontDistribution.DomainName}
+    Export:
+      Name: !Sub ${EnvironmentName}-CloudFrontURL

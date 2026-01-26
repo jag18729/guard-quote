@@ -1,0 +1,294 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote ElastiCache Redis Cluster for caching and session management'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  ClusterName:
+    Description: Redis cluster name
+    Type: String
+    Default: guardquote-redis
+
+  NodeType:
+    Description: ElastiCache node type
+    Type: String
+    Default: cache.t3.medium
+    AllowedValues:
+      - cache.t3.micro
+      - cache.t3.small
+      - cache.t3.medium
+      - cache.t4g.micro
+      - cache.t4g.small
+      - cache.t4g.medium
+      - cache.r6g.large
+      - cache.r6g.xlarge
+      - cache.r7g.large
+
+  NumCacheClusters:
+    Description: Number of cache clusters (nodes) for replication group
+    Type: Number
+    Default: 2
+    MinValue: 1
+    MaxValue: 6
+
+  EngineVersion:
+    Description: Redis engine version
+    Type: String
+    Default: '7.1'
+    AllowedValues:
+      - '7.1'
+      - '7.0'
+      - '6.2'
+
+  VpcId:
+    Description: VPC ID
+    Type: AWS::EC2::VPC::Id
+
+  SubnetIds:
+    Description: Subnet IDs for ElastiCache subnet group
+    Type: List<AWS::EC2::Subnet::Id>
+
+  SecurityGroupId:
+    Description: Security group for Redis
+    Type: AWS::EC2::SecurityGroup::Id
+
+  AuthToken:
+    Description: Redis AUTH token (password)
+    Type: String
+    NoEcho: true
+    MinLength: 16
+    MaxLength: 128
+
+  AutomaticFailoverEnabled:
+    Description: Enable automatic failover (requires 2+ nodes)
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  MultiAZEnabled:
+    Description: Enable Multi-AZ
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  SnapshotRetentionLimit:
+    Description: Number of days to retain automatic snapshots
+    Type: Number
+    Default: 7
+    MinValue: 0
+    MaxValue: 35
+
+  SnapshotWindow:
+    Description: Daily time range for snapshots (UTC)
+    Type: String
+    Default: '03:00-04:00'
+
+  MaintenanceWindow:
+    Description: Weekly maintenance window (UTC)
+    Type: String
+    Default: 'sun:04:00-sun:05:00'
+
+  TransitEncryptionEnabled:
+    Description: Enable in-transit encryption
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  AtRestEncryptionEnabled:
+    Description: Enable at-rest encryption
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+Conditions:
+  EnableFailover: !And
+    - !Equals [!Ref AutomaticFailoverEnabled, 'true']
+    - !Not [!Equals [!Ref NumCacheClusters, 1]]
+  EnableMultiAZ: !Equals [!Ref MultiAZEnabled, 'true']
+  EnableTransitEncryption: !Equals [!Ref TransitEncryptionEnabled, 'true']
+  EnableAtRestEncryption: !Equals [!Ref AtRestEncryptionEnabled, 'true']
+
+Resources:
+  # KMS Key for at-rest encryption
+  RedisKMSKey:
+    Type: AWS::KMS::Key
+    Condition: EnableAtRestEncryption
+    Properties:
+      Description: !Sub KMS key for ${EnvironmentName} Redis encryption
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-redis-key
+
+  # Subnet Group
+  RedisSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      CacheSubnetGroupName: !Sub ${EnvironmentName}-${ClusterName}-subnet-group
+      Description: !Sub Subnet group for ${EnvironmentName} Redis cluster
+      SubnetIds: !Ref SubnetIds
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ClusterName}-subnet-group
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Parameter Group
+  RedisParameterGroup:
+    Type: AWS::ElastiCache::ParameterGroup
+    Properties:
+      CacheParameterGroupFamily: redis7
+      Description: !Sub Redis parameters for ${EnvironmentName}
+      Properties:
+        maxmemory-policy: allkeys-lru
+        notify-keyspace-events: 'Ex'
+        timeout: 300
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-redis-params
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Replication Group (Redis cluster with replicas)
+  RedisReplicationGroup:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      ReplicationGroupId: !Sub ${EnvironmentName}-${ClusterName}
+      ReplicationGroupDescription: !Sub GuardQuote Redis cluster for ${EnvironmentName}
+      Engine: redis
+      EngineVersion: !Ref EngineVersion
+      CacheNodeType: !Ref NodeType
+      NumCacheClusters: !Ref NumCacheClusters
+      CacheSubnetGroupName: !Ref RedisSubnetGroup
+      CacheParameterGroupName: !Ref RedisParameterGroup
+      SecurityGroupIds:
+        - !Ref SecurityGroupId
+      Port: 6379
+      AutomaticFailoverEnabled: !If [EnableFailover, true, false]
+      MultiAZEnabled: !If [EnableMultiAZ, true, false]
+      AuthToken: !If [EnableTransitEncryption, !Ref AuthToken, !Ref AWS::NoValue]
+      TransitEncryptionEnabled: !If [EnableTransitEncryption, true, false]
+      AtRestEncryptionEnabled: !If [EnableAtRestEncryption, true, false]
+      KmsKeyId: !If [EnableAtRestEncryption, !Ref RedisKMSKey, !Ref AWS::NoValue]
+      SnapshotRetentionLimit: !Ref SnapshotRetentionLimit
+      SnapshotWindow: !Ref SnapshotWindow
+      PreferredMaintenanceWindow: !Ref MaintenanceWindow
+      AutoMinorVersionUpgrade: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${ClusterName}
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Secrets Manager Secret
+  RedisSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub ${EnvironmentName}/guardquote/redis
+      Description: !Sub Redis credentials for ${EnvironmentName}
+      SecretString: !Sub |
+        {
+          "host": "${RedisReplicationGroup.PrimaryEndPoint.Address}",
+          "port": ${RedisReplicationGroup.PrimaryEndPoint.Port},
+          "readerEndpoint": "${RedisReplicationGroup.ReaderEndPoint.Address}",
+          "authToken": "${AuthToken}",
+          "ssl": ${TransitEncryptionEnabled}
+        }
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # CloudWatch Alarms
+  RedisCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-redis-cpu-high
+      AlarmDescription: Redis CPU utilization is high
+      MetricName: CPUUtilization
+      Namespace: AWS/ElastiCache
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: CacheClusterId
+          Value: !Sub ${EnvironmentName}-${ClusterName}-001
+
+  RedisMemoryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-redis-memory-high
+      AlarmDescription: Redis memory utilization is high
+      MetricName: DatabaseMemoryUsagePercentage
+      Namespace: AWS/ElastiCache
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: CacheClusterId
+          Value: !Sub ${EnvironmentName}-${ClusterName}-001
+
+  RedisConnectionsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-redis-connections-high
+      AlarmDescription: Redis current connections is high
+      MetricName: CurrConnections
+      Namespace: AWS/ElastiCache
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 1000
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: CacheClusterId
+          Value: !Sub ${EnvironmentName}-${ClusterName}-001
+
+Outputs:
+  RedisEndpoint:
+    Description: Redis Primary Endpoint
+    Value: !GetAtt RedisReplicationGroup.PrimaryEndPoint.Address
+    Export:
+      Name: !Sub ${EnvironmentName}-RedisEndpoint
+
+  RedisReaderEndpoint:
+    Description: Redis Reader Endpoint
+    Value: !GetAtt RedisReplicationGroup.ReaderEndPoint.Address
+    Export:
+      Name: !Sub ${EnvironmentName}-RedisReaderEndpoint
+
+  RedisPort:
+    Description: Redis Port
+    Value: !GetAtt RedisReplicationGroup.PrimaryEndPoint.Port
+    Export:
+      Name: !Sub ${EnvironmentName}-RedisPort
+
+  RedisSecretArn:
+    Description: Redis Secret ARN
+    Value: !Ref RedisSecret
+    Export:
+      Name: !Sub ${EnvironmentName}-RedisSecretArn
+
+  RedisConnectionURL:
+    Description: Redis Connection URL
+    Value: !Sub
+      - 'rediss://:****@${Endpoint}:${Port}'
+      - Endpoint: !GetAtt RedisReplicationGroup.PrimaryEndPoint.Address
+        Port: !GetAtt RedisReplicationGroup.PrimaryEndPoint.Port
+    Export:
+      Name: !Sub ${EnvironmentName}-RedisConnectionURL

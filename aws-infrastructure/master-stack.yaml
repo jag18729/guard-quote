@@ -1,0 +1,390 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote Master Stack - Orchestrates all infrastructure components'
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'Environment Configuration'
+        Parameters:
+          - EnvironmentName
+          - ProjectName
+      - Label:
+          default: 'Network Configuration'
+        Parameters:
+          - VpcCIDR
+          - EnableNatGateway
+          - BastionAllowedIP
+      - Label:
+          default: 'Database Configuration'
+        Parameters:
+          - DBInstanceClass
+          - DBMasterPassword
+          - RedisNodeType
+          - RedisAuthToken
+      - Label:
+          default: 'Identity Configuration'
+        Parameters:
+          - CognitoDomainPrefix
+          - EnableDirectoryService
+          - DirectoryPassword
+      - Label:
+          default: 'Security Configuration'
+        Parameters:
+          - EnableWAF
+          - RateLimitPerIP
+          - CertificateArn
+      - Label:
+          default: 'Notification Configuration'
+        Parameters:
+          - AlertEmail
+          - SlackWebhookURL
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+
+  ProjectName:
+    Description: Project name
+    Type: String
+    Default: guardquote
+
+  VpcCIDR:
+    Description: VPC CIDR block
+    Type: String
+    Default: 10.0.0.0/16
+
+  EnableNatGateway:
+    Description: Enable NAT Gateway (costs apply)
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  BastionAllowedIP:
+    Description: IP CIDR allowed to access bastion host
+    Type: String
+    Default: 0.0.0.0/0
+
+  DBInstanceClass:
+    Description: RDS instance class
+    Type: String
+    Default: db.t3.medium
+    AllowedValues:
+      - db.t3.micro
+      - db.t3.small
+      - db.t3.medium
+      - db.r5.large
+
+  DBMasterPassword:
+    Description: Database master password
+    Type: String
+    NoEcho: true
+    MinLength: 8
+
+  RedisNodeType:
+    Description: ElastiCache node type
+    Type: String
+    Default: cache.t3.medium
+    AllowedValues:
+      - cache.t3.micro
+      - cache.t3.small
+      - cache.t3.medium
+      - cache.r6g.large
+
+  RedisAuthToken:
+    Description: Redis AUTH token (min 16 characters)
+    Type: String
+    NoEcho: true
+    MinLength: 16
+
+  CognitoDomainPrefix:
+    Description: Cognito domain prefix (globally unique)
+    Type: String
+    Default: guardquote
+
+  EnableDirectoryService:
+    Description: Enable AWS Directory Service
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+
+  DirectoryPassword:
+    Description: Directory Service admin password
+    Type: String
+    NoEcho: true
+    Default: ''
+
+  EnableWAF:
+    Description: Enable AWS WAF
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  RateLimitPerIP:
+    Description: WAF rate limit per IP per 5 minutes
+    Type: Number
+    Default: 2000
+
+  CertificateArn:
+    Description: ACM certificate ARN for HTTPS
+    Type: String
+    Default: ''
+
+  AlertEmail:
+    Description: Email for alerts
+    Type: String
+    Default: ''
+
+  SlackWebhookURL:
+    Description: Slack webhook for notifications
+    Type: String
+    NoEcho: true
+    Default: ''
+
+  TemplatesBucket:
+    Description: S3 bucket containing nested stack templates
+    Type: String
+    Default: guardquote-cloudformation-templates
+
+Conditions:
+  UseNatGateway: !Equals [!Ref EnableNatGateway, 'true']
+  UseDirectoryService: !Equals [!Ref EnableDirectoryService, 'true']
+  UseWAF: !Equals [!Ref EnableWAF, 'true']
+  HasCertificate: !Not [!Equals [!Ref CertificateArn, '']]
+  IsProd: !Equals [!Ref EnvironmentName, 'prod']
+
+Resources:
+  # ==================== NETWORKING ====================
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${TemplatesBucket}.s3.amazonaws.com/networking/01-vpc.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        VpcCIDR: !Ref VpcCIDR
+        EnableNatGateway: !Ref EnableNatGateway
+        EnableVPCFlowLogs: 'true'
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-vpc-stack
+
+  SecurityGroupsStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: VPCStack
+    Properties:
+      TemplateURL: !Sub https://${TemplatesBucket}.s3.amazonaws.com/networking/02-security-groups.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        BastionAllowedIP: !Ref BastionAllowedIP
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-sg-stack
+
+  VPCEndpointsStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: SecurityGroupsStack
+    Properties:
+      TemplateURL: !Sub https://${TemplatesBucket}.s3.amazonaws.com/networking/03-vpc-endpoints.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
+        PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2
+        PrivateRouteTableId: !GetAtt VPCStack.Outputs.PrivateRouteTable1
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-endpoints-stack
+
+  # ==================== COMPUTE ====================
+  ALBStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: SecurityGroupsStack
+    Properties:
+      TemplateURL: !Sub https://${TemplatesBucket}.s3.amazonaws.com/compute/04-alb.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PublicSubnet1: !GetAtt VPCStack.Outputs.PublicSubnet1
+        PublicSubnet2: !GetAtt VPCStack.Outputs.PublicSubnet2
+        ALBSecurityGroup: !GetAtt SecurityGroupsStack.Outputs.ALBSecurityGroup
+        CertificateArn: !Ref CertificateArn
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-alb-stack
+
+  # ==================== DATABASE ====================
+  RDSStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: SecurityGroupsStack
+    Properties:
+      TemplateURL: !Sub https://${TemplatesBucket}.s3.amazonaws.com/database/08-rds-postgresql.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        DBInstanceClass: !Ref DBInstanceClass
+        DBMasterPassword: !Ref DBMasterPassword
+        DBSubnetGroupName: !GetAtt VPCStack.Outputs.DatabaseSubnetGroup
+        VPCSecurityGroup: !GetAtt SecurityGroupsStack.Outputs.DatabaseSecurityGroup
+        MultiAZ: !If [IsProd, 'true', 'false']
+        DeletionProtection: !If [IsProd, 'true', 'false']
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-rds-stack
+
+  RedisStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: SecurityGroupsStack
+    Properties:
+      TemplateURL: !Sub https://${TemplatesBucket}.s3.amazonaws.com/database/10-elasticache-redis.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        NodeType: !Ref RedisNodeType
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        SubnetIds: !Join [',', [!GetAtt VPCStack.Outputs.PrivateSubnet1, !GetAtt VPCStack.Outputs.PrivateSubnet2]]
+        SecurityGroupId: !GetAtt SecurityGroupsStack.Outputs.DatabaseSecurityGroup
+        AuthToken: !Ref RedisAuthToken
+        NumCacheClusters: !If [IsProd, 2, 1]
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-redis-stack
+
+  # ==================== IDENTITY ====================
+  CognitoStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${TemplatesBucket}.s3.amazonaws.com/identity/12-cognito.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        DomainPrefix: !Ref CognitoDomainPrefix
+        MFAConfiguration: !If [IsProd, 'ON', 'OPTIONAL']
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-cognito-stack
+
+  DirectoryServiceStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: UseDirectoryService
+    DependsOn: VPCStack
+    Properties:
+      TemplateURL: !Sub https://${TemplatesBucket}.s3.amazonaws.com/identity/13-directory-service.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        AdminPassword: !Ref DirectoryPassword
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
+        PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-directory-stack
+
+  # ==================== SECURITY ====================
+  BastionStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: SecurityGroupsStack
+    Properties:
+      TemplateURL: !Sub https://${TemplatesBucket}.s3.amazonaws.com/security/15-bastion-host.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PublicSubnetId: !GetAtt VPCStack.Outputs.PublicSubnet1
+        BastionSecurityGroupId: !GetAtt SecurityGroupsStack.Outputs.BastionSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-bastion-stack
+
+  WAFStack:
+    Type: AWS::CloudFormation::Stack
+    Condition: UseWAF
+    Properties:
+      TemplateURL: !Sub https://${TemplatesBucket}.s3.amazonaws.com/security/16-waf.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        RateLimitPerIP: !Ref RateLimitPerIP
+        EnableAWSManagedRules: 'true'
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-waf-stack
+
+  SecretsStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${TemplatesBucket}.s3.amazonaws.com/security/17-secrets-manager.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        DatabasePassword: !Ref DBMasterPassword
+        RedisPassword: !Ref RedisAuthToken
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-secrets-stack
+
+  # ==================== MONITORING ====================
+  MonitoringStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${TemplatesBucket}.s3.amazonaws.com/monitoring/19-cloudwatch-monitoring.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        AlertEmailAddress: !Ref AlertEmail
+        LogRetentionDays: !If [IsProd, 90, 30]
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-monitoring-stack
+
+  # ==================== AUTOMATION ====================
+  NetworkAutomationStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - VPCStack
+      - SecurityGroupsStack
+    Properties:
+      TemplateURL: !Sub https://${TemplatesBucket}.s3.amazonaws.com/automation/18-network-health-check.yaml
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        VpcId: !GetAtt VPCStack.Outputs.VpcId
+        PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
+        PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2
+        LambdaSecurityGroupId: !GetAtt SecurityGroupsStack.Outputs.LambdaSecurityGroup
+        SlackWebhookURL: !Ref SlackWebhookURL
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-automation-stack
+
+Outputs:
+  VpcId:
+    Description: VPC ID
+    Value: !GetAtt VPCStack.Outputs.VpcId
+
+  ALBDNSName:
+    Description: ALB DNS Name
+    Value: !GetAtt ALBStack.Outputs.LoadBalancerDNSName
+
+  DatabaseEndpoint:
+    Description: RDS Endpoint
+    Value: !GetAtt RDSStack.Outputs.DBEndpoint
+
+  RedisEndpoint:
+    Description: Redis Endpoint
+    Value: !GetAtt RedisStack.Outputs.RedisEndpoint
+
+  CognitoUserPoolId:
+    Description: Cognito User Pool ID
+    Value: !GetAtt CognitoStack.Outputs.UserPoolId
+
+  BastionPublicIP:
+    Description: Bastion Host Public IP
+    Value: !GetAtt BastionStack.Outputs.BastionPublicIP
+
+  WAFWebACLArn:
+    Condition: UseWAF
+    Description: WAF Web ACL ARN
+    Value: !GetAtt WAFStack.Outputs.WebACLArn
+
+  DashboardURL:
+    Description: CloudWatch Dashboard URL
+    Value: !GetAtt MonitoringStack.Outputs.DashboardURL

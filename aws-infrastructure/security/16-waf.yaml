@@ -1,0 +1,377 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote AWS WAF - Web Application Firewall for API and CloudFront'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  Scope:
+    Description: WAF scope (REGIONAL for ALB/API Gateway, CLOUDFRONT for CloudFront)
+    Type: String
+    Default: REGIONAL
+    AllowedValues:
+      - REGIONAL
+      - CLOUDFRONT
+
+  RateLimitPerIP:
+    Description: Rate limit requests per 5 minutes per IP
+    Type: Number
+    Default: 2000
+
+  EnableAWSManagedRules:
+    Description: Enable AWS managed rule groups
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  EnableSQLiProtection:
+    Description: Enable SQL injection protection
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  EnableXSSProtection:
+    Description: Enable cross-site scripting protection
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  BlockedCountries:
+    Description: Comma-separated list of country codes to block
+    Type: CommaDelimitedList
+    Default: ''
+
+  AllowedIPAddresses:
+    Description: Comma-separated list of allowed IP CIDR blocks (for IP allowlist)
+    Type: CommaDelimitedList
+    Default: ''
+
+  BlockedIPAddresses:
+    Description: Comma-separated list of blocked IP CIDR blocks
+    Type: CommaDelimitedList
+    Default: ''
+
+  EnableLogging:
+    Description: Enable WAF logging
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+Conditions:
+  HasBlockedCountries: !Not [!Equals [!Join ['', !Ref BlockedCountries], '']]
+  HasAllowedIPs: !Not [!Equals [!Join ['', !Ref AllowedIPAddresses], '']]
+  HasBlockedIPs: !Not [!Equals [!Join ['', !Ref BlockedIPAddresses], '']]
+  UseAWSManagedRules: !Equals [!Ref EnableAWSManagedRules, 'true']
+  UseSQLi: !Equals [!Ref EnableSQLiProtection, 'true']
+  UseXSS: !Equals [!Ref EnableXSSProtection, 'true']
+  EnableWAFLogging: !Equals [!Ref EnableLogging, 'true']
+
+Resources:
+  # IP Sets
+  AllowedIPSet:
+    Type: AWS::WAFv2::IPSet
+    Condition: HasAllowedIPs
+    Properties:
+      Name: !Sub ${EnvironmentName}-guardquote-allowed-ips
+      Description: Allowed IP addresses
+      Scope: !Ref Scope
+      IPAddressVersion: IPV4
+      Addresses: !Ref AllowedIPAddresses
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  BlockedIPSet:
+    Type: AWS::WAFv2::IPSet
+    Condition: HasBlockedIPs
+    Properties:
+      Name: !Sub ${EnvironmentName}-guardquote-blocked-ips
+      Description: Blocked IP addresses
+      Scope: !Ref Scope
+      IPAddressVersion: IPV4
+      Addresses: !Ref BlockedIPAddresses
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Web ACL
+  WebACL:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: !Sub ${EnvironmentName}-guardquote-waf
+      Description: !Sub WAF for GuardQuote ${EnvironmentName}
+      Scope: !Ref Scope
+      DefaultAction:
+        Allow: {}
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: !Sub ${EnvironmentName}-guardquote-waf
+      Rules:
+        # Rule 1: Block blocked IPs (highest priority)
+        - !If
+          - HasBlockedIPs
+          - Name: BlockedIPs
+            Priority: 0
+            Statement:
+              IPSetReferenceStatement:
+                Arn: !GetAtt BlockedIPSet.Arn
+            Action:
+              Block: {}
+            VisibilityConfig:
+              SampledRequestsEnabled: true
+              CloudWatchMetricsEnabled: true
+              MetricName: BlockedIPs
+          - !Ref AWS::NoValue
+
+        # Rule 2: Rate limiting
+        - Name: RateLimiting
+          Priority: 1
+          Statement:
+            RateBasedStatement:
+              Limit: !Ref RateLimitPerIP
+              AggregateKeyType: IP
+          Action:
+            Block:
+              CustomResponse:
+                ResponseCode: 429
+                CustomResponseBodyKey: rate-limited
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: RateLimiting
+
+        # Rule 3: AWS Managed Common Rule Set
+        - !If
+          - UseAWSManagedRules
+          - Name: AWSManagedRulesCommonRuleSet
+            Priority: 2
+            Statement:
+              ManagedRuleGroupStatement:
+                VendorName: AWS
+                Name: AWSManagedRulesCommonRuleSet
+                ExcludedRules:
+                  - Name: SizeRestrictions_BODY
+                  - Name: CrossSiteScripting_BODY
+            OverrideAction:
+              None: {}
+            VisibilityConfig:
+              SampledRequestsEnabled: true
+              CloudWatchMetricsEnabled: true
+              MetricName: AWSManagedRulesCommonRuleSet
+          - !Ref AWS::NoValue
+
+        # Rule 4: AWS Managed Known Bad Inputs
+        - !If
+          - UseAWSManagedRules
+          - Name: AWSManagedRulesKnownBadInputsRuleSet
+            Priority: 3
+            Statement:
+              ManagedRuleGroupStatement:
+                VendorName: AWS
+                Name: AWSManagedRulesKnownBadInputsRuleSet
+            OverrideAction:
+              None: {}
+            VisibilityConfig:
+              SampledRequestsEnabled: true
+              CloudWatchMetricsEnabled: true
+              MetricName: AWSManagedRulesKnownBadInputsRuleSet
+          - !Ref AWS::NoValue
+
+        # Rule 5: SQL Injection Protection
+        - !If
+          - UseSQLi
+          - Name: AWSManagedRulesSQLiRuleSet
+            Priority: 4
+            Statement:
+              ManagedRuleGroupStatement:
+                VendorName: AWS
+                Name: AWSManagedRulesSQLiRuleSet
+            OverrideAction:
+              None: {}
+            VisibilityConfig:
+              SampledRequestsEnabled: true
+              CloudWatchMetricsEnabled: true
+              MetricName: AWSManagedRulesSQLiRuleSet
+          - !Ref AWS::NoValue
+
+        # Rule 6: Linux Protection (for backend servers)
+        - !If
+          - UseAWSManagedRules
+          - Name: AWSManagedRulesLinuxRuleSet
+            Priority: 5
+            Statement:
+              ManagedRuleGroupStatement:
+                VendorName: AWS
+                Name: AWSManagedRulesLinuxRuleSet
+            OverrideAction:
+              None: {}
+            VisibilityConfig:
+              SampledRequestsEnabled: true
+              CloudWatchMetricsEnabled: true
+              MetricName: AWSManagedRulesLinuxRuleSet
+          - !Ref AWS::NoValue
+
+        # Rule 7: Amazon IP Reputation List
+        - !If
+          - UseAWSManagedRules
+          - Name: AWSManagedRulesAmazonIpReputationList
+            Priority: 6
+            Statement:
+              ManagedRuleGroupStatement:
+                VendorName: AWS
+                Name: AWSManagedRulesAmazonIpReputationList
+            OverrideAction:
+              None: {}
+            VisibilityConfig:
+              SampledRequestsEnabled: true
+              CloudWatchMetricsEnabled: true
+              MetricName: AWSManagedRulesAmazonIpReputationList
+          - !Ref AWS::NoValue
+
+        # Rule 8: Bot Control (count mode for monitoring)
+        - Name: AWSManagedRulesBotControlRuleSet
+          Priority: 7
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesBotControlRuleSet
+              ManagedRuleGroupConfigs:
+                - AWSManagedRulesBotControlRuleSet:
+                    InspectionLevel: COMMON
+          OverrideAction:
+            Count: {}
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: AWSManagedRulesBotControlRuleSet
+
+        # Rule 9: Geo blocking
+        - !If
+          - HasBlockedCountries
+          - Name: GeoBlocking
+            Priority: 8
+            Statement:
+              GeoMatchStatement:
+                CountryCodes: !Ref BlockedCountries
+            Action:
+              Block: {}
+            VisibilityConfig:
+              SampledRequestsEnabled: true
+              CloudWatchMetricsEnabled: true
+              MetricName: GeoBlocking
+          - !Ref AWS::NoValue
+
+      CustomResponseBodies:
+        rate-limited:
+          ContentType: APPLICATION_JSON
+          Content: '{"error": "Too many requests. Please try again later.", "code": "RATE_LIMITED"}'
+
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-guardquote-waf
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # WAF Logging
+  WAFLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: EnableWAFLogging
+    Properties:
+      LogGroupName: !Sub aws-waf-logs-${EnvironmentName}-guardquote
+      RetentionInDays: 30
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  WAFLoggingConfiguration:
+    Type: AWS::WAFv2::LoggingConfiguration
+    Condition: EnableWAFLogging
+    Properties:
+      ResourceArn: !GetAtt WebACL.Arn
+      LogDestinationConfigs:
+        - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:aws-waf-logs-${EnvironmentName}-guardquote
+      LoggingFilter:
+        DefaultBehavior: KEEP
+        Filters:
+          - Behavior: KEEP
+            Conditions:
+              - ActionCondition:
+                  Action: BLOCK
+            Requirement: MEETS_ANY
+      RedactedFields:
+        - SingleHeader:
+            Name: authorization
+        - SingleHeader:
+            Name: cookie
+
+  # CloudWatch Dashboard
+  WAFDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub ${EnvironmentName}-guardquote-waf
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  ["AWS/WAFV2", "AllowedRequests", "WebACL", "${EnvironmentName}-guardquote-waf", "Region", "${AWS::Region}", "Rule", "ALL"],
+                  [".", "BlockedRequests", ".", ".", ".", ".", ".", "."]
+                ],
+                "title": "Allowed vs Blocked Requests",
+                "region": "${AWS::Region}",
+                "period": 300
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "metrics": [
+                  ["AWS/WAFV2", "BlockedRequests", "WebACL", "${EnvironmentName}-guardquote-waf", "Region", "${AWS::Region}", "Rule", "RateLimiting"]
+                ],
+                "title": "Rate Limited Requests",
+                "region": "${AWS::Region}",
+                "period": 300
+              }
+            }
+          ]
+        }
+
+Outputs:
+  WebACLArn:
+    Description: WAF Web ACL ARN
+    Value: !GetAtt WebACL.Arn
+    Export:
+      Name: !Sub ${EnvironmentName}-WAFWebACLArn
+
+  WebACLId:
+    Description: WAF Web ACL ID
+    Value: !Ref WebACL
+    Export:
+      Name: !Sub ${EnvironmentName}-WAFWebACLId
+
+  AllowedIPSetArn:
+    Condition: HasAllowedIPs
+    Description: Allowed IP Set ARN
+    Value: !GetAtt AllowedIPSet.Arn
+    Export:
+      Name: !Sub ${EnvironmentName}-AllowedIPSetArn
+
+  BlockedIPSetArn:
+    Condition: HasBlockedIPs
+    Description: Blocked IP Set ARN
+    Value: !GetAtt BlockedIPSet.Arn
+    Export:
+      Name: !Sub ${EnvironmentName}-BlockedIPSetArn

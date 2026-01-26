@@ -1,0 +1,380 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote RDS PostgreSQL - Multi-AZ database with read replicas'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  DBInstanceIdentifier:
+    Description: Database instance identifier
+    Type: String
+    Default: guardquote-db
+
+  DBName:
+    Description: Database name
+    Type: String
+    Default: guardquote
+
+  DBMasterUsername:
+    Description: Master username for the database
+    Type: String
+    Default: guardquote_admin
+    NoEcho: true
+
+  DBMasterPassword:
+    Description: Master password for the database
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    MaxLength: 128
+
+  DBInstanceClass:
+    Description: Database instance type
+    Type: String
+    Default: db.t3.medium
+    AllowedValues:
+      - db.t3.micro
+      - db.t3.small
+      - db.t3.medium
+      - db.t3.large
+      - db.r5.large
+      - db.r5.xlarge
+      - db.r5.2xlarge
+      - db.r6g.large
+      - db.r6g.xlarge
+
+  DBAllocatedStorage:
+    Description: Allocated storage in GB
+    Type: Number
+    Default: 100
+    MinValue: 20
+    MaxValue: 16384
+
+  DBMaxAllocatedStorage:
+    Description: Maximum storage for autoscaling in GB
+    Type: Number
+    Default: 500
+    MinValue: 100
+    MaxValue: 16384
+
+  DBSubnetGroupName:
+    Description: Database subnet group name
+    Type: String
+
+  VPCSecurityGroup:
+    Description: Security group for database
+    Type: AWS::EC2::SecurityGroup::Id
+
+  MultiAZ:
+    Description: Enable Multi-AZ deployment
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  EnablePerformanceInsights:
+    Description: Enable Performance Insights
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  BackupRetentionPeriod:
+    Description: Backup retention period in days
+    Type: Number
+    Default: 7
+    MinValue: 0
+    MaxValue: 35
+
+  PreferredBackupWindow:
+    Description: Preferred backup window (UTC)
+    Type: String
+    Default: '03:00-04:00'
+
+  PreferredMaintenanceWindow:
+    Description: Preferred maintenance window (UTC)
+    Type: String
+    Default: 'sun:04:00-sun:05:00'
+
+  EnableEnhancedMonitoring:
+    Description: Enable Enhanced Monitoring
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  MonitoringInterval:
+    Description: Enhanced monitoring interval in seconds
+    Type: Number
+    Default: 60
+    AllowedValues: [0, 1, 5, 10, 15, 30, 60]
+
+  CreateReadReplica:
+    Description: Create a read replica
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+
+  DeletionProtection:
+    Description: Enable deletion protection
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+Conditions:
+  IsProd: !Equals [!Ref EnvironmentName, 'prod']
+  EnableMultiAZ: !Equals [!Ref MultiAZ, 'true']
+  EnablePI: !Equals [!Ref EnablePerformanceInsights, 'true']
+  EnableMonitoring: !Equals [!Ref EnableEnhancedMonitoring, 'true']
+  CreateReplica: !Equals [!Ref CreateReadReplica, 'true']
+  EnableDeletionProtection: !Equals [!Ref DeletionProtection, 'true']
+
+Resources:
+  # KMS Key for encryption
+  DBEncryptionKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub KMS key for ${EnvironmentName} GuardQuote RDS encryption
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: '*'
+          - Sid: Allow RDS to use the key
+            Effect: Allow
+            Principal:
+              Service: rds.amazonaws.com
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-guardquote-rds-key
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  DBEncryptionKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub alias/${EnvironmentName}-guardquote-rds
+      TargetKeyId: !Ref DBEncryptionKey
+
+  # Parameter Group
+  DBParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Family: postgres16
+      Description: !Sub GuardQuote PostgreSQL parameters for ${EnvironmentName}
+      Parameters:
+        log_statement: all
+        log_min_duration_statement: 1000
+        shared_preload_libraries: pg_stat_statements
+        pg_stat_statements.track: all
+        max_connections: 200
+        work_mem: 16384
+        maintenance_work_mem: 524288
+        effective_cache_size: 1572864
+        random_page_cost: 1.1
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-guardquote-pg-params
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Enhanced Monitoring Role
+  MonitoringRole:
+    Type: AWS::IAM::Role
+    Condition: EnableMonitoring
+    Properties:
+      RoleName: !Sub ${EnvironmentName}-rds-monitoring-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: monitoring.rds.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
+
+  # Primary Database Instance
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub ${EnvironmentName}-${DBInstanceIdentifier}
+      DBName: !Ref DBName
+      Engine: postgres
+      EngineVersion: '16.4'
+      DBInstanceClass: !Ref DBInstanceClass
+      AllocatedStorage: !Ref DBAllocatedStorage
+      MaxAllocatedStorage: !Ref DBMaxAllocatedStorage
+      StorageType: gp3
+      StorageEncrypted: true
+      KmsKeyId: !Ref DBEncryptionKey
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBSubnetGroupName: !Ref DBSubnetGroupName
+      VPCSecurityGroups:
+        - !Ref VPCSecurityGroup
+      DBParameterGroupName: !Ref DBParameterGroup
+      MultiAZ: !If [EnableMultiAZ, true, false]
+      PubliclyAccessible: false
+      AutoMinorVersionUpgrade: true
+      BackupRetentionPeriod: !Ref BackupRetentionPeriod
+      PreferredBackupWindow: !Ref PreferredBackupWindow
+      PreferredMaintenanceWindow: !Ref PreferredMaintenanceWindow
+      DeletionProtection: !If [EnableDeletionProtection, true, false]
+      EnablePerformanceInsights: !If [EnablePI, true, false]
+      PerformanceInsightsRetentionPeriod: !If [EnablePI, 7, !Ref AWS::NoValue]
+      PerformanceInsightsKMSKeyId: !If [EnablePI, !Ref DBEncryptionKey, !Ref AWS::NoValue]
+      MonitoringInterval: !If [EnableMonitoring, !Ref MonitoringInterval, 0]
+      MonitoringRoleArn: !If [EnableMonitoring, !GetAtt MonitoringRole.Arn, !Ref AWS::NoValue]
+      EnableCloudwatchLogsExports:
+        - postgresql
+        - upgrade
+      CopyTagsToSnapshot: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${DBInstanceIdentifier}
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Read Replica
+  DBReadReplica:
+    Type: AWS::RDS::DBInstance
+    Condition: CreateReplica
+    Properties:
+      DBInstanceIdentifier: !Sub ${EnvironmentName}-${DBInstanceIdentifier}-replica
+      SourceDBInstanceIdentifier: !Ref DBInstance
+      DBInstanceClass: !Ref DBInstanceClass
+      StorageType: gp3
+      PubliclyAccessible: false
+      AutoMinorVersionUpgrade: true
+      EnablePerformanceInsights: !If [EnablePI, true, false]
+      PerformanceInsightsRetentionPeriod: !If [EnablePI, 7, !Ref AWS::NoValue]
+      MonitoringInterval: !If [EnableMonitoring, !Ref MonitoringInterval, 0]
+      MonitoringRoleArn: !If [EnableMonitoring, !GetAtt MonitoringRole.Arn, !Ref AWS::NoValue]
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-${DBInstanceIdentifier}-replica
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Secrets Manager Secret
+  DBSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub ${EnvironmentName}/guardquote/database
+      Description: !Sub GuardQuote database credentials for ${EnvironmentName}
+      SecretString: !Sub |
+        {
+          "username": "${DBMasterUsername}",
+          "password": "${DBMasterPassword}",
+          "engine": "postgres",
+          "host": "${DBInstance.Endpoint.Address}",
+          "port": ${DBInstance.Endpoint.Port},
+          "dbname": "${DBName}",
+          "dbInstanceIdentifier": "${DBInstance}"
+        }
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-guardquote-db-secret
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # CloudWatch Alarms
+  DBCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-guardquote-db-cpu-high
+      AlarmDescription: Database CPU utilization is high
+      MetricName: CPUUtilization
+      Namespace: AWS/RDS
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref DBInstance
+
+  DBFreeStorageAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-guardquote-db-storage-low
+      AlarmDescription: Database free storage is low
+      MetricName: FreeStorageSpace
+      Namespace: AWS/RDS
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 10737418240  # 10 GB in bytes
+      ComparisonOperator: LessThanThreshold
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref DBInstance
+
+  DBConnectionsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-guardquote-db-connections-high
+      AlarmDescription: Database connections are high
+      MetricName: DatabaseConnections
+      Namespace: AWS/RDS
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 150
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: DBInstanceIdentifier
+          Value: !Ref DBInstance
+
+Outputs:
+  DBInstanceId:
+    Description: Database Instance Identifier
+    Value: !Ref DBInstance
+    Export:
+      Name: !Sub ${EnvironmentName}-DBInstanceId
+
+  DBEndpoint:
+    Description: Database Endpoint Address
+    Value: !GetAtt DBInstance.Endpoint.Address
+    Export:
+      Name: !Sub ${EnvironmentName}-DBEndpoint
+
+  DBPort:
+    Description: Database Port
+    Value: !GetAtt DBInstance.Endpoint.Port
+    Export:
+      Name: !Sub ${EnvironmentName}-DBPort
+
+  DBSecretArn:
+    Description: Database Secret ARN
+    Value: !Ref DBSecret
+    Export:
+      Name: !Sub ${EnvironmentName}-DBSecretArn
+
+  DBReadReplicaEndpoint:
+    Condition: CreateReplica
+    Description: Read Replica Endpoint
+    Value: !GetAtt DBReadReplica.Endpoint.Address
+    Export:
+      Name: !Sub ${EnvironmentName}-DBReadReplicaEndpoint
+
+  ConnectionString:
+    Description: PostgreSQL Connection String
+    Value: !Sub postgresql://${DBMasterUsername}:****@${DBInstance.Endpoint.Address}:${DBInstance.Endpoint.Port}/${DBName}
+    Export:
+      Name: !Sub ${EnvironmentName}-DBConnectionString

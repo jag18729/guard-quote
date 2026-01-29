@@ -1,10 +1,32 @@
 /**
  * Pi1 Service Management - Control services on Raspberry Pi
+ * Supports demo mode when Pi is unreachable
  */
 
-const PI_HOST = "192.168.2.70";
-const PI_USER = "johnmarston";
-const PI_PASS = "481526";
+const PI_HOST = process.env.PI_HOST || "192.168.2.70";
+const PI_USER = process.env.PI_USER || "johnmarston";
+const PI_PASS = process.env.PI_PASS || "481526";
+
+// Check if we're in demo mode (can't reach Pi)
+let demoMode: boolean | null = null;
+
+async function checkDemoMode(): Promise<boolean> {
+  if (demoMode !== null) return demoMode;
+
+  try {
+    const proc = Bun.spawn(["ping", "-c", "1", "-W", "1", PI_HOST], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    const exitCode = await proc.exited;
+    demoMode = exitCode !== 0;
+  } catch {
+    demoMode = true;
+  }
+
+  console.log(`Pi1 services running in ${demoMode ? "DEMO" : "LIVE"} mode`);
+  return demoMode;
+}
 
 interface ServiceStatus {
   name: string;
@@ -179,8 +201,29 @@ async function getDockerStatus(containerName: string): Promise<Partial<ServiceSt
   return { status, uptime, memory, cpu };
 }
 
+// Demo mode mock statuses
+function getDemoServiceStatuses(): ServiceStatus[] {
+  return SERVICES.map((svc: any) => ({
+    name: svc.name,
+    displayName: svc.displayName,
+    description: svc.description,
+    type: svc.type,
+    port: svc.port,
+    status: svc.planned ? "planned" : "unknown",
+    uptime: svc.planned ? undefined : "Demo Mode",
+    memory: undefined,
+    cpu: undefined,
+    demoMode: true,
+  } as ServiceStatus));
+}
+
 // Get all service statuses (parallel for speed)
 export async function getAllServiceStatuses(): Promise<ServiceStatus[]> {
+  // Check if Pi is reachable
+  if (await checkDemoMode()) {
+    return getDemoServiceStatuses();
+  }
+
   // Run all status checks in parallel
   const statusPromises = SERVICES.map(async (svc: any) => {
     // Handle planned services - don't check status
@@ -344,6 +387,36 @@ export async function remediateService(serviceName: string): Promise<ServiceActi
 
 // Get Pi system info
 export async function getPiSystemInfo(): Promise<{
+  hostname: string;
+  uptime: string;
+  loadAvg: string;
+  memoryUsed: string;
+  memoryTotal: string;
+  diskUsed: string;
+  diskTotal: string;
+  cpuTemp: string;
+  demoMode?: boolean;
+}> {
+  // Demo mode returns mock data
+  if (await checkDemoMode()) {
+    return {
+      hostname: "pi1 (demo)",
+      uptime: "Demo Mode",
+      loadAvg: "0.00 0.00 0.00",
+      memoryUsed: "0GB",
+      memoryTotal: "8GB",
+      diskUsed: "0GB",
+      diskTotal: "256GB",
+      cpuTemp: "N/A",
+      demoMode: true,
+    };
+  }
+
+  return getPiSystemInfoLive();
+}
+
+// Actual Pi system info via SSH
+async function getPiSystemInfoLive(): Promise<{
   hostname: string;
   uptime: string;
   loadAvg: string;

@@ -217,15 +217,34 @@ DATABASE_URL=postgres://postgres:password@localhost:5432/guardquote
 
 ## Development
 
+### Run Linting
+```bash
+# Frontend (ESLint + Prettier)
+cd frontend && bun run lint
+
+# Backend (Biome)
+cd backend && bun run lint
+```
+
 ### Run Tests
 ```bash
+# Frontend (Vitest - 5 tests)
+cd frontend && bun run test
+
+# Backend (Bun Test - 7 tests)
 cd backend && bun test
-cd frontend && bun test
 ```
 
 ### Build for Production
 ```bash
 cd frontend && bun run build
+```
+
+### Docker Build
+```bash
+docker build -t guardquote-frontend ./frontend
+docker build -t guardquote-backend ./backend
+docker build -t guardquote-ml ./ml-engine
 ```
 
 ### Environment Variables
@@ -272,16 +291,40 @@ GitHub Actions workflows in `.github/workflows/`:
 | `pr-check.yml` | Push/PR to main | ✅ Active |
 | `integration.yml.disabled` | — | ⏸️ Disabled |
 
-**PR Check** runs on every push:
-- Backend: install, lint, typecheck
-- Frontend: install, lint, typecheck
-- ML Engine: install, lint, tests
+**PR Check** runs 4 jobs on every push:
+
+| Job | Steps |
+|-----|-------|
+| `lint-backend` | Install → Biome lint → TypeCheck |
+| `lint-frontend` | Install → ESLint → TypeCheck → Vitest → Build |
+| `test-ml-engine` | Install → Ruff → Pytest |
+| `docker-build` | Build all 3 Dockerfiles |
 
 **Integration Tests** (disabled) require:
 - Self-hosted runner on local network
 - Access to Pi1 (192.168.2.70) for PostgreSQL/Redis
 
 To re-enable: rename `integration.yml.disabled` → `integration.yml`
+
+## Docker
+
+All services have Dockerfiles:
+
+| Service | Base Image | Port |
+|---------|------------|------|
+| Frontend | `nginx:alpine` | 80 |
+| Backend | `oven/bun:latest` | 3000 |
+| ML Engine | `python:3.12-slim` | 8000 |
+
+```bash
+# Build and run with docker-compose
+docker-compose up -d
+
+# Or build individually
+docker build -t guardquote-frontend ./frontend
+docker build -t guardquote-backend ./backend
+docker build -t guardquote-ml ./ml-engine
+```
 
 ---
 

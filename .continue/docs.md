@@ -161,22 +161,36 @@ gh workflow run integration.yml
 
 | Workflow | Trigger | Status |
 |----------|---------|--------|
-| `pr-check.yml` | Push/PR to main | ✅ Active |
+| `pr-check.yml` | Push/PR to main | ✅ Active (4 jobs) |
 | `train-ml.yml` | Weekly/Manual | ✅ Active |
 | `integration.yml.disabled` | Manual | ⏸️ Disabled |
+
+### PR Check Jobs
+
+| Job | What it does |
+|-----|--------------|
+| `lint-backend` | Biome lint + TypeCheck (soft-fail) |
+| `lint-frontend` | ESLint + TypeCheck (soft-fail) + Vitest + Build |
+| `test-ml-engine` | Ruff + Pytest (soft-fail) |
+| `docker-build` | Build all 3 Dockerfiles |
 
 ### Run CI Locally
 
 ```bash
 # Full CI simulation
 # Backend
-cd backend && bun install && bun run lint && bun run typecheck && bun test
+cd backend && bun run lint && bun run typecheck && bun test
 
 # Frontend
-cd frontend && bun install && bun run lint && bun run typecheck && bun test && bun run build
+cd frontend && bun run lint && bun run typecheck && bun run test && bun run build
 
 # ML Engine
-cd ml-engine && pip install -e ".[dev]" && ruff check . && pytest tests/ -v
+cd ml-engine && ruff check . && pytest tests/ -v
+
+# Docker
+docker build -t guardquote-frontend ./frontend
+docker build -t guardquote-backend ./backend
+docker build -t guardquote-ml ./ml-engine
 ```
 
 ### Fix Lint Errors

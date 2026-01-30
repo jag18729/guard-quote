@@ -21,7 +21,7 @@ export default function PublicNavbar() {
             <span className={styles.greeting}>Hello, <strong>{user.firstName}</strong></span>
             <button
               className={styles.authBtn}
-              onClick={() => navigate("/admin/dashboard")}
+              onClick={() => navigate("/admin")}
             >
               Dashboard
             </button>

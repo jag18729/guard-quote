@@ -30,7 +30,7 @@ export default function AdminLogin() {
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/admin/dashboard");
+      navigate("/admin");
     }
   }, [isAuthenticated, navigate]);
 

@@ -270,7 +270,7 @@ GitHub Actions workflows in `.github/workflows/`:
 | Workflow | Trigger | Status |
 |----------|---------|--------|
 | `pr-check.yml` | Push/PR to main | ✅ Active |
-| `integration.yml` | Manual only | ⏸️ Disabled |
+| `integration.yml.disabled` | — | ⏸️ Disabled |
 
 **PR Check** runs on every push:
 - Backend: install, lint, typecheck
@@ -281,7 +281,7 @@ GitHub Actions workflows in `.github/workflows/`:
 - Self-hosted runner on local network
 - Access to Pi1 (192.168.2.70) for PostgreSQL/Redis
 
-To re-enable integration tests, uncomment the triggers in `integration.yml`.
+To re-enable: rename `integration.yml.disabled` → `integration.yml`
 
 ---
 

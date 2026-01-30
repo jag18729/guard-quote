@@ -1,11 +1,13 @@
 name: Integration Tests
 
+# DISABLED: Requires self-hosted runner with Pi1 network access
+# Re-enable when local CI infrastructure is set up
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger only
+  # push:
+  #   branches: [main]
+  # pull_request:
+  #   branches: [main]
 
 env:
   PI1_HOST: 192.168.2.70

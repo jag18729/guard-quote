@@ -2,7 +2,7 @@
 name = "guardquote-ml"
 version = "0.1.0"
 description = "ML Engine for GuardQuote - Security Guard Pricing and Risk Assessment"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
@@ -32,7 +32,7 @@ packages = ["src"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py314"
+target-version = "py312"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

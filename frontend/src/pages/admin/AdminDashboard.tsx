@@ -32,11 +32,15 @@ export default function AdminDashboard() {
         });
 
         if (!res.ok) {
-          if (res.status === 401 || res.status === 403) {
-            navigate("/admin/login");
+          if (res.status === 401) {
+            navigate("/admin/login", { state: { error: "Session expired. Please log in again." } });
             return;
           }
-          throw new Error("Failed to fetch stats");
+          if (res.status === 403) {
+            navigate("/admin/login", { state: { error: "Access denied. Admin privileges required." } });
+            return;
+          }
+          throw new Error("Failed to fetch dashboard data");
         }
 
         const data = await res.json();

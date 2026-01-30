@@ -1,15 +1,31 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import styles from "./AdminLogin.module.css";
 
+interface LocationState {
+  from?: Location;
+  error?: string;
+}
+
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, isAuthenticated } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Check for redirect error message
+  useEffect(() => {
+    const state = location.state as LocationState;
+    if (state?.error) {
+      setError(state.error);
+      // Clear the state so error doesn't persist on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   // Redirect if already logged in
   if (isAuthenticated) {

@@ -11,7 +11,7 @@ interface User {
   role: string;
   is_active: boolean;
   created_at: string;
-  last_login: string | null;
+  updated_at: string;
 }
 
 interface UserFormData {
@@ -196,7 +196,7 @@ export default function AdminUsers() {
           <span>User</span>
           <span>Role</span>
           <span>Status</span>
-          <span>Last Login</span>
+          <span>Joined</span>
           <span>Actions</span>
         </div>
 
@@ -224,9 +224,7 @@ export default function AdminUsers() {
             </span>
 
             <span className={styles.lastLogin}>
-              {user.last_login
-                ? new Date(user.last_login).toLocaleDateString()
-                : "Never"}
+              {new Date(user.created_at).toLocaleDateString()}
             </span>
 
             <div className={styles.actions}>

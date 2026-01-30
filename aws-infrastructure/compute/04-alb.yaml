@@ -1,0 +1,301 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote Application Load Balancer with HTTPS and path-based routing'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  VpcId:
+    Description: VPC ID
+    Type: AWS::EC2::VPC::Id
+
+  PublicSubnet1:
+    Description: Public Subnet 1 ID
+    Type: AWS::EC2::Subnet::Id
+
+  PublicSubnet2:
+    Description: Public Subnet 2 ID
+    Type: AWS::EC2::Subnet::Id
+
+  ALBSecurityGroup:
+    Description: Security Group for ALB
+    Type: AWS::EC2::SecurityGroup::Id
+
+  CertificateArn:
+    Description: ACM Certificate ARN for HTTPS (leave empty to skip HTTPS)
+    Type: String
+    Default: ''
+
+  HealthCheckPath:
+    Description: Health check path for default target group
+    Type: String
+    Default: /health
+
+  EnableAccessLogs:
+    Description: Enable ALB access logs
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  AccessLogsBucket:
+    Description: S3 bucket for ALB access logs
+    Type: String
+    Default: ''
+
+  IdleTimeout:
+    Description: Idle timeout in seconds
+    Type: Number
+    Default: 60
+    MinValue: 1
+    MaxValue: 4000
+
+Conditions:
+  HasCertificate: !Not [!Equals [!Ref CertificateArn, '']]
+  EnableLogs: !And
+    - !Equals [!Ref EnableAccessLogs, 'true']
+    - !Not [!Equals [!Ref AccessLogsBucket, '']]
+
+Resources:
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub ${EnvironmentName}-guardquote-alb
+      Type: application
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: !Ref IdleTimeout
+        - Key: routing.http.drop_invalid_header_fields.enabled
+          Value: 'true'
+        - Key: routing.http2.enabled
+          Value: 'true'
+        - !If
+          - EnableLogs
+          - Key: access_logs.s3.enabled
+            Value: 'true'
+          - !Ref AWS::NoValue
+        - !If
+          - EnableLogs
+          - Key: access_logs.s3.bucket
+            Value: !Ref AccessLogsBucket
+          - !Ref AWS::NoValue
+        - !If
+          - EnableLogs
+          - Key: access_logs.s3.prefix
+            Value: !Sub alb/${EnvironmentName}
+          - !Ref AWS::NoValue
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-guardquote-alb
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  HTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - !If
+          - HasCertificate
+          - Type: redirect
+            RedirectConfig:
+              Protocol: HTTPS
+              Port: '443'
+              StatusCode: HTTP_301
+          - Type: forward
+            TargetGroupArn: !Ref BackendTargetGroup
+
+  HTTPSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: HasCertificate
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref BackendTargetGroup
+
+  # Backend API Target Group (port 3000)
+  BackendTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${EnvironmentName}-backend-tg
+      Port: 3000
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+      TargetType: ip
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: !Ref HealthCheckPath
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: 200-299
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '30'
+        - Key: stickiness.enabled
+          Value: 'false'
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-backend-tg
+
+  # ML Engine Target Group (port 8000)
+  MLEngineTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${EnvironmentName}-ml-engine-tg
+      Port: 8000
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+      TargetType: ip
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /health
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: 200-299
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '60'
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-ml-engine-tg
+
+  # Frontend Target Group (port 5173 for dev, 80 for prod)
+  FrontendTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub ${EnvironmentName}-frontend-tg
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+      TargetType: ip
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+      Matcher:
+        HttpCode: 200-299
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-frontend-tg
+
+  # Path-based routing rules
+  APIListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Condition: HasCertificate
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 10
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+              - /api/*
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref BackendTargetGroup
+
+  MLListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Condition: HasCertificate
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 20
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+              - /ml/*
+              - /predict/*
+              - /train/*
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref MLEngineTargetGroup
+
+  FrontendListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Condition: HasCertificate
+    Properties:
+      ListenerArn: !Ref HTTPSListener
+      Priority: 100
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values:
+              - /*
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref FrontendTargetGroup
+
+Outputs:
+  LoadBalancerArn:
+    Description: ALB ARN
+    Value: !Ref ApplicationLoadBalancer
+    Export:
+      Name: !Sub ${EnvironmentName}-ALBArn
+
+  LoadBalancerDNSName:
+    Description: ALB DNS Name
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
+    Export:
+      Name: !Sub ${EnvironmentName}-ALBDNSName
+
+  LoadBalancerHostedZoneId:
+    Description: ALB Hosted Zone ID
+    Value: !GetAtt ApplicationLoadBalancer.CanonicalHostedZoneID
+    Export:
+      Name: !Sub ${EnvironmentName}-ALBHostedZoneId
+
+  BackendTargetGroupArn:
+    Description: Backend Target Group ARN
+    Value: !Ref BackendTargetGroup
+    Export:
+      Name: !Sub ${EnvironmentName}-BackendTargetGroupArn
+
+  MLEngineTargetGroupArn:
+    Description: ML Engine Target Group ARN
+    Value: !Ref MLEngineTargetGroup
+    Export:
+      Name: !Sub ${EnvironmentName}-MLEngineTargetGroupArn
+
+  FrontendTargetGroupArn:
+    Description: Frontend Target Group ARN
+    Value: !Ref FrontendTargetGroup
+    Export:
+      Name: !Sub ${EnvironmentName}-FrontendTargetGroupArn
+
+  HTTPListenerArn:
+    Description: HTTP Listener ARN
+    Value: !Ref HTTPListener
+    Export:
+      Name: !Sub ${EnvironmentName}-HTTPListenerArn
+
+  HTTPSListenerArn:
+    Condition: HasCertificate
+    Description: HTTPS Listener ARN
+    Value: !Ref HTTPSListener
+    Export:
+      Name: !Sub ${EnvironmentName}-HTTPSListenerArn

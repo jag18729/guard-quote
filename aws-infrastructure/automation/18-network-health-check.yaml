@@ -1,0 +1,553 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote Network Automation - Health checks and host monitoring with Lambda'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  VpcId:
+    Description: VPC ID
+    Type: AWS::EC2::VPC::Id
+
+  PrivateSubnet1:
+    Description: Private Subnet 1 ID for Lambda
+    Type: AWS::EC2::Subnet::Id
+
+  PrivateSubnet2:
+    Description: Private Subnet 2 ID for Lambda
+    Type: AWS::EC2::Subnet::Id
+
+  LambdaSecurityGroupId:
+    Description: Security Group ID for Lambda functions
+    Type: AWS::EC2::SecurityGroup::Id
+
+  HealthCheckEndpoints:
+    Description: Comma-separated list of endpoints to check (URL format)
+    Type: CommaDelimitedList
+    Default: 'https://api.guardquote.com/health,https://ml.guardquote.com/health'
+
+  CheckIntervalMinutes:
+    Description: Health check interval in minutes
+    Type: Number
+    Default: 5
+    AllowedValues: [1, 5, 10, 15, 30, 60]
+
+  AlertSNSTopicArn:
+    Description: SNS Topic ARN for alerts (leave empty to create new)
+    Type: String
+    Default: ''
+
+  SlackWebhookURL:
+    Description: Slack webhook URL for notifications
+    Type: String
+    Default: ''
+    NoEcho: true
+
+  PagerDutyIntegrationKey:
+    Description: PagerDuty integration key
+    Type: String
+    Default: ''
+    NoEcho: true
+
+Conditions:
+  CreateSNSTopic: !Equals [!Ref AlertSNSTopicArn, '']
+  HasSlack: !Not [!Equals [!Ref SlackWebhookURL, '']]
+  HasPagerDuty: !Not [!Equals [!Ref PagerDutyIntegrationKey, '']]
+
+Resources:
+  # SNS Topic for alerts
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Condition: CreateSNSTopic
+    Properties:
+      TopicName: !Sub ${EnvironmentName}-guardquote-alerts
+      DisplayName: GuardQuote Health Alerts
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Lambda Execution Role
+  HealthCheckLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${EnvironmentName}-health-check-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: HealthCheckPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !If [CreateSNSTopic, !Ref AlertTopic, !Ref AlertSNSTopicArn]
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:DescribeNetworkInterfaces
+                  - rds:DescribeDBInstances
+                  - elasticache:DescribeCacheClusters
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${EnvironmentName}/guardquote/*
+
+  # Health Check Lambda Function
+  HealthCheckLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${EnvironmentName}-health-check
+      Description: Performs health checks on GuardQuote infrastructure
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt HealthCheckLambdaRole.Arn
+      Timeout: 60
+      MemorySize: 256
+      VpcConfig:
+        SubnetIds:
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroupId
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref EnvironmentName
+          ENDPOINTS: !Join [',', !Ref HealthCheckEndpoints]
+          SNS_TOPIC_ARN: !If [CreateSNSTopic, !Ref AlertTopic, !Ref AlertSNSTopicArn]
+          SLACK_WEBHOOK_URL: !Ref SlackWebhookURL
+          PAGERDUTY_KEY: !Ref PagerDutyIntegrationKey
+      Code:
+        ZipFile: |
+          import json
+          import os
+          import urllib.request
+          import urllib.error
+          import boto3
+          import socket
+          from datetime import datetime
+
+          cloudwatch = boto3.client('cloudwatch')
+          sns = boto3.client('sns')
+
+          def handler(event, context):
+              environment = os.environ.get('ENVIRONMENT', 'dev')
+              endpoints = os.environ.get('ENDPOINTS', '').split(',')
+              sns_topic = os.environ.get('SNS_TOPIC_ARN', '')
+              slack_url = os.environ.get('SLACK_WEBHOOK_URL', '')
+
+              results = []
+              failed_checks = []
+
+              for endpoint in endpoints:
+                  endpoint = endpoint.strip()
+                  if not endpoint:
+                      continue
+
+                  result = check_endpoint(endpoint)
+                  results.append(result)
+
+                  # Publish metric to CloudWatch
+                  publish_metric(environment, endpoint, result)
+
+                  if not result['healthy']:
+                      failed_checks.append(result)
+
+              # Send alerts for failed checks
+              if failed_checks:
+                  send_alerts(environment, failed_checks, sns_topic, slack_url)
+
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps({
+                      'timestamp': datetime.utcnow().isoformat(),
+                      'environment': environment,
+                      'results': results,
+                      'healthy': len(failed_checks) == 0
+                  })
+              }
+
+          def check_endpoint(url):
+              result = {
+                  'endpoint': url,
+                  'healthy': False,
+                  'status_code': None,
+                  'response_time_ms': None,
+                  'error': None
+              }
+
+              try:
+                  start = datetime.utcnow()
+                  request = urllib.request.Request(url, headers={'User-Agent': 'HealthCheck/1.0'})
+                  response = urllib.request.urlopen(request, timeout=10)
+                  end = datetime.utcnow()
+
+                  result['status_code'] = response.getcode()
+                  result['response_time_ms'] = int((end - start).total_seconds() * 1000)
+                  result['healthy'] = 200 <= response.getcode() < 300
+
+              except urllib.error.HTTPError as e:
+                  result['status_code'] = e.code
+                  result['error'] = str(e)
+              except urllib.error.URLError as e:
+                  result['error'] = str(e.reason)
+              except socket.timeout:
+                  result['error'] = 'Connection timeout'
+              except Exception as e:
+                  result['error'] = str(e)
+
+              return result
+
+          def publish_metric(environment, endpoint, result):
+              try:
+                  # Extract hostname from URL
+                  from urllib.parse import urlparse
+                  hostname = urlparse(endpoint).netloc
+
+                  metrics = [
+                      {
+                          'MetricName': 'HealthCheckStatus',
+                          'Dimensions': [
+                              {'Name': 'Environment', 'Value': environment},
+                              {'Name': 'Endpoint', 'Value': hostname}
+                          ],
+                          'Value': 1 if result['healthy'] else 0,
+                          'Unit': 'Count'
+                      }
+                  ]
+
+                  if result['response_time_ms']:
+                      metrics.append({
+                          'MetricName': 'ResponseTime',
+                          'Dimensions': [
+                              {'Name': 'Environment', 'Value': environment},
+                              {'Name': 'Endpoint', 'Value': hostname}
+                          ],
+                          'Value': result['response_time_ms'],
+                          'Unit': 'Milliseconds'
+                      })
+
+                  cloudwatch.put_metric_data(
+                      Namespace='GuardQuote/HealthChecks',
+                      MetricData=metrics
+                  )
+              except Exception as e:
+                  print(f"Error publishing metrics: {e}")
+
+          def send_alerts(environment, failed_checks, sns_topic, slack_url):
+              message = f"🚨 Health Check Alert - {environment}\n\n"
+              for check in failed_checks:
+                  message += f"❌ {check['endpoint']}\n"
+                  message += f"   Status: {check.get('status_code', 'N/A')}\n"
+                  message += f"   Error: {check.get('error', 'Unknown')}\n\n"
+
+              # Send to SNS
+              if sns_topic:
+                  try:
+                      sns.publish(
+                          TopicArn=sns_topic,
+                          Subject=f"[{environment.upper()}] Health Check Failed",
+                          Message=message
+                      )
+                  except Exception as e:
+                      print(f"Error sending SNS: {e}")
+
+              # Send to Slack
+              if slack_url:
+                  try:
+                      slack_message = {
+                          "text": message,
+                          "attachments": [{
+                              "color": "danger",
+                              "title": f"Health Check Failed - {environment}",
+                              "fields": [
+                                  {"title": c['endpoint'], "value": c.get('error', 'Unknown error'), "short": True}
+                                  for c in failed_checks
+                              ]
+                          }]
+                      }
+                      req = urllib.request.Request(
+                          slack_url,
+                          data=json.dumps(slack_message).encode('utf-8'),
+                          headers={'Content-Type': 'application/json'}
+                      )
+                      urllib.request.urlopen(req, timeout=5)
+                  except Exception as e:
+                      print(f"Error sending Slack: {e}")
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-health-check
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # EventBridge Rule for scheduled execution
+  HealthCheckSchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub ${EnvironmentName}-health-check-schedule
+      Description: Scheduled health check execution
+      ScheduleExpression: !Sub 'rate(${CheckIntervalMinutes} minutes)'
+      State: ENABLED
+      Targets:
+        - Id: HealthCheckLambda
+          Arn: !GetAtt HealthCheckLambda.Arn
+
+  HealthCheckSchedulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref HealthCheckLambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt HealthCheckSchedule.Arn
+
+  # Network Host Discovery Lambda
+  HostDiscoveryLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${EnvironmentName}-host-discovery
+      Description: Discovers and monitors hosts in the VPC
+      Runtime: python3.12
+      Handler: index.handler
+      Role: !GetAtt HealthCheckLambdaRole.Arn
+      Timeout: 120
+      MemorySize: 256
+      VpcConfig:
+        SubnetIds:
+          - !Ref PrivateSubnet1
+          - !Ref PrivateSubnet2
+        SecurityGroupIds:
+          - !Ref LambdaSecurityGroupId
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref EnvironmentName
+          VPC_ID: !Ref VpcId
+      Code:
+        ZipFile: |
+          import json
+          import os
+          import boto3
+          from datetime import datetime
+
+          ec2 = boto3.client('ec2')
+          rds = boto3.client('rds')
+          elasticache = boto3.client('elasticache')
+          cloudwatch = boto3.client('cloudwatch')
+
+          def handler(event, context):
+              environment = os.environ.get('ENVIRONMENT', 'dev')
+              vpc_id = os.environ.get('VPC_ID', '')
+
+              inventory = {
+                  'timestamp': datetime.utcnow().isoformat(),
+                  'environment': environment,
+                  'vpc_id': vpc_id,
+                  'ec2_instances': [],
+                  'rds_instances': [],
+                  'elasticache_clusters': [],
+                  'network_interfaces': []
+              }
+
+              # Discover EC2 instances
+              try:
+                  ec2_response = ec2.describe_instances(
+                      Filters=[
+                          {'Name': 'vpc-id', 'Values': [vpc_id]},
+                          {'Name': 'instance-state-name', 'Values': ['running', 'pending', 'stopping', 'stopped']}
+                      ]
+                  )
+                  for reservation in ec2_response['Reservations']:
+                      for instance in reservation['Instances']:
+                          name = ''
+                          for tag in instance.get('Tags', []):
+                              if tag['Key'] == 'Name':
+                                  name = tag['Value']
+                                  break
+
+                          inventory['ec2_instances'].append({
+                              'instance_id': instance['InstanceId'],
+                              'name': name,
+                              'type': instance['InstanceType'],
+                              'state': instance['State']['Name'],
+                              'private_ip': instance.get('PrivateIpAddress'),
+                              'public_ip': instance.get('PublicIpAddress'),
+                              'subnet_id': instance.get('SubnetId'),
+                              'launch_time': instance['LaunchTime'].isoformat()
+                          })
+              except Exception as e:
+                  print(f"Error discovering EC2: {e}")
+
+              # Discover RDS instances
+              try:
+                  rds_response = rds.describe_db_instances()
+                  for db in rds_response['DBInstances']:
+                      if db.get('DBSubnetGroup', {}).get('VpcId') == vpc_id:
+                          inventory['rds_instances'].append({
+                              'identifier': db['DBInstanceIdentifier'],
+                              'engine': db['Engine'],
+                              'status': db['DBInstanceStatus'],
+                              'endpoint': db.get('Endpoint', {}).get('Address'),
+                              'port': db.get('Endpoint', {}).get('Port'),
+                              'instance_class': db['DBInstanceClass'],
+                              'multi_az': db.get('MultiAZ', False)
+                          })
+              except Exception as e:
+                  print(f"Error discovering RDS: {e}")
+
+              # Discover ElastiCache clusters
+              try:
+                  cache_response = elasticache.describe_cache_clusters(ShowCacheNodeInfo=True)
+                  for cluster in cache_response['CacheClusters']:
+                      inventory['elasticache_clusters'].append({
+                          'cluster_id': cluster['CacheClusterId'],
+                          'engine': cluster['Engine'],
+                          'status': cluster['CacheClusterStatus'],
+                          'node_type': cluster['CacheNodeType'],
+                          'num_nodes': cluster['NumCacheNodes'],
+                          'nodes': [
+                              {
+                                  'endpoint': node.get('Endpoint', {}).get('Address'),
+                                  'port': node.get('Endpoint', {}).get('Port'),
+                                  'status': node.get('CacheNodeStatus')
+                              }
+                              for node in cluster.get('CacheNodes', [])
+                          ]
+                      })
+              except Exception as e:
+                  print(f"Error discovering ElastiCache: {e}")
+
+              # Discover Network Interfaces
+              try:
+                  eni_response = ec2.describe_network_interfaces(
+                      Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}]
+                  )
+                  for eni in eni_response['NetworkInterfaces']:
+                      inventory['network_interfaces'].append({
+                          'interface_id': eni['NetworkInterfaceId'],
+                          'type': eni.get('InterfaceType', 'unknown'),
+                          'status': eni['Status'],
+                          'private_ip': eni.get('PrivateIpAddress'),
+                          'subnet_id': eni['SubnetId'],
+                          'description': eni.get('Description', '')[:100]
+                      })
+              except Exception as e:
+                  print(f"Error discovering ENIs: {e}")
+
+              # Publish inventory metrics
+              publish_inventory_metrics(environment, inventory)
+
+              return {
+                  'statusCode': 200,
+                  'body': json.dumps(inventory, default=str)
+              }
+
+          def publish_inventory_metrics(environment, inventory):
+              try:
+                  cloudwatch.put_metric_data(
+                      Namespace='GuardQuote/Infrastructure',
+                      MetricData=[
+                          {
+                              'MetricName': 'EC2InstanceCount',
+                              'Dimensions': [{'Name': 'Environment', 'Value': environment}],
+                              'Value': len(inventory['ec2_instances']),
+                              'Unit': 'Count'
+                          },
+                          {
+                              'MetricName': 'RDSInstanceCount',
+                              'Dimensions': [{'Name': 'Environment', 'Value': environment}],
+                              'Value': len(inventory['rds_instances']),
+                              'Unit': 'Count'
+                          },
+                          {
+                              'MetricName': 'ElastiCacheClusterCount',
+                              'Dimensions': [{'Name': 'Environment', 'Value': environment}],
+                              'Value': len(inventory['elasticache_clusters']),
+                              'Unit': 'Count'
+                          }
+                      ]
+                  )
+              except Exception as e:
+                  print(f"Error publishing inventory metrics: {e}")
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-host-discovery
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Host Discovery Schedule (hourly)
+  HostDiscoverySchedule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub ${EnvironmentName}-host-discovery-schedule
+      Description: Scheduled host discovery execution
+      ScheduleExpression: 'rate(1 hour)'
+      State: ENABLED
+      Targets:
+        - Id: HostDiscoveryLambda
+          Arn: !GetAtt HostDiscoveryLambda.Arn
+
+  HostDiscoveryPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref HostDiscoveryLambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt HostDiscoverySchedule.Arn
+
+  # CloudWatch Alarms for health checks
+  HealthCheckFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub ${EnvironmentName}-health-check-failures
+      AlarmDescription: One or more health checks have failed
+      MetricName: HealthCheckStatus
+      Namespace: GuardQuote/HealthChecks
+      Dimensions:
+        - Name: Environment
+          Value: !Ref EnvironmentName
+      Statistic: Minimum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 1
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: breaching
+      AlarmActions:
+        - !If [CreateSNSTopic, !Ref AlertTopic, !Ref AlertSNSTopicArn]
+
+Outputs:
+  HealthCheckLambdaArn:
+    Description: Health Check Lambda ARN
+    Value: !GetAtt HealthCheckLambda.Arn
+    Export:
+      Name: !Sub ${EnvironmentName}-HealthCheckLambdaArn
+
+  HostDiscoveryLambdaArn:
+    Description: Host Discovery Lambda ARN
+    Value: !GetAtt HostDiscoveryLambda.Arn
+    Export:
+      Name: !Sub ${EnvironmentName}-HostDiscoveryLambdaArn
+
+  AlertTopicArn:
+    Description: Alert SNS Topic ARN
+    Value: !If [CreateSNSTopic, !Ref AlertTopic, !Ref AlertSNSTopicArn]
+    Export:
+      Name: !Sub ${EnvironmentName}-AlertTopicArn

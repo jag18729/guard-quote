@@ -1,0 +1,281 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote X-Ray Distributed Tracing Configuration'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  SamplingRate:
+    Description: X-Ray sampling rate (0-1)
+    Type: Number
+    Default: 0.1
+    MinValue: 0
+    MaxValue: 1
+
+  EnableInsights:
+    Description: Enable X-Ray Insights
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+Conditions:
+  UseInsights: !Equals [!Ref EnableInsights, 'true']
+  IsProd: !Equals [!Ref EnvironmentName, 'prod']
+
+Resources:
+  # X-Ray Sampling Rule
+  XRaySamplingRule:
+    Type: AWS::XRay::SamplingRule
+    Properties:
+      SamplingRule:
+        RuleName: !Sub ${EnvironmentName}-guardquote-sampling
+        Priority: 1000
+        FixedRate: !Ref SamplingRate
+        ReservoirSize: 5
+        ServiceName: !Sub guardquote-${EnvironmentName}
+        ServiceType: '*'
+        Host: '*'
+        HTTPMethod: '*'
+        URLPath: '*'
+        Version: 1
+        Attributes:
+          Environment: !Ref EnvironmentName
+
+  # Higher sampling for errors
+  XRayErrorSamplingRule:
+    Type: AWS::XRay::SamplingRule
+    Properties:
+      SamplingRule:
+        RuleName: !Sub ${EnvironmentName}-guardquote-error-sampling
+        Priority: 100
+        FixedRate: 1.0
+        ReservoirSize: 10
+        ServiceName: !Sub guardquote-${EnvironmentName}
+        ServiceType: '*'
+        Host: '*'
+        HTTPMethod: '*'
+        URLPath: '*'
+        Version: 1
+        Attributes:
+          Environment: !Ref EnvironmentName
+          fault: 'true'
+
+  # Lower sampling for health checks
+  XRayHealthCheckSamplingRule:
+    Type: AWS::XRay::SamplingRule
+    Properties:
+      SamplingRule:
+        RuleName: !Sub ${EnvironmentName}-guardquote-healthcheck-sampling
+        Priority: 50
+        FixedRate: 0.01
+        ReservoirSize: 1
+        ServiceName: !Sub guardquote-${EnvironmentName}
+        ServiceType: '*'
+        Host: '*'
+        HTTPMethod: 'GET'
+        URLPath: '/health*'
+        Version: 1
+        Attributes:
+          Environment: !Ref EnvironmentName
+
+  # X-Ray Group for filtering
+  XRayGroup:
+    Type: AWS::XRay::Group
+    Properties:
+      GroupName: !Sub ${EnvironmentName}-guardquote
+      FilterExpression: !Sub 'annotation.Environment = "${EnvironmentName}"'
+      InsightsConfiguration:
+        InsightsEnabled: !If [UseInsights, true, false]
+        NotificationsEnabled: !If [UseInsights, true, false]
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # X-Ray Group for errors
+  XRayErrorGroup:
+    Type: AWS::XRay::Group
+    Properties:
+      GroupName: !Sub ${EnvironmentName}-guardquote-errors
+      FilterExpression: !Sub 'annotation.Environment = "${EnvironmentName}" AND (fault = true OR error = true)'
+      InsightsConfiguration:
+        InsightsEnabled: true
+        NotificationsEnabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # X-Ray Group for slow requests
+  XRaySlowRequestsGroup:
+    Type: AWS::XRay::Group
+    Properties:
+      GroupName: !Sub ${EnvironmentName}-guardquote-slow
+      FilterExpression: !Sub 'annotation.Environment = "${EnvironmentName}" AND responsetime > 3'
+      InsightsConfiguration:
+        InsightsEnabled: true
+        NotificationsEnabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # IAM Role for X-Ray daemon
+  XRayDaemonRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${EnvironmentName}-xray-daemon-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+                - ecs-tasks.amazonaws.com
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess
+      Policies:
+        - PolicyName: XRayFullAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - xray:PutTraceSegments
+                  - xray:PutTelemetryRecords
+                  - xray:GetSamplingRules
+                  - xray:GetSamplingTargets
+                  - xray:GetSamplingStatisticSummaries
+                Resource: '*'
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # CloudWatch Dashboard for X-Ray
+  XRayDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Sub ${EnvironmentName}-GuardQuote-Tracing
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "text",
+              "x": 0,
+              "y": 0,
+              "width": 24,
+              "height": 1,
+              "properties": {
+                "markdown": "# X-Ray Tracing Dashboard - ${EnvironmentName}\n"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 1,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "title": "Traced Requests",
+                "metrics": [
+                  ["AWS/X-Ray", "TracedRequestCount", "GroupName", "${EnvironmentName}-guardquote"]
+                ],
+                "period": 300,
+                "stat": "Sum",
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 1,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "title": "Error Rate",
+                "metrics": [
+                  ["AWS/X-Ray", "ErrorRate", "GroupName", "${EnvironmentName}-guardquote"]
+                ],
+                "period": 300,
+                "stat": "Average",
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 1,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "title": "Fault Rate",
+                "metrics": [
+                  ["AWS/X-Ray", "FaultRate", "GroupName", "${EnvironmentName}-guardquote"]
+                ],
+                "period": 300,
+                "stat": "Average",
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 7,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Response Time Distribution",
+                "metrics": [
+                  ["AWS/X-Ray", "ResponseTime", "GroupName", "${EnvironmentName}-guardquote", {"stat": "p50", "label": "p50"}],
+                  ["...", {"stat": "p90", "label": "p90"}],
+                  ["...", {"stat": "p99", "label": "p99"}]
+                ],
+                "period": 300,
+                "region": "${AWS::Region}"
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 7,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Throttle Rate",
+                "metrics": [
+                  ["AWS/X-Ray", "ThrottledRequestCount", "GroupName", "${EnvironmentName}-guardquote"]
+                ],
+                "period": 300,
+                "stat": "Sum",
+                "region": "${AWS::Region}"
+              }
+            }
+          ]
+        }
+
+Outputs:
+  XRayGroupArn:
+    Description: X-Ray Group ARN
+    Value: !GetAtt XRayGroup.GroupARN
+    Export:
+      Name: !Sub ${EnvironmentName}-XRayGroupArn
+
+  XRayDaemonRoleArn:
+    Description: X-Ray Daemon IAM Role ARN
+    Value: !GetAtt XRayDaemonRole.Arn
+    Export:
+      Name: !Sub ${EnvironmentName}-XRayDaemonRoleArn
+
+  XRayDashboardURL:
+    Description: X-Ray Dashboard URL
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/cloudwatch/home?region=${AWS::Region}#dashboards:name=${EnvironmentName}-GuardQuote-Tracing
+    Export:
+      Name: !Sub ${EnvironmentName}-XRayDashboardURL
+
+  XRayConsoleURL:
+    Description: X-Ray Console URL with Group Filter
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/xray/home?region=${AWS::Region}#/service-map?group=${EnvironmentName}-guardquote
+    Export:
+      Name: !Sub ${EnvironmentName}-XRayConsoleURL

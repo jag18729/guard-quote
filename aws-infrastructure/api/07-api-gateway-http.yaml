@@ -1,0 +1,229 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote HTTP API Gateway (API Gateway v2) with JWT authorizer'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  ApiName:
+    Description: API Gateway name
+    Type: String
+    Default: guardquote-http-api
+
+  LambdaFunctionArn:
+    Description: ARN of the Lambda function to integrate
+    Type: String
+
+  StageName:
+    Description: API Gateway stage name
+    Type: String
+    Default: $default
+
+  EnableJWTAuth:
+    Description: Enable JWT Authorization
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+
+  JWTIssuer:
+    Description: JWT Issuer URL (Cognito, Auth0, etc.)
+    Type: String
+    Default: ''
+
+  JWTAudience:
+    Description: JWT Audience
+    Type: String
+    Default: ''
+
+  CORSAllowOrigins:
+    Description: CORS allowed origins (comma-separated)
+    Type: CommaDelimitedList
+    Default: '*'
+
+  CORSAllowMethods:
+    Description: CORS allowed methods (comma-separated)
+    Type: CommaDelimitedList
+    Default: 'GET,POST,PUT,DELETE,OPTIONS,PATCH'
+
+  CORSAllowHeaders:
+    Description: CORS allowed headers (comma-separated)
+    Type: CommaDelimitedList
+    Default: 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'
+
+  ThrottlingBurstLimit:
+    Description: Throttling burst limit
+    Type: Number
+    Default: 1000
+
+  ThrottlingRateLimit:
+    Description: Throttling rate limit
+    Type: Number
+    Default: 500
+
+  EnableAccessLogs:
+    Description: Enable access logging
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+Conditions:
+  UseJWTAuth: !And
+    - !Equals [!Ref EnableJWTAuth, 'true']
+    - !Not [!Equals [!Ref JWTIssuer, '']]
+  EnableLogs: !Equals [!Ref EnableAccessLogs, 'true']
+
+Resources:
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub ${EnvironmentName}-${ApiName}
+      Description: !Sub GuardQuote HTTP API for ${EnvironmentName}
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins: !Ref CORSAllowOrigins
+        AllowMethods: !Ref CORSAllowMethods
+        AllowHeaders: !Ref CORSAllowHeaders
+        AllowCredentials: true
+        MaxAge: 86400
+      Tags:
+        Name: !Sub ${EnvironmentName}-${ApiName}
+        Environment: !Ref EnvironmentName
+
+  # JWT Authorizer
+  JWTAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Condition: UseJWTAuth
+    Properties:
+      ApiId: !Ref HttpApi
+      AuthorizerType: JWT
+      Name: !Sub ${EnvironmentName}-jwt-authorizer
+      IdentitySource:
+        - $request.header.Authorization
+      JwtConfiguration:
+        Issuer: !Ref JWTIssuer
+        Audience:
+          - !Ref JWTAudience
+
+  # Lambda Integration
+  LambdaIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Ref LambdaFunctionArn
+      PayloadFormatVersion: '2.0'
+      TimeoutInMillis: 30000
+
+  # Default Route (catch-all)
+  DefaultRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: $default
+      AuthorizationType: !If [UseJWTAuth, JWT, NONE]
+      AuthorizerId: !If [UseJWTAuth, !Ref JWTAuthorizer, !Ref AWS::NoValue]
+      Target: !Sub integrations/${LambdaIntegration}
+
+  # API Routes
+  GetQuotesRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: GET /api/quotes
+      AuthorizationType: !If [UseJWTAuth, JWT, NONE]
+      AuthorizerId: !If [UseJWTAuth, !Ref JWTAuthorizer, !Ref AWS::NoValue]
+      Target: !Sub integrations/${LambdaIntegration}
+
+  PostQuotesRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: POST /api/quotes
+      AuthorizationType: !If [UseJWTAuth, JWT, NONE]
+      AuthorizerId: !If [UseJWTAuth, !Ref JWTAuthorizer, !Ref AWS::NoValue]
+      Target: !Sub integrations/${LambdaIntegration}
+
+  GetQuoteByIdRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: GET /api/quotes/{id}
+      AuthorizationType: !If [UseJWTAuth, JWT, NONE]
+      AuthorizerId: !If [UseJWTAuth, !Ref JWTAuthorizer, !Ref AWS::NoValue]
+      Target: !Sub integrations/${LambdaIntegration}
+
+  PredictRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: POST /api/predict
+      AuthorizationType: !If [UseJWTAuth, JWT, NONE]
+      AuthorizerId: !If [UseJWTAuth, !Ref JWTAuthorizer, !Ref AWS::NoValue]
+      Target: !Sub integrations/${LambdaIntegration}
+
+  HealthRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: GET /health
+      AuthorizationType: NONE
+      Target: !Sub integrations/${LambdaIntegration}
+
+  # Stage with logging
+  ApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: !Ref StageName
+      AutoDeploy: true
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: !Ref ThrottlingBurstLimit
+        ThrottlingRateLimit: !Ref ThrottlingRateLimit
+        DetailedMetricsEnabled: true
+      AccessLogSettings:
+        !If
+          - EnableLogs
+          - DestinationArn: !GetAtt ApiLogGroup.Arn
+            Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","routeKey":"$context.routeKey","status":"$context.status","protocol":"$context.protocol","responseLength":"$context.responseLength","integrationError":"$context.integrationErrorMessage"}'
+          - !Ref AWS::NoValue
+      Tags:
+        Environment: !Ref EnvironmentName
+
+  # Lambda Permission
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LambdaFunctionArn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*
+
+  # CloudWatch Log Group
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: EnableLogs
+    Properties:
+      LogGroupName: !Sub /aws/apigateway/${EnvironmentName}-${ApiName}
+      RetentionInDays: 30
+
+Outputs:
+  HttpApiId:
+    Description: HTTP API ID
+    Value: !Ref HttpApi
+    Export:
+      Name: !Sub ${EnvironmentName}-HttpApiId
+
+  HttpApiEndpoint:
+    Description: HTTP API Endpoint URL
+    Value: !GetAtt HttpApi.ApiEndpoint
+    Export:
+      Name: !Sub ${EnvironmentName}-HttpApiEndpoint
+
+  JWTAuthorizerId:
+    Condition: UseJWTAuth
+    Description: JWT Authorizer ID
+    Value: !Ref JWTAuthorizer
+    Export:
+      Name: !Sub ${EnvironmentName}-JWTAuthorizerId

@@ -1,0 +1,57 @@
+# Cloudflare Tunnel Configuration for Pi1
+# GuardGuote - "The typo that became a brand"
+#
+# Location: /home/johnmarston/.cloudflared/config.yml on Pi1
+#
+# Setup:
+#   1. SSH to Pi1: ssh pi1
+#   2. Install cloudflared
+#   3. Run: cloudflared tunnel login
+#   4. Run: cloudflared tunnel create guardguote-pi1
+#   5. Copy this file to ~/.cloudflared/config.yml
+#   6. Replace <TUNNEL_ID> with actual tunnel ID
+#   7. Run: cloudflared tunnel route dns guardguote-pi1 pi1.guardguote.com
+#   8. Run: sudo cloudflared service install && sudo systemctl enable --now cloudflared
+
+# Tunnel ID (get from: cloudflared tunnel list)
+tunnel: <TUNNEL_ID>
+credentials-file: /home/johnmarston/.cloudflared/<TUNNEL_ID>.json
+
+# Ingress rules - route traffic to local services
+ingress:
+  # Backend API (Bun + Hono on port 3000)
+  - hostname: pi1.guardguote.com
+    service: http://localhost:3000
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+
+  # ML Engine (FastAPI on port 8000)
+  - hostname: ml-pi1.guardguote.com
+    service: http://localhost:8000
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 60s
+
+  # Health check endpoint
+  - hostname: health-pi1.guardguote.com
+    service: http://localhost:3000/health
+
+  # Grafana monitoring (optional - for admin access)
+  - hostname: grafana-pi1.guardguote.com
+    service: http://localhost:3001
+    originRequest:
+      noTLSVerify: true
+
+  # Prometheus (optional - for admin access)
+  - hostname: prometheus-pi1.guardguote.com
+    service: http://localhost:9090
+    originRequest:
+      noTLSVerify: true
+
+  # Catch-all rule (required)
+  - service: http_status:404
+
+# Optional: Enable WARP routing for private network access
+# warp-routing:
+#   enabled: true

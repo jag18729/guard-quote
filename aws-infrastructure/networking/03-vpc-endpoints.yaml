@@ -1,0 +1,213 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote VPC Endpoints - Private connectivity to AWS services'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  VpcId:
+    Description: VPC ID
+    Type: AWS::EC2::VPC::Id
+
+  PrivateSubnet1:
+    Description: Private Subnet 1 ID
+    Type: AWS::EC2::Subnet::Id
+
+  PrivateSubnet2:
+    Description: Private Subnet 2 ID
+    Type: AWS::EC2::Subnet::Id
+
+  PrivateRouteTableId:
+    Description: Private Route Table ID for Gateway endpoints
+    Type: String
+
+  EnableS3Endpoint:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  EnableDynamoDBEndpoint:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  EnableECREndpoints:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  EnableSecretsManagerEndpoint:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  EnableSSMEndpoints:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+Conditions:
+  CreateS3Endpoint: !Equals [!Ref EnableS3Endpoint, 'true']
+  CreateDynamoDBEndpoint: !Equals [!Ref EnableDynamoDBEndpoint, 'true']
+  CreateECREndpoints: !Equals [!Ref EnableECREndpoints, 'true']
+  CreateSecretsManagerEndpoint: !Equals [!Ref EnableSecretsManagerEndpoint, 'true']
+  CreateSSMEndpoints: !Equals [!Ref EnableSSMEndpoints, 'true']
+
+Resources:
+  EndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${EnvironmentName}-vpc-endpoints-sg
+      GroupDescription: Security group for VPC Endpoints
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 10.0.0.0/8
+          Description: HTTPS from VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-vpc-endpoints-sg
+
+  # Gateway Endpoints (free)
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Condition: CreateS3Endpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcEndpointType: Gateway
+      VpcId: !Ref VpcId
+      RouteTableIds:
+        - !Ref PrivateRouteTableId
+
+  DynamoDBEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Condition: CreateDynamoDBEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.dynamodb
+      VpcEndpointType: Gateway
+      VpcId: !Ref VpcId
+      RouteTableIds:
+        - !Ref PrivateRouteTableId
+
+  # Interface Endpoints (costs apply)
+  ECRApiEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Condition: CreateECREndpoints
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
+      VpcEndpointType: Interface
+      VpcId: !Ref VpcId
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      PrivateDnsEnabled: true
+
+  ECRDkrEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Condition: CreateECREndpoints
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
+      VpcEndpointType: Interface
+      VpcId: !Ref VpcId
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      PrivateDnsEnabled: true
+
+  SecretsManagerEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Condition: CreateSecretsManagerEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.secretsmanager
+      VpcEndpointType: Interface
+      VpcId: !Ref VpcId
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      PrivateDnsEnabled: true
+
+  SSMEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Condition: CreateSSMEndpoints
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssm
+      VpcEndpointType: Interface
+      VpcId: !Ref VpcId
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      PrivateDnsEnabled: true
+
+  SSMMessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Condition: CreateSSMEndpoints
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssmmessages
+      VpcEndpointType: Interface
+      VpcId: !Ref VpcId
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      PrivateDnsEnabled: true
+
+  EC2MessagesEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Condition: CreateSSMEndpoints
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ec2messages
+      VpcEndpointType: Interface
+      VpcId: !Ref VpcId
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      PrivateDnsEnabled: true
+
+  CloudWatchLogsEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
+      VpcEndpointType: Interface
+      VpcId: !Ref VpcId
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup
+      PrivateDnsEnabled: true
+
+Outputs:
+  EndpointSecurityGroup:
+    Description: Security Group for VPC Endpoints
+    Value: !Ref EndpointSecurityGroup
+    Export:
+      Name: !Sub ${EnvironmentName}-EndpointSecurityGroup
+
+  S3EndpointId:
+    Condition: CreateS3Endpoint
+    Description: S3 VPC Endpoint ID
+    Value: !Ref S3Endpoint
+    Export:
+      Name: !Sub ${EnvironmentName}-S3Endpoint
+
+  DynamoDBEndpointId:
+    Condition: CreateDynamoDBEndpoint
+    Description: DynamoDB VPC Endpoint ID
+    Value: !Ref DynamoDBEndpoint
+    Export:
+      Name: !Sub ${EnvironmentName}-DynamoDBEndpoint

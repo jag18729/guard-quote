@@ -1,0 +1,380 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote DynamoDB Tables for high-performance NoSQL storage'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  BillingMode:
+    Description: DynamoDB billing mode
+    Type: String
+    Default: PAY_PER_REQUEST
+    AllowedValues:
+      - PAY_PER_REQUEST
+      - PROVISIONED
+
+  ReadCapacityUnits:
+    Description: Read capacity units (only for PROVISIONED mode)
+    Type: Number
+    Default: 5
+    MinValue: 1
+
+  WriteCapacityUnits:
+    Description: Write capacity units (only for PROVISIONED mode)
+    Type: Number
+    Default: 5
+    MinValue: 1
+
+  EnablePointInTimeRecovery:
+    Description: Enable Point-in-Time Recovery
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  EnableDeletionProtection:
+    Description: Enable Deletion Protection
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  TTLEnabled:
+    Description: Enable TTL on applicable tables
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  EnableStreams:
+    Description: Enable DynamoDB Streams
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+Conditions:
+  IsProvisioned: !Equals [!Ref BillingMode, 'PROVISIONED']
+  EnablePITR: !Equals [!Ref EnablePointInTimeRecovery, 'true']
+  EnableProtection: !Equals [!Ref EnableDeletionProtection, 'true']
+  EnableTTL: !Equals [!Ref TTLEnabled, 'true']
+  EnableDDBStreams: !Equals [!Ref EnableStreams, 'true']
+
+Resources:
+  # KMS Key for encryption
+  DynamoDBKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub KMS key for ${EnvironmentName} DynamoDB encryption
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: '*'
+          - Sid: Allow DynamoDB
+            Effect: Allow
+            Principal:
+              Service: dynamodb.amazonaws.com
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:GenerateDataKey*
+            Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-dynamodb-key
+
+  # Quotes Table - Main business data
+  QuotesTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub ${EnvironmentName}-guardquote-quotes
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:
+        !If
+          - IsProvisioned
+          - ReadCapacityUnits: !Ref ReadCapacityUnits
+            WriteCapacityUnits: !Ref WriteCapacityUnits
+          - !Ref AWS::NoValue
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: gsi1pk
+          AttributeType: S
+        - AttributeName: gsi1sk
+          AttributeType: S
+        - AttributeName: customerId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: gsi1
+          KeySchema:
+            - AttributeName: gsi1pk
+              KeyType: HASH
+            - AttributeName: gsi1sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: !Ref ReadCapacityUnits
+                WriteCapacityUnits: !Ref WriteCapacityUnits
+              - !Ref AWS::NoValue
+        - IndexName: customer-index
+          KeySchema:
+            - AttributeName: customerId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            !If
+              - IsProvisioned
+              - ReadCapacityUnits: !Ref ReadCapacityUnits
+                WriteCapacityUnits: !Ref WriteCapacityUnits
+              - !Ref AWS::NoValue
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+        KMSMasterKeyId: !Ref DynamoDBKMSKey
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: !If [EnablePITR, true, false]
+      DeletionProtectionEnabled: !If [EnableProtection, true, false]
+      TimeToLiveSpecification:
+        !If
+          - EnableTTL
+          - AttributeName: ttl
+            Enabled: true
+          - !Ref AWS::NoValue
+      StreamSpecification:
+        !If
+          - EnableDDBStreams
+          - StreamViewType: NEW_AND_OLD_IMAGES
+          - !Ref AWS::NoValue
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-guardquote-quotes
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Sessions Table - User sessions and auth tokens
+  SessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${EnvironmentName}-guardquote-sessions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: sessionId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: sessionId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: user-sessions-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+        KMSMasterKeyId: !Ref DynamoDBKMSKey
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-guardquote-sessions
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Audit Log Table - Immutable audit trail
+  AuditLogTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub ${EnvironmentName}-guardquote-audit-log
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: entityType
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: entity-type-index
+          KeySchema:
+            - AttributeName: entityType
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+        KMSMasterKeyId: !Ref DynamoDBKMSKey
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      DeletionProtectionEnabled: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-guardquote-audit-log
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # ML Predictions Cache Table
+  MLPredictionsCacheTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${EnvironmentName}-guardquote-ml-cache
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: cacheKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: cacheKey
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: expiresAt
+        Enabled: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-guardquote-ml-cache
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Auto Scaling (for PROVISIONED mode)
+  QuotesTableReadScaling:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Condition: IsProvisioned
+    Properties:
+      MaxCapacity: 100
+      MinCapacity: 5
+      ResourceId: !Sub table/${QuotesTable}
+      RoleARN: !GetAtt AutoScalingRole.Arn
+      ScalableDimension: dynamodb:table:ReadCapacityUnits
+      ServiceNamespace: dynamodb
+
+  QuotesTableReadScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Condition: IsProvisioned
+    Properties:
+      PolicyName: QuotesReadAutoScaling
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref QuotesTableReadScaling
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
+
+  QuotesTableWriteScaling:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Condition: IsProvisioned
+    Properties:
+      MaxCapacity: 100
+      MinCapacity: 5
+      ResourceId: !Sub table/${QuotesTable}
+      RoleARN: !GetAtt AutoScalingRole.Arn
+      ScalableDimension: dynamodb:table:WriteCapacityUnits
+      ServiceNamespace: dynamodb
+
+  QuotesTableWriteScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Condition: IsProvisioned
+    Properties:
+      PolicyName: QuotesWriteAutoScaling
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref QuotesTableWriteScaling
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
+
+  AutoScalingRole:
+    Type: AWS::IAM::Role
+    Condition: IsProvisioned
+    Properties:
+      RoleName: !Sub ${EnvironmentName}-dynamodb-autoscaling-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: application-autoscaling.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/DynamoDBAutoscalingServiceRolePolicy
+
+Outputs:
+  QuotesTableName:
+    Description: Quotes Table Name
+    Value: !Ref QuotesTable
+    Export:
+      Name: !Sub ${EnvironmentName}-QuotesTableName
+
+  QuotesTableArn:
+    Description: Quotes Table ARN
+    Value: !GetAtt QuotesTable.Arn
+    Export:
+      Name: !Sub ${EnvironmentName}-QuotesTableArn
+
+  QuotesTableStreamArn:
+    Condition: EnableDDBStreams
+    Description: Quotes Table Stream ARN
+    Value: !GetAtt QuotesTable.StreamArn
+    Export:
+      Name: !Sub ${EnvironmentName}-QuotesTableStreamArn
+
+  SessionsTableName:
+    Description: Sessions Table Name
+    Value: !Ref SessionsTable
+    Export:
+      Name: !Sub ${EnvironmentName}-SessionsTableName
+
+  AuditLogTableName:
+    Description: Audit Log Table Name
+    Value: !Ref AuditLogTable
+    Export:
+      Name: !Sub ${EnvironmentName}-AuditLogTableName
+
+  MLCacheTableName:
+    Description: ML Predictions Cache Table Name
+    Value: !Ref MLPredictionsCacheTable
+    Export:
+      Name: !Sub ${EnvironmentName}-MLCacheTableName
+
+  DynamoDBKMSKeyArn:
+    Description: DynamoDB KMS Key ARN
+    Value: !GetAtt DynamoDBKMSKey.Arn
+    Export:
+      Name: !Sub ${EnvironmentName}-DynamoDBKMSKeyArn

@@ -1,0 +1,395 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote Cognito User Pool for authentication and authorization'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  UserPoolName:
+    Description: Cognito User Pool name
+    Type: String
+    Default: guardquote-users
+
+  DomainPrefix:
+    Description: Cognito domain prefix (must be unique globally)
+    Type: String
+    Default: guardquote
+
+  CallbackURLs:
+    Description: Callback URLs for OAuth (comma-separated)
+    Type: CommaDelimitedList
+    Default: 'https://localhost:5173/callback,https://guardquote.com/callback'
+
+  LogoutURLs:
+    Description: Logout URLs for OAuth (comma-separated)
+    Type: CommaDelimitedList
+    Default: 'https://localhost:5173,https://guardquote.com'
+
+  AllowedOAuthFlows:
+    Description: Allowed OAuth flows
+    Type: CommaDelimitedList
+    Default: 'code,implicit'
+
+  AllowedOAuthScopes:
+    Description: Allowed OAuth scopes
+    Type: CommaDelimitedList
+    Default: 'email,openid,profile,aws.cognito.signin.user.admin'
+
+  MFAConfiguration:
+    Description: MFA configuration
+    Type: String
+    Default: OPTIONAL
+    AllowedValues:
+      - 'OFF'
+      - 'ON'
+      - 'OPTIONAL'
+
+  PasswordMinLength:
+    Description: Minimum password length
+    Type: Number
+    Default: 12
+    MinValue: 8
+    MaxValue: 99
+
+  EnableEmailVerification:
+    Description: Require email verification
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+
+  AutoVerifyAttributes:
+    Description: Attributes to auto-verify
+    Type: CommaDelimitedList
+    Default: 'email'
+
+  EnableAdvancedSecurity:
+    Description: Enable advanced security features
+    Type: String
+    Default: 'ENFORCED'
+    AllowedValues:
+      - 'OFF'
+      - 'AUDIT'
+      - 'ENFORCED'
+
+  SESEmailArn:
+    Description: SES verified email ARN (optional - leave empty for Cognito default)
+    Type: String
+    Default: ''
+
+Conditions:
+  UseSES: !Not [!Equals [!Ref SESEmailArn, '']]
+  IsProd: !Equals [!Ref EnvironmentName, 'prod']
+
+Resources:
+  # User Pool
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      UserPoolName: !Sub ${EnvironmentName}-${UserPoolName}
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+          - Name: verified_phone_number
+            Priority: 2
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+        InviteMessageTemplate:
+          EmailMessage: 'Your GuardQuote username is {username} and temporary password is {####}'
+          EmailSubject: 'Welcome to GuardQuote'
+          SMSMessage: 'Your GuardQuote username is {username} and temporary password is {####}'
+      AutoVerifiedAttributes: !Ref AutoVerifyAttributes
+      DeletionProtection: !If [IsProd, ACTIVE, INACTIVE]
+      DeviceConfiguration:
+        ChallengeRequiredOnNewDevice: true
+        DeviceOnlyRememberedOnUserPrompt: true
+      EmailConfiguration:
+        !If
+          - UseSES
+          - EmailSendingAccount: DEVELOPER
+            SourceArn: !Ref SESEmailArn
+          - EmailSendingAccount: COGNITO_DEFAULT
+      MfaConfiguration: !Ref MFAConfiguration
+      EnabledMfas:
+        - SOFTWARE_TOKEN_MFA
+      Policies:
+        PasswordPolicy:
+          MinimumLength: !Ref PasswordMinLength
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+          TemporaryPasswordValidityDays: 7
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: phone_number
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+        - Name: company
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+        - Name: role
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+      UsernameAttributes:
+        - email
+      UsernameConfiguration:
+        CaseSensitive: false
+      UserAttributeUpdateSettings:
+        AttributesRequireVerificationBeforeUpdate:
+          - email
+      UserPoolAddOns:
+        AdvancedSecurityMode: !Ref EnableAdvancedSecurity
+      UserPoolTags:
+        Environment: !Ref EnvironmentName
+        Application: GuardQuote
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
+        EmailMessage: 'Your GuardQuote verification code is {####}'
+        EmailSubject: 'Verify your GuardQuote email'
+
+  # User Pool Domain
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub ${EnvironmentName}-${DomainPrefix}
+      UserPoolId: !Ref UserPool
+
+  # Resource Server for custom scopes
+  ResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      Identifier: guardquote-api
+      Name: GuardQuote API
+      UserPoolId: !Ref UserPool
+      Scopes:
+        - ScopeName: quotes.read
+          ScopeDescription: Read quotes
+        - ScopeName: quotes.write
+          ScopeDescription: Create and update quotes
+        - ScopeName: admin
+          ScopeDescription: Admin access
+
+  # User Pool Client (Web App)
+  WebAppClient:
+    Type: AWS::Cognito::UserPoolClient
+    DependsOn: ResourceServer
+    Properties:
+      ClientName: !Sub ${EnvironmentName}-guardquote-web
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      RefreshTokenValidity: 30
+      AccessTokenValidity: 1
+      IdTokenValidity: 1
+      TokenValidityUnits:
+        RefreshToken: days
+        AccessToken: hours
+        IdToken: hours
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+      SupportedIdentityProviders:
+        - COGNITO
+      AllowedOAuthFlows: !Ref AllowedOAuthFlows
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthScopes: !Ref AllowedOAuthScopes
+      CallbackURLs: !Ref CallbackURLs
+      LogoutURLs: !Ref LogoutURLs
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+      EnablePropagateAdditionalUserContextData: false
+
+  # User Pool Client (Server/M2M)
+  ServerClient:
+    Type: AWS::Cognito::UserPoolClient
+    DependsOn: ResourceServer
+    Properties:
+      ClientName: !Sub ${EnvironmentName}-guardquote-server
+      UserPoolId: !Ref UserPool
+      GenerateSecret: true
+      RefreshTokenValidity: 30
+      AccessTokenValidity: 1
+      IdTokenValidity: 1
+      TokenValidityUnits:
+        RefreshToken: days
+        AccessToken: hours
+        IdToken: hours
+      ExplicitAuthFlows:
+        - ALLOW_ADMIN_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      SupportedIdentityProviders:
+        - COGNITO
+      AllowedOAuthFlows:
+        - client_credentials
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthScopes:
+        - guardquote-api/quotes.read
+        - guardquote-api/quotes.write
+        - guardquote-api/admin
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+
+  # Identity Pool for AWS credentials
+  IdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: !Sub ${EnvironmentName}_guardquote_identity_pool
+      AllowUnauthenticatedIdentities: false
+      CognitoIdentityProviders:
+        - ClientId: !Ref WebAppClient
+          ProviderName: !GetAtt UserPool.ProviderName
+          ServerSideTokenCheck: true
+
+  # IAM Roles for Identity Pool
+  AuthenticatedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${EnvironmentName}-cognito-authenticated
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                cognito-identity.amazonaws.com:aud: !Ref IdentityPool
+              ForAnyValue:StringLike:
+                cognito-identity.amazonaws.com:amr: authenticated
+      Policies:
+        - PolicyName: CognitoAuthenticatedPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cognito-sync:*
+                  - cognito-identity:*
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - execute-api:Invoke
+                Resource: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:*/*
+
+  UnauthenticatedRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${EnvironmentName}-cognito-unauthenticated
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                cognito-identity.amazonaws.com:aud: !Ref IdentityPool
+              ForAnyValue:StringLike:
+                cognito-identity.amazonaws.com:amr: unauthenticated
+      Policies:
+        - PolicyName: CognitoUnauthenticatedPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Deny
+                Action: '*'
+                Resource: '*'
+
+  IdentityPoolRoleAttachment:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId: !Ref IdentityPool
+      Roles:
+        authenticated: !GetAtt AuthenticatedRole.Arn
+        unauthenticated: !GetAtt UnauthenticatedRole.Arn
+
+  # User Groups
+  AdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Admins
+      Description: Administrator users
+      UserPoolId: !Ref UserPool
+      Precedence: 0
+
+  ManagerGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Managers
+      Description: Manager users
+      UserPoolId: !Ref UserPool
+      Precedence: 10
+
+  UserGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: Users
+      Description: Standard users
+      UserPoolId: !Ref UserPool
+      Precedence: 20
+
+Outputs:
+  UserPoolId:
+    Description: User Pool ID
+    Value: !Ref UserPool
+    Export:
+      Name: !Sub ${EnvironmentName}-UserPoolId
+
+  UserPoolArn:
+    Description: User Pool ARN
+    Value: !GetAtt UserPool.Arn
+    Export:
+      Name: !Sub ${EnvironmentName}-UserPoolArn
+
+  UserPoolProviderName:
+    Description: User Pool Provider Name
+    Value: !GetAtt UserPool.ProviderName
+    Export:
+      Name: !Sub ${EnvironmentName}-UserPoolProviderName
+
+  WebAppClientId:
+    Description: Web App Client ID
+    Value: !Ref WebAppClient
+    Export:
+      Name: !Sub ${EnvironmentName}-WebAppClientId
+
+  ServerClientId:
+    Description: Server Client ID
+    Value: !Ref ServerClient
+    Export:
+      Name: !Sub ${EnvironmentName}-ServerClientId
+
+  IdentityPoolId:
+    Description: Identity Pool ID
+    Value: !Ref IdentityPool
+    Export:
+      Name: !Sub ${EnvironmentName}-IdentityPoolId
+
+  CognitoDomain:
+    Description: Cognito Domain URL
+    Value: !Sub https://${EnvironmentName}-${DomainPrefix}.auth.${AWS::Region}.amazoncognito.com
+    Export:
+      Name: !Sub ${EnvironmentName}-CognitoDomain
+
+  JWTIssuer:
+    Description: JWT Issuer URL for API Gateway
+    Value: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}
+    Export:
+      Name: !Sub ${EnvironmentName}-JWTIssuer

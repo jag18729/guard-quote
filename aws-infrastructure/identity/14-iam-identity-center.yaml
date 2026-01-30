@@ -1,0 +1,319 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GuardQuote IAM Identity Center (SSO) Permission Sets and Assignments'
+
+Parameters:
+  EnvironmentName:
+    Description: Environment name (dev, staging, prod)
+    Type: String
+    Default: dev
+
+  IdentityCenterInstanceArn:
+    Description: IAM Identity Center Instance ARN
+    Type: String
+    Default: ''
+
+  SessionDuration:
+    Description: Session duration for permission sets
+    Type: String
+    Default: PT8H
+
+  ManagedPolicies:
+    Description: List of AWS managed policy ARNs for admin access
+    Type: CommaDelimitedList
+    Default: 'arn:aws:iam::aws:policy/AdministratorAccess'
+
+Conditions:
+  HasIdentityCenter: !Not [!Equals [!Ref IdentityCenterInstanceArn, '']]
+
+Resources:
+  # Administrator Permission Set
+  AdminPermissionSet:
+    Type: AWS::SSO::PermissionSet
+    Condition: HasIdentityCenter
+    Properties:
+      Name: !Sub ${EnvironmentName}-GuardQuote-Admin
+      Description: Full administrative access to GuardQuote AWS resources
+      InstanceArn: !Ref IdentityCenterInstanceArn
+      SessionDuration: !Ref SessionDuration
+      ManagedPolicies:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Application
+          Value: GuardQuote
+
+  # Developer Permission Set
+  DeveloperPermissionSet:
+    Type: AWS::SSO::PermissionSet
+    Condition: HasIdentityCenter
+    Properties:
+      Name: !Sub ${EnvironmentName}-GuardQuote-Developer
+      Description: Developer access to GuardQuote AWS resources
+      InstanceArn: !Ref IdentityCenterInstanceArn
+      SessionDuration: !Ref SessionDuration
+      ManagedPolicies:
+        - arn:aws:iam::aws:policy/PowerUserAccess
+      InlinePolicy: |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "DenyIAMChanges",
+              "Effect": "Deny",
+              "Action": [
+                "iam:CreateUser",
+                "iam:DeleteUser",
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:AttachUserPolicy",
+                "iam:AttachRolePolicy"
+              ],
+              "Resource": "*"
+            },
+            {
+              "Sid": "DenyBillingAccess",
+              "Effect": "Deny",
+              "Action": [
+                "aws-portal:*",
+                "budgets:*",
+                "ce:*"
+              ],
+              "Resource": "*"
+            }
+          ]
+        }
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Application
+          Value: GuardQuote
+
+  # Read-Only Permission Set
+  ReadOnlyPermissionSet:
+    Type: AWS::SSO::PermissionSet
+    Condition: HasIdentityCenter
+    Properties:
+      Name: !Sub ${EnvironmentName}-GuardQuote-ReadOnly
+      Description: Read-only access to GuardQuote AWS resources
+      InstanceArn: !Ref IdentityCenterInstanceArn
+      SessionDuration: !Ref SessionDuration
+      ManagedPolicies:
+        - arn:aws:iam::aws:policy/ReadOnlyAccess
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Application
+          Value: GuardQuote
+
+  # Database Admin Permission Set
+  DatabaseAdminPermissionSet:
+    Type: AWS::SSO::PermissionSet
+    Condition: HasIdentityCenter
+    Properties:
+      Name: !Sub ${EnvironmentName}-GuardQuote-DBA
+      Description: Database administration access
+      InstanceArn: !Ref IdentityCenterInstanceArn
+      SessionDuration: !Ref SessionDuration
+      ManagedPolicies:
+        - arn:aws:iam::aws:policy/AmazonRDSFullAccess
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonElastiCacheFullAccess
+      InlinePolicy: |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "SecretsManagerAccess",
+              "Effect": "Allow",
+              "Action": [
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:ListSecrets"
+              ],
+              "Resource": "*",
+              "Condition": {
+                "StringLike": {
+                  "secretsmanager:Name": "*guardquote*"
+                }
+              }
+            },
+            {
+              "Sid": "CloudWatchAccess",
+              "Effect": "Allow",
+              "Action": [
+                "cloudwatch:GetMetricData",
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:ListMetrics",
+                "logs:GetLogEvents",
+                "logs:DescribeLogStreams",
+                "logs:DescribeLogGroups"
+              ],
+              "Resource": "*"
+            }
+          ]
+        }
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Application
+          Value: GuardQuote
+
+  # ML Engineer Permission Set
+  MLEngineerPermissionSet:
+    Type: AWS::SSO::PermissionSet
+    Condition: HasIdentityCenter
+    Properties:
+      Name: !Sub ${EnvironmentName}-GuardQuote-MLEngineer
+      Description: ML engineering access for model training and deployment
+      InstanceArn: !Ref IdentityCenterInstanceArn
+      SessionDuration: !Ref SessionDuration
+      ManagedPolicies:
+        - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+      InlinePolicy: |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "S3Access",
+              "Effect": "Allow",
+              "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:DeleteObject",
+                "s3:ListBucket"
+              ],
+              "Resource": [
+                "arn:aws:s3:::*guardquote*",
+                "arn:aws:s3:::*guardquote*/*"
+              ]
+            },
+            {
+              "Sid": "ECRAccess",
+              "Effect": "Allow",
+              "Action": [
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+                "ecr:PutImage",
+                "ecr:InitiateLayerUpload",
+                "ecr:UploadLayerPart",
+                "ecr:CompleteLayerUpload"
+              ],
+              "Resource": "*"
+            },
+            {
+              "Sid": "LambdaAccess",
+              "Effect": "Allow",
+              "Action": [
+                "lambda:GetFunction",
+                "lambda:UpdateFunctionCode",
+                "lambda:UpdateFunctionConfiguration",
+                "lambda:InvokeFunction"
+              ],
+              "Resource": "arn:aws:lambda:*:*:function:*guardquote*"
+            }
+          ]
+        }
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Application
+          Value: GuardQuote
+
+  # Security Auditor Permission Set
+  SecurityAuditorPermissionSet:
+    Type: AWS::SSO::PermissionSet
+    Condition: HasIdentityCenter
+    Properties:
+      Name: !Sub ${EnvironmentName}-GuardQuote-SecurityAuditor
+      Description: Security audit and compliance access
+      InstanceArn: !Ref IdentityCenterInstanceArn
+      SessionDuration: !Ref SessionDuration
+      ManagedPolicies:
+        - arn:aws:iam::aws:policy/SecurityAudit
+        - arn:aws:iam::aws:policy/AWSCloudTrail_ReadOnlyAccess
+      InlinePolicy: |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "SecurityHubAccess",
+              "Effect": "Allow",
+              "Action": [
+                "securityhub:Get*",
+                "securityhub:List*",
+                "securityhub:Describe*"
+              ],
+              "Resource": "*"
+            },
+            {
+              "Sid": "GuardDutyAccess",
+              "Effect": "Allow",
+              "Action": [
+                "guardduty:Get*",
+                "guardduty:List*"
+              ],
+              "Resource": "*"
+            },
+            {
+              "Sid": "ConfigAccess",
+              "Effect": "Allow",
+              "Action": [
+                "config:Get*",
+                "config:Describe*",
+                "config:List*"
+              ],
+              "Resource": "*"
+            }
+          ]
+        }
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Application
+          Value: GuardQuote
+
+Outputs:
+  AdminPermissionSetArn:
+    Condition: HasIdentityCenter
+    Description: Admin Permission Set ARN
+    Value: !GetAtt AdminPermissionSet.PermissionSetArn
+    Export:
+      Name: !Sub ${EnvironmentName}-AdminPermissionSetArn
+
+  DeveloperPermissionSetArn:
+    Condition: HasIdentityCenter
+    Description: Developer Permission Set ARN
+    Value: !GetAtt DeveloperPermissionSet.PermissionSetArn
+    Export:
+      Name: !Sub ${EnvironmentName}-DeveloperPermissionSetArn
+
+  ReadOnlyPermissionSetArn:
+    Condition: HasIdentityCenter
+    Description: Read-Only Permission Set ARN
+    Value: !GetAtt ReadOnlyPermissionSet.PermissionSetArn
+    Export:
+      Name: !Sub ${EnvironmentName}-ReadOnlyPermissionSetArn
+
+  DatabaseAdminPermissionSetArn:
+    Condition: HasIdentityCenter
+    Description: Database Admin Permission Set ARN
+    Value: !GetAtt DatabaseAdminPermissionSet.PermissionSetArn
+    Export:
+      Name: !Sub ${EnvironmentName}-DatabaseAdminPermissionSetArn
+
+  MLEngineerPermissionSetArn:
+    Condition: HasIdentityCenter
+    Description: ML Engineer Permission Set ARN
+    Value: !GetAtt MLEngineerPermissionSet.PermissionSetArn
+    Export:
+      Name: !Sub ${EnvironmentName}-MLEngineerPermissionSetArn
+
+  SecurityAuditorPermissionSetArn:
+    Condition: HasIdentityCenter
+    Description: Security Auditor Permission Set ARN
+    Value: !GetAtt SecurityAuditorPermissionSet.PermissionSetArn
+    Export:
+      Name: !Sub ${EnvironmentName}-SecurityAuditorPermissionSetArn

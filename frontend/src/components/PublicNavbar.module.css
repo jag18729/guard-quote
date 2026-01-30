@@ -63,10 +63,18 @@
   gap: 0.75rem;
 }
 
-.userName {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-right: 0.5rem;
+.greeting {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin-right: 0.75rem;
+}
+
+.greeting strong {
+  background: linear-gradient(90deg, #5f23ff, #fdb927);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 700;
 }
 
 .loginBtn {

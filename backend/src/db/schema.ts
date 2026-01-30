@@ -1,15 +1,14 @@
-import {
-  mysqlTable,
-  varchar,
-  int,
-  decimal,
-  datetime,
-  boolean,
-  text,
-  mysqlEnum,
-  primaryKey,
-} from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
+import {
+  boolean,
+  datetime,
+  decimal,
+  int,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  varchar,
+} from "drizzle-orm/mysql-core";
 
 // ============================================
 // 3NF NORMALIZED SCHEMA FOR GUARDQUOTE
@@ -87,10 +86,18 @@ export const clients = mysqlTable("clients", {
 export const quotes = mysqlTable("quotes", {
   id: int("id").primaryKey().autoincrement(),
   quoteNumber: varchar("quote_number", { length: 50 }).notNull().unique(),
-  clientId: int("client_id").references(() => clients.id).notNull(),
-  createdBy: int("created_by").references(() => users.id).notNull(),
-  eventTypeId: int("event_type_id").references(() => eventTypes.id).notNull(),
-  locationId: int("location_id").references(() => locations.id).notNull(),
+  clientId: int("client_id")
+    .references(() => clients.id)
+    .notNull(),
+  createdBy: int("created_by")
+    .references(() => users.id)
+    .notNull(),
+  eventTypeId: int("event_type_id")
+    .references(() => eventTypes.id)
+    .notNull(),
+  locationId: int("location_id")
+    .references(() => locations.id)
+    .notNull(),
 
   // Event details
   eventDate: datetime("event_date").notNull(),
@@ -115,7 +122,15 @@ export const quotes = mysqlTable("quotes", {
   confidenceScore: decimal("confidence_score", { precision: 4, scale: 3 }),
 
   // Status tracking
-  status: mysqlEnum("status", ["draft", "pending", "sent", "accepted", "rejected", "expired", "completed"]).default("draft"),
+  status: mysqlEnum("status", [
+    "draft",
+    "pending",
+    "sent",
+    "accepted",
+    "rejected",
+    "expired",
+    "completed",
+  ]).default("draft"),
   validUntil: datetime("valid_until"),
   notes: text("notes"),
   internalNotes: text("internal_notes"),
@@ -127,7 +142,9 @@ export const quotes = mysqlTable("quotes", {
 // 7. QUOTE_LINE_ITEMS - Itemized pricing breakdown (3NF)
 export const quoteLineItems = mysqlTable("quote_line_items", {
   id: int("id").primaryKey().autoincrement(),
-  quoteId: int("quote_id").references(() => quotes.id).notNull(),
+  quoteId: int("quote_id")
+    .references(() => quotes.id)
+    .notNull(),
   serviceOptionId: int("service_option_id").references(() => serviceOptions.id),
   description: varchar("description", { length: 255 }).notNull(),
   quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
@@ -139,7 +156,9 @@ export const quoteLineItems = mysqlTable("quote_line_items", {
 // 8. QUOTE_STATUS_HISTORY - Audit trail for status changes
 export const quoteStatusHistory = mysqlTable("quote_status_history", {
   id: int("id").primaryKey().autoincrement(),
-  quoteId: int("quote_id").references(() => quotes.id).notNull(),
+  quoteId: int("quote_id")
+    .references(() => quotes.id)
+    .notNull(),
   fromStatus: varchar("from_status", { length: 50 }),
   toStatus: varchar("to_status", { length: 50 }).notNull(),
   changedBy: int("changed_by").references(() => users.id),
@@ -150,7 +169,9 @@ export const quoteStatusHistory = mysqlTable("quote_status_history", {
 // 9. ML_TRAINING_DATA - Denormalized view for ML training
 export const mlTrainingData = mysqlTable("ml_training_data", {
   id: int("id").primaryKey().autoincrement(),
-  quoteId: int("quote_id").references(() => quotes.id).notNull(),
+  quoteId: int("quote_id")
+    .references(() => quotes.id)
+    .notNull(),
 
   // Features (denormalized for ML performance)
   eventTypeCode: varchar("event_type_code", { length: 50 }).notNull(),
@@ -216,7 +237,10 @@ export const quotesRelations = relations(quotes, ({ one, many }) => ({
 
 export const quoteLineItemsRelations = relations(quoteLineItems, ({ one }) => ({
   quote: one(quotes, { fields: [quoteLineItems.quoteId], references: [quotes.id] }),
-  serviceOption: one(serviceOptions, { fields: [quoteLineItems.serviceOptionId], references: [serviceOptions.id] }),
+  serviceOption: one(serviceOptions, {
+    fields: [quoteLineItems.serviceOptionId],
+    references: [serviceOptions.id],
+  }),
 }));
 
 export const quoteStatusHistoryRelations = relations(quoteStatusHistory, ({ one }) => ({

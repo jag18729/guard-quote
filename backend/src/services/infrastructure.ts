@@ -2,11 +2,20 @@
  * Infrastructure Service - Monitor and manage multi-server deployment
  * Tracks Pi cluster, syslog, and other infrastructure services
  */
-import { broadcastToChannel } from "./websocket";
+
 import { logger } from "./logging";
+import { broadcastToChannel } from "./websocket";
 
 // Infrastructure node types
-type NodeType = "api" | "database" | "syslog" | "redis" | "ldap" | "gateway" | "storage" | "monitoring";
+type NodeType =
+  | "api"
+  | "database"
+  | "syslog"
+  | "redis"
+  | "ldap"
+  | "gateway"
+  | "storage"
+  | "monitoring";
 type NodeStatus = "online" | "offline" | "degraded" | "unknown";
 
 interface InfraNode {
@@ -29,52 +38,61 @@ interface InfraNode {
 // Your infrastructure nodes
 const infrastructure: Map<string, InfraNode> = new Map([
   // PostgreSQL on Raspberry Pi
-  ["pi-db", {
-    id: "pi-db",
-    name: "Database Server (Pi)",
-    type: "database",
-    host: "192.168.2.70",
-    port: 5432,
-    status: "unknown",
-    lastCheck: new Date(0),
-    services: ["postgresql", "pgbouncer"],
-    metadata: {
-      ssh_user: "johnmarston",
-      os: "Raspberry Pi OS",
-      role: "primary",
+  [
+    "pi-db",
+    {
+      id: "pi-db",
+      name: "Database Server (Pi)",
+      type: "database",
+      host: "192.168.2.70",
+      port: 5432,
+      status: "unknown",
+      lastCheck: new Date(0),
+      services: ["postgresql", "pgbouncer"],
+      metadata: {
+        ssh_user: "johnmarston",
+        os: "Raspberry Pi OS",
+        role: "primary",
+      },
     },
-  }],
+  ],
 
   // Syslog server
-  ["syslog", {
-    id: "syslog",
-    name: "Syslog Server",
-    type: "syslog",
-    host: "192.168.2.101",
-    port: 514,
-    status: "unknown",
-    lastCheck: new Date(0),
-    services: ["rsyslog", "logrotate"],
-    metadata: {
-      protocol: "udp",
-      facility: "local0",
+  [
+    "syslog",
+    {
+      id: "syslog",
+      name: "Syslog Server",
+      type: "syslog",
+      host: "192.168.2.101",
+      port: 514,
+      status: "unknown",
+      lastCheck: new Date(0),
+      services: ["rsyslog", "logrotate"],
+      metadata: {
+        protocol: "udp",
+        facility: "local0",
+      },
     },
-  }],
+  ],
 
   // Local API server
-  ["api", {
-    id: "api",
-    name: "API Server (Local)",
-    type: "api",
-    host: "localhost",
-    port: 3000,
-    status: "unknown",
-    lastCheck: new Date(0),
-    services: ["bun", "hono", "guardquote-api"],
-    metadata: {
-      runtime: "Bun 1.3.6",
+  [
+    "api",
+    {
+      id: "api",
+      name: "API Server (Local)",
+      type: "api",
+      host: "localhost",
+      port: 3000,
+      status: "unknown",
+      lastCheck: new Date(0),
+      services: ["bun", "hono", "guardquote-api"],
+      metadata: {
+        runtime: "Bun 1.3.6",
+      },
     },
-  }],
+  ],
 ]);
 
 // Future infrastructure placeholders
@@ -124,7 +142,11 @@ const futureInfrastructure: Omit<InfraNode, "status" | "lastCheck">[] = [
 /**
  * Check if a TCP port is reachable
  */
-async function checkTCPPort(host: string, port: number, timeout = 5000): Promise<{
+async function checkTCPPort(
+  host: string,
+  port: number,
+  _timeout = 5000
+): Promise<{
   reachable: boolean;
   latency?: number;
   error?: string;
@@ -177,7 +199,7 @@ async function pingHost(host: string): Promise<{
     }
 
     return { reachable: false };
-  } catch (error) {
+  } catch (_error) {
     return { reachable: false };
   }
 }
@@ -185,7 +207,10 @@ async function pingHost(host: string): Promise<{
 /**
  * Check PostgreSQL health
  */
-async function checkPostgreSQL(host: string, port: number): Promise<{
+async function checkPostgreSQL(
+  host: string,
+  port: number
+): Promise<{
   status: NodeStatus;
   latency?: number;
   message?: string;
@@ -199,20 +224,28 @@ async function checkPostgreSQL(host: string, port: number): Promise<{
   // If TCP is reachable, try actual connection
   try {
     const start = performance.now();
-    const proc = Bun.spawn([
-      "psql",
-      "-h", host,
-      "-p", port.toString(),
-      "-U", "guardquote",
-      "-d", "guardquote",
-      "-c", "SELECT 1;",
-    ], {
-      env: {
-        ...process.env,
-        PGPASSWORD: "WPU8bj3nbwFyZFEtHZQz",
-        PGCONNECT_TIMEOUT: "5",
-      },
-    });
+    const proc = Bun.spawn(
+      [
+        "psql",
+        "-h",
+        host,
+        "-p",
+        port.toString(),
+        "-U",
+        "guardquote",
+        "-d",
+        "guardquote",
+        "-c",
+        "SELECT 1;",
+      ],
+      {
+        env: {
+          ...process.env,
+          PGPASSWORD: "WPU8bj3nbwFyZFEtHZQz",
+          PGCONNECT_TIMEOUT: "5",
+        },
+      }
+    );
 
     const exitCode = await proc.exited;
     const latency = Math.round(performance.now() - start);
@@ -230,7 +263,10 @@ async function checkPostgreSQL(host: string, port: number): Promise<{
 /**
  * Check Syslog server (UDP)
  */
-async function checkSyslog(host: string, port: number): Promise<{
+async function checkSyslog(
+  host: string,
+  port: number
+): Promise<{
   status: NodeStatus;
   latency?: number;
   message?: string;
@@ -264,7 +300,10 @@ async function checkSyslog(host: string, port: number): Promise<{
 /**
  * Check Redis server
  */
-async function checkRedis(host: string, port: number): Promise<{
+async function checkRedis(
+  host: string,
+  port: number
+): Promise<{
   status: NodeStatus;
   latency?: number;
   message?: string;
@@ -296,7 +335,7 @@ async function checkRedis(host: string, port: number): Promise<{
     });
 
     // Wait a bit for response
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     socket.end();
 
     return { status: "online", latency: tcpCheck.latency };
@@ -325,7 +364,7 @@ async function checkNodeHealth(node: InfraNode): Promise<void> {
     case "redis":
       result = await checkRedis(node.host, node.port || 6379);
       break;
-    case "api":
+    case "api": {
       const tcpCheck = await checkTCPPort(node.host, node.port || 3000);
       result = {
         status: tcpCheck.reachable ? "online" : "offline",
@@ -333,7 +372,8 @@ async function checkNodeHealth(node: InfraNode): Promise<void> {
         message: tcpCheck.error,
       };
       break;
-    default:
+    }
+    default: {
       // Generic TCP check for unknown types
       const generic = await checkTCPPort(node.host, node.port || 80);
       result = {
@@ -341,6 +381,7 @@ async function checkNodeHealth(node: InfraNode): Promise<void> {
         latency: generic.latency,
         message: generic.error,
       };
+    }
   }
 
   const previousStatus = node.status;
@@ -350,11 +391,15 @@ async function checkNodeHealth(node: InfraNode): Promise<void> {
 
   // Log status changes
   if (previousStatus !== result.status && previousStatus !== "unknown") {
-    logger.warn("Infrastructure", `${node.name} status changed: ${previousStatus} → ${result.status}`, {
-      node: node.id,
-      host: node.host,
-      message: result.message,
-    });
+    logger.warn(
+      "Infrastructure",
+      `${node.name} status changed: ${previousStatus} → ${result.status}`,
+      {
+        node: node.id,
+        host: node.host,
+        message: result.message,
+      }
+    );
 
     // Broadcast status change
     broadcastToChannel("services", "infrastructure.status_change", {
@@ -397,10 +442,10 @@ export async function getInfrastructureOverview(): Promise<{
   const nodes = await checkAllNodes();
 
   const summary = {
-    online: nodes.filter(n => n.status === "online").length,
-    offline: nodes.filter(n => n.status === "offline").length,
-    degraded: nodes.filter(n => n.status === "degraded").length,
-    unknown: nodes.filter(n => n.status === "unknown").length,
+    online: nodes.filter((n) => n.status === "online").length,
+    offline: nodes.filter((n) => n.status === "offline").length,
+    degraded: nodes.filter((n) => n.status === "degraded").length,
+    unknown: nodes.filter((n) => n.status === "unknown").length,
   };
 
   return {
@@ -475,7 +520,7 @@ export function startMonitoring(intervalMs = 30000) {
   }
 
   // Initial check
-  checkAllNodes().then(nodes => {
+  checkAllNodes().then((nodes) => {
     broadcastToChannel("services", "infrastructure.status", {
       nodes,
       timestamp: Date.now(),
@@ -512,7 +557,11 @@ export function stopMonitoring() {
 /**
  * Scan a port range on a host
  */
-export async function scanPorts(host: string, startPort: number, endPort: number): Promise<{
+export async function scanPorts(
+  host: string,
+  startPort: number,
+  endPort: number
+): Promise<{
   host: string;
   openPorts: number[];
 }> {
@@ -521,7 +570,7 @@ export async function scanPorts(host: string, startPort: number, endPort: number
 
   for (let port = startPort; port <= endPort; port++) {
     promises.push(
-      checkTCPPort(host, port, 1000).then(result => {
+      checkTCPPort(host, port, 1000).then((result) => {
         if (result.reachable) {
           openPorts.push(port);
         }
@@ -538,11 +587,13 @@ export async function scanPorts(host: string, startPort: number, endPort: number
 /**
  * Discover services on the local network
  */
-export async function discoverNetwork(subnet: string = "192.168.2"): Promise<{
-  host: string;
-  reachable: boolean;
-  latency?: number;
-}[]> {
+export async function discoverNetwork(subnet: string = "192.168.2"): Promise<
+  {
+    host: string;
+    reachable: boolean;
+    latency?: number;
+  }[]
+> {
   const results: { host: string; reachable: boolean; latency?: number }[] = [];
   const promises: Promise<void>[] = [];
 
@@ -550,7 +601,7 @@ export async function discoverNetwork(subnet: string = "192.168.2"): Promise<{
   for (let i = 1; i <= 254; i++) {
     const host = `${subnet}.${i}`;
     promises.push(
-      pingHost(host).then(result => {
+      pingHost(host).then((result) => {
         if (result.reachable) {
           results.push({ host, reachable: true, latency: result.latency });
         }
@@ -560,18 +611,12 @@ export async function discoverNetwork(subnet: string = "192.168.2"): Promise<{
 
   await Promise.all(promises);
   results.sort((a, b) => {
-    const aNum = parseInt(a.host.split(".").pop() || "0");
-    const bNum = parseInt(b.host.split(".").pop() || "0");
+    const aNum = parseInt(a.host.split(".").pop() || "0", 10);
+    const bNum = parseInt(b.host.split(".").pop() || "0", 10);
     return aNum - bNum;
   });
 
   return results;
 }
 
-export {
-  NodeType,
-  NodeStatus,
-  InfraNode,
-  infrastructure,
-  futureInfrastructure,
-};
+export { type NodeType, type NodeStatus, type InfraNode, infrastructure, futureInfrastructure };

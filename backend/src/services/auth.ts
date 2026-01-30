@@ -54,7 +54,10 @@ async function sign(payload: string, secret: string): Promise<string> {
 }
 
 // Create JWT token
-export async function createToken(payload: Omit<JWTPayload, "iat" | "exp">, expiresIn: number = JWT_EXPIRY): Promise<string> {
+export async function createToken(
+  payload: Omit<JWTPayload, "iat" | "exp">,
+  expiresIn: number = JWT_EXPIRY
+): Promise<string> {
   const header = { alg: "HS256", typ: "JWT" };
   const now = Math.floor(Date.now() / 1000);
 
@@ -137,7 +140,10 @@ export async function login(email: string, password: string): Promise<AuthResult
 
     // Create tokens
     const accessToken = await createToken({ userId: user.id, email: user.email, role: user.role });
-    const refreshToken = await createToken({ userId: user.id, email: user.email, role: user.role }, REFRESH_EXPIRY);
+    const refreshToken = await createToken(
+      { userId: user.id, email: user.email, role: user.role },
+      REFRESH_EXPIRY
+    );
 
     // Log successful login
     await sql`
@@ -224,7 +230,12 @@ export async function getUserFromToken(token: string): Promise<AuthResult["user"
 }
 
 // Create admin user (for initial setup)
-export async function createAdminUser(email: string, password: string, firstName: string, lastName: string): Promise<AuthResult> {
+export async function createAdminUser(
+  email: string,
+  password: string,
+  firstName: string,
+  lastName: string
+): Promise<AuthResult> {
   try {
     const existing = await sql`SELECT id FROM users WHERE email = ${email.toLowerCase()}`;
     if (existing.length > 0) {

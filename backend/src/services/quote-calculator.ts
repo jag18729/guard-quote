@@ -131,13 +131,21 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
 
   // Risk level mapping
   const riskLevel: "low" | "medium" | "high" | "critical" =
-    riskScore >= 0.75 ? "critical" : riskScore >= 0.5 ? "high" : riskScore >= 0.25 ? "medium" : "low";
+    riskScore >= 0.75
+      ? "critical"
+      : riskScore >= 0.5
+        ? "high"
+        : riskScore >= 0.25
+          ? "medium"
+          : "low";
 
   // Calculate prices
   const basePrice = baseLaborCost + armedPremium + vehiclePremium;
   const riskMultiplier = 1 + riskScore * 0.5;
   const finalPrice =
-    Math.round(basePrice * eventMultiplier * locationMultiplier * timeMultiplier * crowdFactor * 100) / 100;
+    Math.round(
+      basePrice * eventMultiplier * locationMultiplier * timeMultiplier * crowdFactor * 100
+    ) / 100;
 
   // Get historical data for confidence
   const historicalData = await sql`
@@ -146,8 +154,9 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     WHERE event_type_code = ${eventTypeCode}
       AND num_guards BETWEEN ${numGuards - 2} AND ${numGuards + 2}
   `;
-  const sampleCount = parseInt(historicalData[0].samples) || 0;
-  const confidenceScore = sampleCount >= 10 ? 0.92 : sampleCount >= 5 ? 0.85 : sampleCount >= 1 ? 0.78 : 0.7;
+  const sampleCount = parseInt(historicalData[0].samples, 10) || 0;
+  const confidenceScore =
+    sampleCount >= 10 ? 0.92 : sampleCount >= 5 ? 0.85 : sampleCount >= 1 ? 0.78 : 0.7;
 
   // Generate risk factors
   const riskFactors: string[] = [];
@@ -179,7 +188,9 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
     recommendations.push("Armed security strongly recommended for this risk level");
   }
   if (crowdSize > 500 && numGuards < Math.ceil(crowdSize / 250)) {
-    recommendations.push(`Consider ${Math.ceil(crowdSize / 250)} guards for optimal coverage (1:250 ratio)`);
+    recommendations.push(
+      `Consider ${Math.ceil(crowdSize / 250)} guards for optimal coverage (1:250 ratio)`
+    );
   }
   if (isNightShift && !hasVehicle) {
     recommendations.push("Vehicle patrol recommended for night shift operations");

@@ -54,7 +54,12 @@ function generateClientId(): string {
 /**
  * Handle new WebSocket connection
  */
-export function handleOpen(ws: ServerWebSocket<WSData>, type: ConnectionType, userId?: number, role?: string) {
+export function handleOpen(
+  ws: ServerWebSocket<WSData>,
+  type: ConnectionType,
+  userId?: number,
+  role?: string
+) {
   const clientId = generateClientId();
   ws.data = { clientId };
 
@@ -74,14 +79,16 @@ export function handleOpen(ws: ServerWebSocket<WSData>, type: ConnectionType, us
   peakConnections = Math.max(peakConnections, connections.size);
 
   // Send welcome message
-  ws.send(JSON.stringify({
-    type: "connected",
-    data: {
-      clientId,
-      serverTime: Date.now(),
-      subscriptions: Array.from(client.subscriptions),
-    },
-  }));
+  ws.send(
+    JSON.stringify({
+      type: "connected",
+      data: {
+        clientId,
+        serverTime: Date.now(),
+        subscriptions: Array.from(client.subscriptions),
+      },
+    })
+  );
 
   // Notify admins of new connection
   if (type === "admin") {
@@ -115,20 +122,24 @@ export function handleMessage(ws: ServerWebSocket<WSData>, message: string | Buf
       case "subscribe":
         if (msg.channel && isValidChannel(msg.channel, client.type)) {
           client.subscriptions.add(msg.channel);
-          ws.send(JSON.stringify({
-            type: "subscribed",
-            data: { channel: msg.channel },
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "subscribed",
+              data: { channel: msg.channel },
+            })
+          );
         }
         break;
 
       case "unsubscribe":
         if (msg.channel) {
           client.subscriptions.delete(msg.channel);
-          ws.send(JSON.stringify({
-            type: "unsubscribed",
-            data: { channel: msg.channel },
-          }));
+          ws.send(
+            JSON.stringify({
+              type: "unsubscribed",
+              data: { channel: msg.channel },
+            })
+          );
         }
         break;
 
@@ -147,16 +158,20 @@ export function handleMessage(ws: ServerWebSocket<WSData>, message: string | Buf
         break;
 
       default:
-        ws.send(JSON.stringify({
-          type: "error",
-          data: { message: `Unknown message type: ${msg.type}` },
-        }));
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            data: { message: `Unknown message type: ${msg.type}` },
+          })
+        );
     }
-  } catch (error) {
-    ws.send(JSON.stringify({
-      type: "error",
-      data: { message: "Invalid message format" },
-    }));
+  } catch (_error) {
+    ws.send(
+      JSON.stringify({
+        type: "error",
+        data: { message: "Invalid message format" },
+      })
+    );
   }
 }
 
@@ -180,11 +195,17 @@ export function handleClose(ws: ServerWebSocket<WSData>) {
  */
 function isValidChannel(channel: SubscriptionChannel, type: ConnectionType): boolean {
   const clientChannels: SubscriptionChannel[] = ["quotes"];
-  const adminChannels: SubscriptionChannel[] = ["quotes", "clients", "system", "alerts", "webhooks", "ml", "services"];
+  const adminChannels: SubscriptionChannel[] = [
+    "quotes",
+    "clients",
+    "system",
+    "alerts",
+    "webhooks",
+    "ml",
+    "services",
+  ];
 
-  return type === "admin"
-    ? adminChannels.includes(channel)
-    : clientChannels.includes(channel);
+  return type === "admin" ? adminChannels.includes(channel) : clientChannels.includes(channel);
 }
 
 /**
@@ -192,31 +213,37 @@ function isValidChannel(channel: SubscriptionChannel, type: ConnectionType): boo
  */
 async function handlePriceCalculation(client: WSClient, data: any) {
   // Send calculating state
-  client.ws.send(JSON.stringify({
-    type: "price.calculating",
-    data: { timestamp: Date.now() },
-  }));
+  client.ws.send(
+    JSON.stringify({
+      type: "price.calculating",
+      data: { timestamp: Date.now() },
+    })
+  );
 
   try {
     // Import calculation logic inline to avoid circular deps
     const { calculateQuote } = await import("./quote-calculator");
     const result = await calculateQuote(data);
 
-    client.ws.send(JSON.stringify({
-      type: "price.update",
-      data: {
-        ...result,
-        timestamp: Date.now(),
-      },
-    }));
+    client.ws.send(
+      JSON.stringify({
+        type: "price.update",
+        data: {
+          ...result,
+          timestamp: Date.now(),
+        },
+      })
+    );
   } catch (error: any) {
-    client.ws.send(JSON.stringify({
-      type: "price.error",
-      data: {
-        message: error.message || "Calculation failed",
-        timestamp: Date.now(),
-      },
-    }));
+    client.ws.send(
+      JSON.stringify({
+        type: "price.error",
+        data: {
+          message: error.message || "Calculation failed",
+          timestamp: Date.now(),
+        },
+      })
+    );
   }
 }
 
@@ -285,11 +312,13 @@ export function broadcastToAdmins(eventType: string, data: any) {
 export function sendToClient(clientId: string, eventType: string, data: any) {
   const client = connections.get(clientId);
   if (client) {
-    client.ws.send(JSON.stringify({
-      type: eventType,
-      data,
-      timestamp: Date.now(),
-    }));
+    client.ws.send(
+      JSON.stringify({
+        type: eventType,
+        data,
+        timestamp: Date.now(),
+      })
+    );
   }
 }
 
@@ -322,7 +351,7 @@ export function broadcastToType(type: ConnectionType, eventType: string, data: a
  * Get WebSocket connection statistics
  */
 export function getWSStats() {
-  const adminCount = Array.from(connections.values()).filter(c => c.type === "admin").length;
+  const adminCount = Array.from(connections.values()).filter((c) => c.type === "admin").length;
   const clientCount = connections.size - adminCount;
 
   return {
@@ -331,7 +360,7 @@ export function getWSStats() {
     client: clientCount,
     peak: peakConnections,
     totalConnections,
-    connections: Array.from(connections.values()).map(c => ({
+    connections: Array.from(connections.values()).map((c) => ({
       id: c.id,
       type: c.type,
       userId: c.userId,
@@ -354,7 +383,7 @@ export function cleanupStaleConnections() {
     if (now - client.lastPing.getTime() > staleThreshold) {
       try {
         client.ws.close(1000, "Connection timeout");
-      } catch (error) {
+      } catch (_error) {
         // Already closed
       }
       connections.delete(id);

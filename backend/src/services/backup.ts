@@ -1,8 +1,3 @@
-/**
- * Backup Service - Database backup and restore operations
- * Supports local and remote backup destinations
- */
-import { sql } from "../db/connection";
 import { broadcastToChannel } from "./websocket";
 
 // Backup configuration
@@ -13,8 +8,8 @@ const config = {
   dbUser: process.env.DB_USER || "guardquote",
   dbPassword: process.env.DB_PASSWORD || "WPU8bj3nbwFyZFEtHZQz",
   backupDir: process.env.BACKUP_DIR || "/tmp/guardquote-backups",
-  retentionDays: parseInt(process.env.BACKUP_RETENTION_DAYS || "7"),
-  scheduleHour: parseInt(process.env.BACKUP_SCHEDULE_HOUR || "2"), // 2 AM
+  retentionDays: parseInt(process.env.BACKUP_RETENTION_DAYS || "7", 10),
+  scheduleHour: parseInt(process.env.BACKUP_SCHEDULE_HOUR || "2", 10), // 2 AM
 };
 
 // Backup status tracking
@@ -62,19 +57,27 @@ export async function createFullBackup(): Promise<BackupRecord> {
     record.status = "running";
 
     // Use Bun's shell to run pg_dump
-    const proc = Bun.spawn([
-      "pg_dump",
-      "-h", config.dbHost,
-      "-U", config.dbUser,
-      "-d", config.dbName,
-      "-F", "c", // Custom format (compressed)
-      "-f", `${config.backupDir}/${filename}`,
-    ], {
-      env: {
-        ...process.env,
-        PGPASSWORD: config.dbPassword,
-      },
-    });
+    const proc = Bun.spawn(
+      [
+        "pg_dump",
+        "-h",
+        config.dbHost,
+        "-U",
+        config.dbUser,
+        "-d",
+        config.dbName,
+        "-F",
+        "c", // Custom format (compressed)
+        "-f",
+        `${config.backupDir}/${filename}`,
+      ],
+      {
+        env: {
+          ...process.env,
+          PGPASSWORD: config.dbPassword,
+        },
+      }
+    );
 
     const exitCode = await proc.exited;
 
@@ -137,19 +140,26 @@ export async function createSchemaBackup(): Promise<BackupRecord> {
   try {
     record.status = "running";
 
-    const proc = Bun.spawn([
-      "pg_dump",
-      "-h", config.dbHost,
-      "-U", config.dbUser,
-      "-d", config.dbName,
-      "-s", // Schema only
-      "-f", `${config.backupDir}/${filename}`,
-    ], {
-      env: {
-        ...process.env,
-        PGPASSWORD: config.dbPassword,
-      },
-    });
+    const proc = Bun.spawn(
+      [
+        "pg_dump",
+        "-h",
+        config.dbHost,
+        "-U",
+        config.dbUser,
+        "-d",
+        config.dbName,
+        "-s", // Schema only
+        "-f",
+        `${config.backupDir}/${filename}`,
+      ],
+      {
+        env: {
+          ...process.env,
+          PGPASSWORD: config.dbPassword,
+        },
+      }
+    );
 
     const exitCode = await proc.exited;
 
@@ -200,18 +210,15 @@ export async function createDataExport(tableName?: string): Promise<BackupRecord
     // Use COPY command for CSV export
     const copyCmd = `\\COPY ${table} TO '${config.backupDir}/${filename}' WITH CSV HEADER`;
 
-    const proc = Bun.spawn([
-      "psql",
-      "-h", config.dbHost,
-      "-U", config.dbUser,
-      "-d", config.dbName,
-      "-c", copyCmd,
-    ], {
-      env: {
-        ...process.env,
-        PGPASSWORD: config.dbPassword,
-      },
-    });
+    const proc = Bun.spawn(
+      ["psql", "-h", config.dbHost, "-U", config.dbUser, "-d", config.dbName, "-c", copyCmd],
+      {
+        env: {
+          ...process.env,
+          PGPASSWORD: config.dbPassword,
+        },
+      }
+    );
 
     const exitCode = await proc.exited;
 
@@ -262,11 +269,7 @@ export async function createRemoteBackup(): Promise<BackupRecord> {
     // SSH to Pi and run pg_dump locally
     const sshCmd = `PGPASSWORD='${config.dbPassword}' pg_dump -h localhost -U ${config.dbUser} ${config.dbName} -F c -f /tmp/${filename}`;
 
-    const proc = Bun.spawn([
-      "ssh",
-      `johnmarston@${config.dbHost}`,
-      sshCmd,
-    ]);
+    const proc = Bun.spawn(["ssh", `johnmarston@${config.dbHost}`, sshCmd]);
 
     const exitCode = await proc.exited;
 
@@ -324,31 +327,39 @@ export async function createRemoteBackup(): Promise<BackupRecord> {
 /**
  * Restore database from backup
  */
-export async function restoreFromBackup(filename: string): Promise<{ success: boolean; message: string }> {
+export async function restoreFromBackup(
+  filename: string
+): Promise<{ success: boolean; message: string }> {
   try {
     const backupPath = `${config.backupDir}/${filename}`;
 
     // Check if file exists
     const file = Bun.file(backupPath);
-    if (!await file.exists()) {
+    if (!(await file.exists())) {
       throw new Error(`Backup file not found: ${filename}`);
     }
 
     broadcastToChannel("services", "restore.started", { filename });
 
-    const proc = Bun.spawn([
-      "pg_restore",
-      "-h", config.dbHost,
-      "-U", config.dbUser,
-      "-d", config.dbName,
-      "-c", // Clean (drop) database objects before recreating
-      backupPath,
-    ], {
-      env: {
-        ...process.env,
-        PGPASSWORD: config.dbPassword,
-      },
-    });
+    const proc = Bun.spawn(
+      [
+        "pg_restore",
+        "-h",
+        config.dbHost,
+        "-U",
+        config.dbUser,
+        "-d",
+        config.dbName,
+        "-c", // Clean (drop) database objects before recreating
+        backupPath,
+      ],
+      {
+        env: {
+          ...process.env,
+          PGPASSWORD: config.dbPassword,
+        },
+      }
+    );
 
     const exitCode = await proc.exited;
 
@@ -380,12 +391,14 @@ export async function restoreFromBackup(filename: string): Promise<{ success: bo
 /**
  * Get list of available backups
  */
-export async function listBackups(): Promise<{
-  filename: string;
-  size: number;
-  created: Date;
-  type: string;
-}[]> {
+export async function listBackups(): Promise<
+  {
+    filename: string;
+    size: number;
+    created: Date;
+    type: string;
+  }[]
+> {
   const backups: { filename: string; size: number; created: Date; type: string }[] = [];
 
   try {
@@ -421,7 +434,7 @@ export async function listBackups(): Promise<{
  */
 export async function cleanupOldBackups(): Promise<number> {
   let deleted = 0;
-  const cutoff = Date.now() - (config.retentionDays * 24 * 60 * 60 * 1000);
+  const cutoff = Date.now() - config.retentionDays * 24 * 60 * 60 * 1000;
 
   try {
     const backups = await listBackups();
@@ -459,7 +472,7 @@ export async function getBackupStats(): Promise<{
   const backups = await listBackups();
   const totalSize = backups.reduce((sum, b) => sum + b.size, 0);
 
-  const lastBackup = backupHistory.find(b => b.status === "completed") || null;
+  const lastBackup = backupHistory.find((b) => b.status === "completed") || null;
 
   // Calculate next scheduled backup
   let nextScheduled: Date | null = null;
@@ -512,16 +525,21 @@ export function startScheduledBackups() {
 
   const msUntilNext = nextRun.getTime() - now.getTime();
 
-  console.log(`[Backup] Scheduled backup at ${config.scheduleHour}:00 (in ${Math.round(msUntilNext / 1000 / 60)} minutes)`);
+  console.log(
+    `[Backup] Scheduled backup at ${config.scheduleHour}:00 (in ${Math.round(msUntilNext / 1000 / 60)} minutes)`
+  );
 
   // Set initial timeout, then daily interval
   scheduledBackupTimer = setTimeout(async () => {
     await runScheduledBackup();
 
     // Set daily interval
-    scheduledBackupTimer = setInterval(async () => {
-      await runScheduledBackup();
-    }, 24 * 60 * 60 * 1000); // 24 hours
+    scheduledBackupTimer = setInterval(
+      async () => {
+        await runScheduledBackup();
+      },
+      24 * 60 * 60 * 1000
+    ); // 24 hours
   }, msUntilNext);
 }
 
@@ -560,7 +578,7 @@ function formatBytes(bytes: number): string {
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
 }
 
 /**
@@ -577,7 +595,4 @@ async function ensureBackupDir() {
 // Initialize
 ensureBackupDir();
 
-export {
-  BackupRecord,
-  config as backupConfig,
-};
+export { type BackupRecord, config as backupConfig };

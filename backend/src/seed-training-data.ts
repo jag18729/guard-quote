@@ -21,27 +21,27 @@ const sql = postgres("postgres://guardquote:WPU8bj3nbwFyZFEtHZQz@192.168.2.70/gu
 
 // Industry-based pricing data
 const BASE_RATES: Record<string, { min: number; max: number; riskMultiplier: number }> = {
-  CONCERT: { min: 35, max: 55, riskMultiplier: 1.30 },
-  SPORT: { min: 32, max: 50, riskMultiplier: 1.20 },
-  CORPORATE: { min: 28, max: 42, riskMultiplier: 1.00 },
-  WEDDING: { min: 30, max: 45, riskMultiplier: 0.90 },
-  FESTIVAL: { min: 38, max: 55, riskMultiplier: 1.40 },
-  NIGHTCLUB: { min: 40, max: 65, riskMultiplier: 1.50 },
-  RETAIL: { min: 25, max: 38, riskMultiplier: 1.10 },
-  EXECUTIVE: { min: 55, max: 100, riskMultiplier: 1.60 },
+  CONCERT: { min: 35, max: 55, riskMultiplier: 1.3 },
+  SPORT: { min: 32, max: 50, riskMultiplier: 1.2 },
+  CORPORATE: { min: 28, max: 42, riskMultiplier: 1.0 },
+  WEDDING: { min: 30, max: 45, riskMultiplier: 0.9 },
+  FESTIVAL: { min: 38, max: 55, riskMultiplier: 1.4 },
+  NIGHTCLUB: { min: 40, max: 65, riskMultiplier: 1.5 },
+  RETAIL: { min: 25, max: 38, riskMultiplier: 1.1 },
+  EXECUTIVE: { min: 55, max: 100, riskMultiplier: 1.6 },
 };
 
 // California locations with risk data
 const LOCATIONS = [
-  { zip: "90001", city: "Los Angeles", state: "CA", riskZone: "high", modifier: 1.30 },
-  { zip: "90210", city: "Beverly Hills", state: "CA", riskZone: "premium", modifier: 1.50 },
-  { zip: "91001", city: "Pasadena", state: "CA", riskZone: "standard", modifier: 1.00 },
-  { zip: "91301", city: "Westlake Village", state: "CA", riskZone: "low", modifier: 0.90 },
-  { zip: "91324", city: "Northridge", state: "CA", riskZone: "standard", modifier: 1.00 },
-  { zip: "90401", city: "Santa Monica", state: "CA", riskZone: "premium", modifier: 1.40 },
+  { zip: "90001", city: "Los Angeles", state: "CA", riskZone: "high", modifier: 1.3 },
+  { zip: "90210", city: "Beverly Hills", state: "CA", riskZone: "premium", modifier: 1.5 },
+  { zip: "91001", city: "Pasadena", state: "CA", riskZone: "standard", modifier: 1.0 },
+  { zip: "91301", city: "Westlake Village", state: "CA", riskZone: "low", modifier: 0.9 },
+  { zip: "91324", city: "Northridge", state: "CA", riskZone: "standard", modifier: 1.0 },
+  { zip: "90401", city: "Santa Monica", state: "CA", riskZone: "premium", modifier: 1.4 },
   { zip: "91101", city: "Pasadena Downtown", state: "CA", riskZone: "standard", modifier: 1.05 },
   { zip: "90028", city: "Hollywood", state: "CA", riskZone: "high", modifier: 1.35 },
-  { zip: "90802", city: "Long Beach", state: "CA", riskZone: "standard", modifier: 1.10 },
+  { zip: "90802", city: "Long Beach", state: "CA", riskZone: "standard", modifier: 1.1 },
   { zip: "92101", city: "San Diego Downtown", state: "CA", riskZone: "standard", modifier: 1.15 },
 ];
 
@@ -122,7 +122,9 @@ function generateRealisticQuote() {
   const isNightShift = hourOfDay >= 18 || hourOfDay < 6;
 
   // Armed guards more likely for high-risk events
-  const armedProbability = ["CONCERT", "NIGHTCLUB", "EXECUTIVE", "FESTIVAL"].includes(eventTypeCode) ? 0.6 : 0.2;
+  const armedProbability = ["CONCERT", "NIGHTCLUB", "EXECUTIVE", "FESTIVAL"].includes(eventTypeCode)
+    ? 0.6
+    : 0.2;
   const isArmed = randomBool(armedProbability);
 
   // Vehicle patrol more likely for larger venues
@@ -139,11 +141,14 @@ function generateRealisticQuote() {
 
   // Apply multipliers
   const weekendMultiplier = isWeekend ? 1.15 : 1.0;
-  const nightMultiplier = isNightShift ? 1.20 : 1.0;
+  const nightMultiplier = isNightShift ? 1.2 : 1.0;
   const locationMultiplier = location.modifier;
   const eventMultiplier = rateData.riskMultiplier;
 
-  const finalPrice = Math.round(laborCost * weekendMultiplier * nightMultiplier * locationMultiplier * eventMultiplier * 100) / 100;
+  const finalPrice =
+    Math.round(
+      laborCost * weekendMultiplier * nightMultiplier * locationMultiplier * eventMultiplier * 100
+    ) / 100;
 
   // Risk score based on all factors
   let riskScore = 30;
@@ -254,5 +259,5 @@ async function seedData(count: number) {
 }
 
 // Run seeding
-const count = parseInt(process.argv[2]) || 500;
+const count = parseInt(process.argv[2], 10) || 500;
 seedData(count).catch(console.error);

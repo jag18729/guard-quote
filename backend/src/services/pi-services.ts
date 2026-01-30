@@ -40,19 +40,28 @@ async function checkDemoMode(): Promise<boolean> {
 
   // Try actual SSH connection (not just ping)
   try {
-    const proc = Bun.spawn([
-      "sshpass", "-p", PI_PASS,
-      "ssh",
-      "-o", "StrictHostKeyChecking=no",
-      "-o", "UserKnownHostsFile=/dev/null",
-      "-o", "ConnectTimeout=2",
-      "-o", "BatchMode=no",
-      `${PI_USER}@${PI_HOST}`,
-      "echo ok"
-    ], {
-      stdout: "pipe",
-      stderr: "pipe",
-    });
+    const proc = Bun.spawn(
+      [
+        "sshpass",
+        "-p",
+        PI_PASS,
+        "ssh",
+        "-o",
+        "StrictHostKeyChecking=no",
+        "-o",
+        "UserKnownHostsFile=/dev/null",
+        "-o",
+        "ConnectTimeout=2",
+        "-o",
+        "BatchMode=no",
+        `${PI_USER}@${PI_HOST}`,
+        "echo ok",
+      ],
+      {
+        stdout: "pipe",
+        stderr: "pipe",
+      }
+    );
 
     const timeout = setTimeout(() => proc.kill(), 3000);
     const exitCode = await proc.exited;
@@ -88,50 +97,137 @@ interface ServiceAction {
 // Service definitions with descriptions
 const SERVICES = [
   // Database & Cache
-  { name: "postgresql", displayName: "PostgreSQL", type: "systemd" as const, port: 5432,
-    description: "Primary relational database storing users, quotes, clients, and event data" },
-  { name: "redis-server", displayName: "Redis", type: "systemd" as const, port: 6379,
-    description: "In-memory cache for sessions, rate limiting, and frequently accessed data" },
-  { name: "pgbouncer", displayName: "PgBouncer", type: "systemd" as const, port: 6432,
-    description: "Connection pooler that manages PostgreSQL connections efficiently" },
+  {
+    name: "postgresql",
+    displayName: "PostgreSQL",
+    type: "systemd" as const,
+    port: 5432,
+    description: "Primary relational database storing users, quotes, clients, and event data",
+  },
+  {
+    name: "redis-server",
+    displayName: "Redis",
+    type: "systemd" as const,
+    port: 6379,
+    description: "In-memory cache for sessions, rate limiting, and frequently accessed data",
+  },
+  {
+    name: "pgbouncer",
+    displayName: "PgBouncer",
+    type: "systemd" as const,
+    port: 6432,
+    description: "Connection pooler that manages PostgreSQL connections efficiently",
+  },
 
   // Security
-  { name: "fail2ban", displayName: "Fail2ban", type: "systemd" as const,
-    description: "Intrusion prevention that bans IPs with too many failed login attempts" },
-  { name: "ufw", displayName: "UFW Firewall", type: "systemd" as const,
-    description: "Firewall controlling network access to services by IP and port" },
-  { name: "pihole-FTL", displayName: "Pi-hole DNS", type: "systemd" as const, port: 53,
-    description: "Network-wide DNS server with ad blocking and query logging" },
+  {
+    name: "fail2ban",
+    displayName: "Fail2ban",
+    type: "systemd" as const,
+    description: "Intrusion prevention that bans IPs with too many failed login attempts",
+  },
+  {
+    name: "ufw",
+    displayName: "UFW Firewall",
+    type: "systemd" as const,
+    description: "Firewall controlling network access to services by IP and port",
+  },
+  {
+    name: "pihole-FTL",
+    displayName: "Pi-hole DNS",
+    type: "systemd" as const,
+    port: 53,
+    description: "Network-wide DNS server with ad blocking and query logging",
+  },
 
   // Monitoring Stack
-  { name: "prometheus", displayName: "Prometheus", type: "docker" as const, port: 9090,
-    description: "Time-series database collecting metrics from all services and hosts" },
-  { name: "grafana", displayName: "Grafana", type: "docker" as const, port: 3000,
-    description: "Visualization dashboards for metrics, logs, and alerting" },
-  { name: "alertmanager", displayName: "Alertmanager", type: "docker" as const, port: 9093,
-    description: "Handles alerts from Prometheus, routing notifications to email/Slack" },
-  { name: "node-exporter", displayName: "Node Exporter", type: "docker" as const, port: 9100,
-    description: "Exports host metrics (CPU, memory, disk, network) to Prometheus" },
-  { name: "loki", displayName: "Loki", type: "docker" as const, port: 3100,
-    description: "Log aggregation system - like Prometheus but for logs" },
-  { name: "promtail", displayName: "Promtail", type: "docker" as const,
-    description: "Agent that ships local logs to Loki for centralized viewing" },
+  {
+    name: "prometheus",
+    displayName: "Prometheus",
+    type: "docker" as const,
+    port: 9090,
+    description: "Time-series database collecting metrics from all services and hosts",
+  },
+  {
+    name: "grafana",
+    displayName: "Grafana",
+    type: "docker" as const,
+    port: 3000,
+    description: "Visualization dashboards for metrics, logs, and alerting",
+  },
+  {
+    name: "alertmanager",
+    displayName: "Alertmanager",
+    type: "docker" as const,
+    port: 9093,
+    description: "Handles alerts from Prometheus, routing notifications to email/Slack",
+  },
+  {
+    name: "node-exporter",
+    displayName: "Node Exporter",
+    type: "docker" as const,
+    port: 9100,
+    description: "Exports host metrics (CPU, memory, disk, network) to Prometheus",
+  },
+  {
+    name: "loki",
+    displayName: "Loki",
+    type: "docker" as const,
+    port: 3100,
+    description: "Log aggregation system - like Prometheus but for logs",
+  },
+  {
+    name: "promtail",
+    displayName: "Promtail",
+    type: "docker" as const,
+    description: "Agent that ships local logs to Loki for centralized viewing",
+  },
 
   // Planned Services (not yet deployed)
-  { name: "traefik", displayName: "Traefik", type: "docker" as const, port: 443, planned: true,
-    description: "API Gateway & reverse proxy with automatic SSL and load balancing" },
-  { name: "openldap", displayName: "OpenLDAP", type: "docker" as const, port: 389, planned: true,
-    description: "Directory service for centralized user authentication across apps" },
-  { name: "keycloak", displayName: "Keycloak", type: "docker" as const, port: 8080, planned: true,
-    description: "Identity provider with SSO, OAuth2, and LDAP integration" },
-  { name: "vault", displayName: "HashiCorp Vault", type: "docker" as const, port: 8200, planned: true,
-    description: "Secrets management for API keys, passwords, and certificates" },
-  { name: "minio", displayName: "MinIO", type: "docker" as const, port: 9000, planned: true,
-    description: "S3-compatible object storage for documents and file uploads" },
+  {
+    name: "traefik",
+    displayName: "Traefik",
+    type: "docker" as const,
+    port: 443,
+    planned: true,
+    description: "API Gateway & reverse proxy with automatic SSL and load balancing",
+  },
+  {
+    name: "openldap",
+    displayName: "OpenLDAP",
+    type: "docker" as const,
+    port: 389,
+    planned: true,
+    description: "Directory service for centralized user authentication across apps",
+  },
+  {
+    name: "keycloak",
+    displayName: "Keycloak",
+    type: "docker" as const,
+    port: 8080,
+    planned: true,
+    description: "Identity provider with SSO, OAuth2, and LDAP integration",
+  },
+  {
+    name: "vault",
+    displayName: "HashiCorp Vault",
+    type: "docker" as const,
+    port: 8200,
+    planned: true,
+    description: "Secrets management for API keys, passwords, and certificates",
+  },
+  {
+    name: "minio",
+    displayName: "MinIO",
+    type: "docker" as const,
+    port: 9000,
+    planned: true,
+    description: "S3-compatible object storage for documents and file uploads",
+  },
 ];
 
 // Sleep helper for retry backoff
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Execute SSH command on Pi with timeout and retry logic
 async function sshExec(
@@ -142,23 +238,32 @@ async function sshExec(
   let lastError: { stdout: string; stderr: string; exitCode: number } = {
     stdout: "",
     stderr: "All retries failed",
-    exitCode: 1
+    exitCode: 1,
   };
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    const proc = Bun.spawn([
-      "sshpass", "-p", PI_PASS,
-      "ssh",
-      "-o", "StrictHostKeyChecking=no",
-      "-o", "UserKnownHostsFile=/dev/null",
-      "-o", "ConnectTimeout=3",
-      "-o", "BatchMode=no",
-      `${PI_USER}@${PI_HOST}`,
-      command
-    ], {
-      stdout: "pipe",
-      stderr: "pipe",
-    });
+    const proc = Bun.spawn(
+      [
+        "sshpass",
+        "-p",
+        PI_PASS,
+        "ssh",
+        "-o",
+        "StrictHostKeyChecking=no",
+        "-o",
+        "UserKnownHostsFile=/dev/null",
+        "-o",
+        "ConnectTimeout=3",
+        "-o",
+        "BatchMode=no",
+        `${PI_USER}@${PI_HOST}`,
+        command,
+      ],
+      {
+        stdout: "pipe",
+        stderr: "pipe",
+      }
+    );
 
     const timeout = setTimeout(() => proc.kill(), timeoutMs);
 
@@ -169,7 +274,7 @@ async function sshExec(
       clearTimeout(timeout);
 
       // Success or command executed (even with non-zero exit)
-      if (exitCode === 0 || !stderr.includes("Connection") && !stderr.includes("timed out")) {
+      if (exitCode === 0 || (!stderr.includes("Connection") && !stderr.includes("timed out"))) {
         return { stdout: stdout.trim(), stderr: stderr.trim(), exitCode };
       }
 
@@ -179,7 +284,7 @@ async function sshExec(
         console.log(`SSH attempt ${attempt} failed, retrying in ${attempt}s...`);
         await sleep(1000 * attempt); // Exponential backoff: 1s, 2s, 3s
       }
-    } catch (error) {
+    } catch (_error) {
       clearTimeout(timeout);
       lastError = { stdout: "", stderr: "Command timed out", exitCode: 1 };
       if (attempt < maxRetries) {
@@ -194,12 +299,16 @@ async function sshExec(
 
 // Get status of a systemd service
 async function getSystemdStatus(serviceName: string): Promise<Partial<ServiceStatus>> {
-  const { stdout, exitCode } = await sshExec(`systemctl is-active ${serviceName} 2>/dev/null || echo 'inactive'`);
+  const { stdout, exitCode: _exitCode } = await sshExec(
+    `systemctl is-active ${serviceName} 2>/dev/null || echo 'inactive'`
+  );
   const status = stdout === "active" ? "running" : stdout === "inactive" ? "stopped" : "error";
 
   let uptime = "";
   if (status === "running") {
-    const { stdout: uptimeOut } = await sshExec(`systemctl show ${serviceName} --property=ActiveEnterTimestamp --value 2>/dev/null`);
+    const { stdout: uptimeOut } = await sshExec(
+      `systemctl show ${serviceName} --property=ActiveEnterTimestamp --value 2>/dev/null`
+    );
     if (uptimeOut) {
       const startTime = new Date(uptimeOut);
       const now = new Date();
@@ -215,7 +324,9 @@ async function getSystemdStatus(serviceName: string): Promise<Partial<ServiceSta
 
 // Get status of a Docker container
 async function getDockerStatus(containerName: string): Promise<Partial<ServiceStatus>> {
-  const { stdout } = await sshExec(`docker inspect --format='{{.State.Status}}' ${containerName} 2>/dev/null || echo 'not_found'`);
+  const { stdout } = await sshExec(
+    `docker inspect --format='{{.State.Status}}' ${containerName} 2>/dev/null || echo 'not_found'`
+  );
 
   let status: ServiceStatus["status"] = "unknown";
   if (stdout === "running") status = "running";
@@ -228,7 +339,9 @@ async function getDockerStatus(containerName: string): Promise<Partial<ServiceSt
   let cpu = "";
 
   if (status === "running") {
-    const { stdout: statsOut } = await sshExec(`docker stats ${containerName} --no-stream --format '{{.UpTime}}|{{.MemUsage}}|{{.CPUPerc}}' 2>/dev/null`);
+    const { stdout: statsOut } = await sshExec(
+      `docker stats ${containerName} --no-stream --format '{{.UpTime}}|{{.MemUsage}}|{{.CPUPerc}}' 2>/dev/null`
+    );
     if (statsOut) {
       const [up, mem, cpuVal] = statsOut.split("|");
       uptime = up || "";
@@ -243,19 +356,22 @@ async function getDockerStatus(containerName: string): Promise<Partial<ServiceSt
 // Demo mode mock statuses - simulate realistic service states
 function getDemoServiceStatuses(): ServiceStatus[] {
   // Simulate realistic statuses for demo
-  const demoStatuses: Record<string, { status: ServiceStatus["status"]; uptime?: string; memory?: string; cpu?: string }> = {
-    "postgresql": { status: "running", uptime: "5d 12h", memory: "256MB", cpu: "2.1%" },
+  const demoStatuses: Record<
+    string,
+    { status: ServiceStatus["status"]; uptime?: string; memory?: string; cpu?: string }
+  > = {
+    postgresql: { status: "running", uptime: "5d 12h", memory: "256MB", cpu: "2.1%" },
     "redis-server": { status: "running", uptime: "5d 12h", memory: "48MB", cpu: "0.5%" },
-    "pgbouncer": { status: "running", uptime: "5d 12h", memory: "12MB", cpu: "0.1%" },
-    "fail2ban": { status: "running", uptime: "5d 12h" },
-    "ufw": { status: "running", uptime: "5d 12h" },
+    pgbouncer: { status: "running", uptime: "5d 12h", memory: "12MB", cpu: "0.1%" },
+    fail2ban: { status: "running", uptime: "5d 12h" },
+    ufw: { status: "running", uptime: "5d 12h" },
     "pihole-FTL": { status: "running", uptime: "5d 12h", memory: "64MB", cpu: "1.2%" },
-    "prometheus": { status: "running", uptime: "3d 8h", memory: "312MB", cpu: "3.4%" },
-    "grafana": { status: "running", uptime: "3d 8h", memory: "128MB", cpu: "1.8%" },
-    "alertmanager": { status: "stopped" },
+    prometheus: { status: "running", uptime: "3d 8h", memory: "312MB", cpu: "3.4%" },
+    grafana: { status: "running", uptime: "3d 8h", memory: "128MB", cpu: "1.8%" },
+    alertmanager: { status: "stopped" },
     "node-exporter": { status: "running", uptime: "3d 8h", memory: "24MB", cpu: "0.3%" },
-    "loki": { status: "running", uptime: "3d 8h", memory: "96MB", cpu: "1.1%" },
-    "promtail": { status: "running", uptime: "3d 8h", memory: "32MB", cpu: "0.4%" },
+    loki: { status: "running", uptime: "3d 8h", memory: "96MB", cpu: "1.1%" },
+    promtail: { status: "running", uptime: "3d 8h", memory: "32MB", cpu: "0.4%" },
   };
 
   return SERVICES.map((svc: any) => {
@@ -266,7 +382,7 @@ function getDemoServiceStatuses(): ServiceStatus[] {
       description: svc.description,
       type: svc.type,
       port: svc.port,
-      status: svc.planned ? "planned" : (demo.status || "running"),
+      status: svc.planned ? "planned" : demo.status || "running",
       uptime: demo.uptime,
       memory: demo.memory,
       cpu: demo.cpu,
@@ -296,9 +412,8 @@ export async function getAllServiceStatuses(): Promise<ServiceStatus[]> {
     }
 
     try {
-      const statusInfo = svc.type === "systemd"
-        ? await getSystemdStatus(svc.name)
-        : await getDockerStatus(svc.name);
+      const statusInfo =
+        svc.type === "systemd" ? await getSystemdStatus(svc.name) : await getDockerStatus(svc.name);
 
       return {
         name: svc.name,
@@ -311,7 +426,7 @@ export async function getAllServiceStatuses(): Promise<ServiceStatus[]> {
         memory: statusInfo.memory,
         cpu: statusInfo.cpu,
       } as ServiceStatus;
-    } catch (error) {
+    } catch (_error) {
       return {
         name: svc.name,
         displayName: svc.displayName,
@@ -327,8 +442,11 @@ export async function getAllServiceStatuses(): Promise<ServiceStatus[]> {
 }
 
 // Control a service (start, stop, restart)
-export async function controlService(serviceName: string, action: "start" | "stop" | "restart"): Promise<ServiceAction> {
-  const svc = SERVICES.find(s => s.name === serviceName);
+export async function controlService(
+  serviceName: string,
+  action: "start" | "stop" | "restart"
+): Promise<ServiceAction> {
+  const svc = SERVICES.find((s) => s.name === serviceName);
   if (!svc) {
     return { success: false, message: `Unknown service: ${serviceName}` };
   }
@@ -363,13 +481,13 @@ export async function controlService(serviceName: string, action: "start" | "sto
       return {
         success: true,
         message: `${svc.displayName} ${action}ed successfully`,
-        output: stdout || stderr
+        output: stdout || stderr,
       };
     } else {
       return {
         success: false,
         message: `Failed to ${action} ${svc.displayName}`,
-        output: stderr || stdout
+        output: stderr || stdout,
       };
     }
   } catch (error: any) {
@@ -381,7 +499,7 @@ export async function controlService(serviceName: string, action: "start" | "sto
 function getDemoLogs(serviceName: string): string {
   const timestamp = new Date().toISOString();
   const demoLogs: Record<string, string> = {
-    "postgresql": `${timestamp} LOG:  database system is ready to accept connections
+    postgresql: `${timestamp} LOG:  database system is ready to accept connections
 ${timestamp} LOG:  autovacuum launcher started
 ${timestamp} LOG:  checkpoint starting: time
 ${timestamp} LOG:  checkpoint complete: wrote 42 buffers (0.3%)
@@ -394,26 +512,29 @@ ${timestamp} - 0 clients connected (0 replicas), 1.2M bytes in use
 ${timestamp} - DB 0: 127 keys (0 volatile)
 ${timestamp} * Background saving started`,
 
-    "prometheus": `${timestamp} level=info msg="Server is ready to receive web requests."
+    prometheus: `${timestamp} level=info msg="Server is ready to receive web requests."
 ${timestamp} level=info msg="TSDB started"
 ${timestamp} level=info msg="Completed WAL replay"
 ${timestamp} level=info msg="Scrape targets loaded" count=12`,
 
-    "grafana": `${timestamp} level=info msg="HTTP Server Listen" address=0.0.0.0:3000
+    grafana: `${timestamp} level=info msg="HTTP Server Listen" address=0.0.0.0:3000
 ${timestamp} level=info msg="Starting plugin search"
 ${timestamp} level=info msg="Plugins registered" count=8`,
 
-    "default": `${timestamp} Service ${serviceName} is running in demo mode.
+    default: `${timestamp} Service ${serviceName} is running in demo mode.
 ${timestamp} No actual logs available - connect to a real server to view logs.
 ${timestamp} Demo mode provides simulated service statuses only.`,
   };
 
-  return demoLogs[serviceName] || demoLogs["default"];
+  return demoLogs[serviceName] || demoLogs.default;
 }
 
 // Get service logs
-export async function getServiceLogs(serviceName: string, lines: number = 50): Promise<{ logs: string; error?: string; demoMode?: boolean }> {
-  const svc = SERVICES.find(s => s.name === serviceName);
+export async function getServiceLogs(
+  serviceName: string,
+  lines: number = 50
+): Promise<{ logs: string; error?: string; demoMode?: boolean }> {
+  const svc = SERVICES.find((s) => s.name === serviceName);
   if (!svc) {
     return { logs: "", error: `Unknown service: ${serviceName}` };
   }
@@ -422,7 +543,7 @@ export async function getServiceLogs(serviceName: string, lines: number = 50): P
   if (await checkDemoMode()) {
     return {
       logs: getDemoLogs(serviceName),
-      demoMode: true
+      demoMode: true,
     };
   }
 
@@ -449,7 +570,7 @@ export async function getServiceLogs(serviceName: string, lines: number = 50): P
 
 // Remediate common issues
 export async function remediateService(serviceName: string): Promise<ServiceAction> {
-  const svc = SERVICES.find(s => s.name === serviceName);
+  const svc = SERVICES.find((s) => s.name === serviceName);
   if (!svc) {
     return { success: false, message: `Unknown service: ${serviceName}` };
   }
@@ -490,10 +611,9 @@ export async function remediateService(serviceName: string): Promise<ServiceActi
 
     return {
       success: exitCode === 0,
-      message: exitCode === 0
-        ? `Remediation complete: ${steps.join(" → ")}`
-        : `Remediation had issues`,
-      output: stdout || stderr
+      message:
+        exitCode === 0 ? `Remediation complete: ${steps.join(" → ")}` : `Remediation had issues`,
+      output: stdout || stderr,
     };
   } catch (error: any) {
     return { success: false, message: error.message };

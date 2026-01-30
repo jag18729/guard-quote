@@ -16,21 +16,30 @@ app.use("*", cors());
 // HEALTH & INFO
 // ============================================
 
-app.get("/", (c) => c.json({
-  status: "ok",
-  service: "GuardQuote API",
-  version: "2.0.0",
-  database: "PostgreSQL (Raspberry Pi)",
-}));
+app.get("/", (c) =>
+  c.json({
+    status: "ok",
+    service: "GuardQuote API",
+    version: "2.0.0",
+    database: "PostgreSQL (Raspberry Pi)",
+  })
+);
 
 app.get("/health", async (c) => {
   const dbOk = await testConnection();
-  return c.json({ status: dbOk ? "healthy" : "degraded", database: dbOk ? "connected" : "disconnected" });
+  return c.json({
+    status: dbOk ? "healthy" : "degraded",
+    database: dbOk ? "connected" : "disconnected",
+  });
 });
 
 app.get("/api/health", async (c) => {
   const dbOk = await testConnection();
-  return c.json({ status: dbOk ? "healthy" : "degraded", database: dbOk ? "connected" : "disconnected", service: "GuardQuote API" });
+  return c.json({
+    status: dbOk ? "healthy" : "degraded",
+    database: dbOk ? "connected" : "disconnected",
+    service: "GuardQuote API",
+  });
 });
 
 // Environment status with async connection checks
@@ -40,7 +49,10 @@ app.get("/api/status", async (c) => {
 
   // Check database
   const dbOk = await testConnection();
-  const isLocalDb = dbUrl.includes("localhost") || dbUrl.includes("127.0.0.1") || !dbUrl.includes("192.168") && !dbUrl.includes("100.");
+  const isLocalDb =
+    dbUrl.includes("localhost") ||
+    dbUrl.includes("127.0.0.1") ||
+    (!dbUrl.includes("192.168") && !dbUrl.includes("100."));
 
   // Check ML engine
   let mlOk = false;
@@ -52,7 +64,9 @@ app.get("/api/status", async (c) => {
       mlOk = mlData.model_loaded === true;
       mlVersion = mlData.version;
     }
-  } catch { mlOk = false; }
+  } catch {
+    mlOk = false;
+  }
 
   // Determine environment mode
   const envMode = isLocalDb ? "demo" : "development";
@@ -61,7 +75,7 @@ app.get("/api/status", async (c) => {
     mode: envMode,
     database: { connected: dbOk, local: isLocalDb },
     mlEngine: { connected: mlOk, version: mlVersion },
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -70,7 +84,8 @@ app.get("/api/status", async (c) => {
 // ============================================
 
 app.get("/api/users", async (c) => {
-  const users = await sql`SELECT id, email, first_name, last_name, role, is_active, created_at FROM users`;
+  const users =
+    await sql`SELECT id, email, first_name, last_name, role, is_active, created_at FROM users`;
   return c.json(users);
 });
 
@@ -78,7 +93,7 @@ app.post("/api/users", async (c) => {
   const body = await c.req.json();
   const result = await sql`
     INSERT INTO users (email, password_hash, first_name, last_name, role)
-    VALUES (${body.email}, ${body.password}, ${body.firstName}, ${body.lastName}, ${body.role || 'user'})
+    VALUES (${body.email}, ${body.password}, ${body.firstName}, ${body.lastName}, ${body.role || "user"})
     RETURNING id
   `;
   return c.json({ success: true, id: result[0].id });
@@ -105,7 +120,7 @@ app.post("/api/clients", async (c) => {
 });
 
 app.get("/api/clients/:id", async (c) => {
-  const id = parseInt(c.req.param("id"));
+  const id = parseInt(c.req.param("id"), 10);
   const client = await sql`SELECT * FROM clients WHERE id = ${id}`;
   return client.length ? c.json(client[0]) : c.json({ error: "Not found" }, 404);
 });
@@ -164,12 +179,16 @@ app.post("/api/quotes", async (c) => {
     )
     RETURNING id, quote_number
   `;
-  await triggerWebhook("quote.created", { quoteId: result[0].id, quoteNumber: result[0].quote_number, ...body });
+  await triggerWebhook("quote.created", {
+    quoteId: result[0].id,
+    quoteNumber: result[0].quote_number,
+    ...body,
+  });
   return c.json({ success: true, id: result[0].id, quoteNumber: result[0].quote_number });
 });
 
 app.get("/api/quotes/:id", async (c) => {
-  const id = parseInt(c.req.param("id"));
+  const id = parseInt(c.req.param("id"), 10);
   const quote = await sql`
     SELECT q.*, c.company_name as client_name, c.email as client_email,
            e.name as event_type_name, l.city, l.state
@@ -183,7 +202,7 @@ app.get("/api/quotes/:id", async (c) => {
 });
 
 app.patch("/api/quotes/:id", async (c) => {
-  const id = parseInt(c.req.param("id"));
+  const id = parseInt(c.req.param("id"), 10);
   const body = await c.req.json();
   const current = await sql`SELECT status FROM quotes WHERE id = ${id}`;
   const oldStatus = current[0]?.status;
@@ -198,7 +217,11 @@ app.patch("/api/quotes/:id", async (c) => {
   `;
 
   if (body.status && body.status !== oldStatus) {
-    await triggerWebhook("quote.status_changed", { quoteId: id, fromStatus: oldStatus, toStatus: body.status });
+    await triggerWebhook("quote.status_changed", {
+      quoteId: id,
+      fromStatus: oldStatus,
+      toStatus: body.status,
+    });
     await sql`INSERT INTO quote_status_history (quote_id, from_status, to_status, reason) VALUES (${id}, ${oldStatus}, ${body.status}, ${body.reason || null})`;
   }
   return c.json({ success: true });
@@ -209,7 +232,7 @@ app.patch("/api/quotes/:id", async (c) => {
 // ============================================
 
 app.get("/api/ml-training-data", async (c) => {
-  const limit = parseInt(c.req.query("limit") || "1000");
+  const limit = parseInt(c.req.query("limit") || "1000", 10);
   const data = await sql`SELECT * FROM ml_training_data ORDER BY created_at DESC LIMIT ${limit}`;
   return c.json(data);
 });
@@ -277,13 +300,15 @@ app.post("/api/ml/predict", async (c) => {
 
     // Get location data
     const location = await sql`SELECT * FROM locations WHERE zip_code = ${input.zipCode}`;
-    const locationData = location.length ? location[0] : { risk_zone: "standard", rate_modifier: 1.0 };
+    const locationData = location.length
+      ? location[0]
+      : { risk_zone: "standard", rate_modifier: 1.0 };
 
     // Parse event date for time-based factors
     const eventDate = input.eventDate ? new Date(input.eventDate) : new Date();
     const dayOfWeek = eventDate.getDay();
     const hourOfDay = eventDate.getHours();
-    const month = eventDate.getMonth() + 1;
+    const _month = eventDate.getMonth() + 1;
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
     const isNightShift = hourOfDay >= 18 || hourOfDay < 6;
 
@@ -295,15 +320,16 @@ app.post("/api/ml/predict", async (c) => {
     // Multipliers
     const eventMultiplier = parseFloat(eventType[0].risk_multiplier);
     const locationMultiplier = parseFloat(locationData.rate_modifier);
-    const timeMultiplier = (isWeekend ? 1.15 : 1.0) * (isNightShift ? 1.20 : 1.0);
+    const timeMultiplier = (isWeekend ? 1.15 : 1.0) * (isNightShift ? 1.2 : 1.0);
 
     // Armed/vehicle premiums
     const armedPremium = input.isArmed ? 1.25 : 1.0;
-    const vehiclePremium = input.hasVehicle ? 1.10 : 1.0;
+    const vehiclePremium = input.hasVehicle ? 1.1 : 1.0;
 
     // Crowd size risk factor
     const crowdSize = input.crowdSize || 0;
-    const crowdFactor = crowdSize > 5000 ? 1.30 : crowdSize > 1000 ? 1.15 : crowdSize > 500 ? 1.05 : 1.0;
+    const crowdFactor =
+      crowdSize > 5000 ? 1.3 : crowdSize > 1000 ? 1.15 : crowdSize > 500 ? 1.05 : 1.0;
 
     // Calculate risk score (0-100)
     let riskScore = 30; // base risk
@@ -315,9 +341,16 @@ app.post("/api/ml/predict", async (c) => {
     riskScore = Math.min(100, Math.max(0, Math.round(riskScore)));
 
     // Calculate predicted price
-    const riskPremium = 1 + (riskScore / 200); // 0-50% premium based on risk
+    const riskPremium = 1 + riskScore / 200; // 0-50% premium based on risk
     const predictedPrice = Math.round(
-      laborCost * eventMultiplier * locationMultiplier * timeMultiplier * armedPremium * vehiclePremium * crowdFactor * riskPremium
+      laborCost *
+        eventMultiplier *
+        locationMultiplier *
+        timeMultiplier *
+        armedPremium *
+        vehiclePremium *
+        crowdFactor *
+        riskPremium
     );
 
     // Get historical data for confidence calculation
@@ -333,7 +366,7 @@ app.post("/api/ml/predict", async (c) => {
     `;
 
     // Calculate confidence score based on historical data availability
-    const sampleCount = parseInt(historicalData[0].sample_count) || 0;
+    const sampleCount = parseInt(historicalData[0].sample_count, 10) || 0;
     let confidenceScore = 60; // base confidence
     if (sampleCount >= 10) confidenceScore = 85;
     else if (sampleCount >= 5) confidenceScore = 75;
@@ -343,16 +376,17 @@ app.post("/api/ml/predict", async (c) => {
     let adjustedPrice = predictedPrice;
     if (sampleCount > 0 && historicalData[0].avg_price) {
       const historicalAvg = parseFloat(historicalData[0].avg_price);
-      adjustedPrice = Math.round((predictedPrice * 0.6) + (historicalAvg * 0.4));
+      adjustedPrice = Math.round(predictedPrice * 0.6 + historicalAvg * 0.4);
     }
 
     // Calculate price range
-    const variance = sampleCount > 0 && historicalData[0].std_dev
-      ? parseFloat(historicalData[0].std_dev)
-      : adjustedPrice * 0.15;
+    const variance =
+      sampleCount > 0 && historicalData[0].std_dev
+        ? parseFloat(historicalData[0].std_dev)
+        : adjustedPrice * 0.15;
     const priceRange = {
       min: Math.round(adjustedPrice - variance),
-      max: Math.round(adjustedPrice + variance)
+      max: Math.round(adjustedPrice + variance),
     };
 
     // Determine risk level
@@ -388,9 +422,9 @@ app.post("/api/ml/predict", async (c) => {
         eventMultiplier,
         locationMultiplier,
         timeMultiplier,
-        riskPremium: Math.round(riskPremium * 100) / 100
+        riskPremium: Math.round(riskPremium * 100) / 100,
       },
-      recommendations
+      recommendations,
     };
 
     return c.json(result);
@@ -416,7 +450,7 @@ app.post("/api/ml/predict/batch", async (c) => {
       const response = await app.request("/api/ml/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(scenario)
+        body: JSON.stringify(scenario),
       });
       results.push(await response.json());
     }
@@ -454,7 +488,7 @@ app.get("/api/ml/stats", async (c) => {
 
   return c.json({
     summary: stats[0],
-    byEventType
+    byEventType,
   });
 });
 
@@ -464,15 +498,15 @@ app.get("/api/ml/stats", async (c) => {
 
 // Event type mapping from frontend values to DB codes
 const EVENT_TYPE_MAP: Record<string, string> = {
-  "corporate": "CORPORATE",
-  "concert": "CONCERT",
-  "sports": "SPORT",
-  "private": "WEDDING",
-  "construction": "RETAIL",
-  "retail": "RETAIL",
-  "residential": "EXECUTIVE",
-  "festival": "FESTIVAL",
-  "nightclub": "NIGHTCLUB",
+  corporate: "CORPORATE",
+  concert: "CONCERT",
+  sports: "SPORT",
+  private: "WEDDING",
+  construction: "RETAIL",
+  retail: "RETAIL",
+  residential: "EXECUTIVE",
+  festival: "FESTIVAL",
+  nightclub: "NIGHTCLUB",
 };
 
 app.get("/ml/health", async (c) => {
@@ -491,28 +525,42 @@ app.get("/ml/model-info", async (c) => {
     model_name: "GuardQuote ML v2.0",
     model_type: "hybrid_regression",
     features: [
-      "event_type", "location_zip", "num_guards", "hours", "crowd_size",
-      "is_armed", "requires_vehicle", "day_of_week", "hour_of_day", "month",
-      "is_weekend", "is_night_shift", "risk_zone", "rate_modifier"
+      "event_type",
+      "location_zip",
+      "num_guards",
+      "hours",
+      "crowd_size",
+      "is_armed",
+      "requires_vehicle",
+      "day_of_week",
+      "hour_of_day",
+      "month",
+      "is_weekend",
+      "is_night_shift",
+      "risk_zone",
+      "rate_modifier",
     ],
-    training_samples: parseInt(stats[0].samples) || 0,
+    training_samples: parseInt(stats[0].samples, 10) || 0,
     accuracy_metrics: {
-      mae: 127.50,
-      rmse: 185.30,
-      r2_score: 0.89
+      mae: 127.5,
+      rmse: 185.3,
+      r2_score: 0.89,
     },
-    last_updated: new Date().toISOString()
+    last_updated: new Date().toISOString(),
   });
 });
 
 app.get("/ml/event-types", async (c) => {
-  const types = await sql`SELECT code, name, base_rate, risk_multiplier FROM event_types WHERE is_active = true`;
-  return c.json(types.map(t => ({
-    value: t.code.toLowerCase(),
-    label: t.name,
-    baseRate: parseFloat(t.base_rate),
-    riskMultiplier: parseFloat(t.risk_multiplier)
-  })));
+  const types =
+    await sql`SELECT code, name, base_rate, risk_multiplier FROM event_types WHERE is_active = true`;
+  return c.json(
+    types.map((t) => ({
+      value: t.code.toLowerCase(),
+      label: t.name,
+      baseRate: parseFloat(t.base_rate),
+      riskMultiplier: parseFloat(t.risk_multiplier),
+    }))
+  );
 });
 
 // Main quote prediction endpoint for frontend
@@ -521,7 +569,8 @@ app.post("/ml/quote", async (c) => {
     const body = await c.req.json();
 
     // Map frontend fields to internal format
-    const eventTypeCode = EVENT_TYPE_MAP[body.event_type] || body.event_type?.toUpperCase() || "CORPORATE";
+    const eventTypeCode =
+      EVENT_TYPE_MAP[body.event_type] || body.event_type?.toUpperCase() || "CORPORATE";
     const zipCode = body.location_zip || "90001";
     const numGuards = body.num_guards || 2;
     const hours = body.hours || 4;
@@ -536,7 +585,9 @@ app.post("/ml/quote", async (c) => {
 
     // Get location data
     const location = await sql`SELECT * FROM locations WHERE zip_code = ${zipCode}`;
-    const locationData = location.length ? location[0] : { risk_zone: "standard", rate_modifier: 1.0, city: "Unknown", state: "CA" };
+    const locationData = location.length
+      ? location[0]
+      : { risk_zone: "standard", rate_modifier: 1.0, city: "Unknown", state: "CA" };
 
     // Time-based factors
     const dayOfWeek = eventDate.getDay();
@@ -552,14 +603,23 @@ app.post("/ml/quote", async (c) => {
     // Multipliers
     const eventMultiplier = parseFloat(eventData.risk_multiplier);
     const locationMultiplier = parseFloat(locationData.rate_modifier);
-    const timeMultiplier = (isWeekend ? 1.15 : 1.0) * (isNightShift ? 1.20 : 1.0);
+    const timeMultiplier = (isWeekend ? 1.15 : 1.0) * (isNightShift ? 1.2 : 1.0);
 
     // Premiums
-    const armedPremium = isArmed ? (15 * hours * numGuards) : 0;
-    const vehiclePremium = hasVehicle ? (50 * numGuards) : 0;
+    const armedPremium = isArmed ? 15 * hours * numGuards : 0;
+    const vehiclePremium = hasVehicle ? 50 * numGuards : 0;
 
     // Crowd risk factor
-    const crowdFactor = crowdSize > 5000 ? 1.35 : crowdSize > 2000 ? 1.25 : crowdSize > 1000 ? 1.15 : crowdSize > 500 ? 1.08 : 1.0;
+    const crowdFactor =
+      crowdSize > 5000
+        ? 1.35
+        : crowdSize > 2000
+          ? 1.25
+          : crowdSize > 1000
+            ? 1.15
+            : crowdSize > 500
+              ? 1.08
+              : 1.0;
 
     // Calculate risk score (0-1 scale for frontend)
     let riskScore = 0.25; // base
@@ -571,12 +631,22 @@ app.post("/ml/quote", async (c) => {
     riskScore = Math.min(1, Math.max(0, riskScore));
 
     // Risk level mapping
-    const riskLevel = riskScore >= 0.75 ? "critical" : riskScore >= 0.5 ? "high" : riskScore >= 0.25 ? "medium" : "low";
+    const riskLevel =
+      riskScore >= 0.75
+        ? "critical"
+        : riskScore >= 0.5
+          ? "high"
+          : riskScore >= 0.25
+            ? "medium"
+            : "low";
 
     // Calculate prices
     const basePrice = baseLaborCost + armedPremium + vehiclePremium;
-    const riskMultiplier = 1 + (riskScore * 0.5);
-    const finalPrice = Math.round(basePrice * eventMultiplier * locationMultiplier * timeMultiplier * crowdFactor * 100) / 100;
+    const riskMultiplier = 1 + riskScore * 0.5;
+    const finalPrice =
+      Math.round(
+        basePrice * eventMultiplier * locationMultiplier * timeMultiplier * crowdFactor * 100
+      ) / 100;
 
     // Get historical data for confidence
     const historicalData = await sql`
@@ -585,8 +655,9 @@ app.post("/ml/quote", async (c) => {
       WHERE event_type_code = ${eventTypeCode}
         AND num_guards BETWEEN ${numGuards - 2} AND ${numGuards + 2}
     `;
-    const sampleCount = parseInt(historicalData[0].samples) || 0;
-    const confidenceScore = sampleCount >= 10 ? 0.92 : sampleCount >= 5 ? 0.85 : sampleCount >= 1 ? 0.78 : 0.70;
+    const sampleCount = parseInt(historicalData[0].samples, 10) || 0;
+    const confidenceScore =
+      sampleCount >= 10 ? 0.92 : sampleCount >= 5 ? 0.85 : sampleCount >= 1 ? 0.78 : 0.7;
 
     // Generate risk factors
     const riskFactors: string[] = [];
@@ -632,7 +703,7 @@ app.post("/ml/quote", async (c) => {
         location_multiplier: locationMultiplier,
         time_multiplier: Math.round(timeMultiplier * 100) / 100,
         crowd_factor: crowdFactor,
-      }
+      },
     });
   } catch (error: any) {
     console.error("ML quote error:", error);
@@ -645,7 +716,8 @@ app.post("/ml/risk-assessment", async (c) => {
   try {
     const body = await c.req.json();
 
-    const eventTypeCode = EVENT_TYPE_MAP[body.event_type] || body.event_type?.toUpperCase() || "CORPORATE";
+    const eventTypeCode =
+      EVENT_TYPE_MAP[body.event_type] || body.event_type?.toUpperCase() || "CORPORATE";
     const zipCode = body.location_zip || "90001";
     const crowdSize = body.crowd_size || 0;
     const isArmed = body.is_armed || false;
@@ -656,7 +728,9 @@ app.post("/ml/risk-assessment", async (c) => {
     const eventType = await sql`SELECT * FROM event_types WHERE code = ${eventTypeCode}`;
     const eventData = eventType.length ? eventType[0] : { risk_multiplier: 1.0 };
     const location = await sql`SELECT * FROM locations WHERE zip_code = ${zipCode}`;
-    const locationData = location.length ? location[0] : { risk_zone: "standard", rate_modifier: 1.0 };
+    const locationData = location.length
+      ? location[0]
+      : { risk_zone: "standard", rate_modifier: 1.0 };
 
     const hourOfDay = eventDate.getHours();
     const dayOfWeek = eventDate.getDay();
@@ -664,15 +738,31 @@ app.post("/ml/risk-assessment", async (c) => {
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
     // Calculate comprehensive risk score
-    let riskScore = 0.20;
+    let riskScore = 0.2;
     riskScore += (parseFloat(eventData.risk_multiplier) - 1) * 0.35;
-    riskScore += (parseFloat(locationData.rate_modifier) - 1) * 0.20;
+    riskScore += (parseFloat(locationData.rate_modifier) - 1) * 0.2;
     riskScore += isNightShift ? 0.12 : 0;
     riskScore += isWeekend ? 0.06 : 0;
-    riskScore += crowdSize > 5000 ? 0.25 : crowdSize > 2000 ? 0.18 : crowdSize > 1000 ? 0.12 : crowdSize > 500 ? 0.06 : 0;
+    riskScore +=
+      crowdSize > 5000
+        ? 0.25
+        : crowdSize > 2000
+          ? 0.18
+          : crowdSize > 1000
+            ? 0.12
+            : crowdSize > 500
+              ? 0.06
+              : 0;
     riskScore = Math.min(1, Math.max(0, riskScore));
 
-    const riskLevel = riskScore >= 0.75 ? "critical" : riskScore >= 0.5 ? "high" : riskScore >= 0.25 ? "medium" : "low";
+    const riskLevel =
+      riskScore >= 0.75
+        ? "critical"
+        : riskScore >= 0.5
+          ? "high"
+          : riskScore >= 0.25
+            ? "medium"
+            : "low";
 
     // Generate detailed factors
     const factors: string[] = [];
@@ -680,7 +770,9 @@ app.post("/ml/risk-assessment", async (c) => {
       factors.push(`Event type risk: ${eventTypeCode} has elevated incident rates`);
     }
     if (crowdSize > 1000) {
-      factors.push(`Crowd density: ${crowdSize.toLocaleString()} people increases coordination complexity`);
+      factors.push(
+        `Crowd density: ${crowdSize.toLocaleString()} people increases coordination complexity`
+      );
     }
     if (isNightShift) {
       factors.push("Time factor: Night operations require enhanced vigilance");
@@ -704,7 +796,9 @@ app.post("/ml/risk-assessment", async (c) => {
       recommendations.push("Armed security strongly recommended for this risk level");
     }
     if (crowdSize > 500 && body.num_guards < Math.ceil(crowdSize / 250)) {
-      recommendations.push(`Consider ${Math.ceil(crowdSize / 250)} guards for optimal crowd coverage (1:250 ratio)`);
+      recommendations.push(
+        `Consider ${Math.ceil(crowdSize / 250)} guards for optimal crowd coverage (1:250 ratio)`
+      );
     }
     if (isNightShift && !hasVehicle) {
       recommendations.push("Vehicle patrol recommended for night shift operations");
@@ -731,8 +825,18 @@ app.post("/ml/risk-assessment", async (c) => {
         event_risk: Math.round((parseFloat(eventData.risk_multiplier) - 1) * 100),
         location_risk: Math.round((parseFloat(locationData.rate_modifier) - 1) * 100),
         time_risk: Math.round((isNightShift ? 12 : 0) + (isWeekend ? 6 : 0)),
-        crowd_risk: Math.round(crowdSize > 5000 ? 25 : crowdSize > 2000 ? 18 : crowdSize > 1000 ? 12 : crowdSize > 500 ? 6 : 0),
-      }
+        crowd_risk: Math.round(
+          crowdSize > 5000
+            ? 25
+            : crowdSize > 2000
+              ? 18
+              : crowdSize > 1000
+                ? 12
+                : crowdSize > 500
+                  ? 6
+                  : 0
+        ),
+      },
     });
   } catch (error: any) {
     console.error("Risk assessment error:", error);
@@ -744,7 +848,14 @@ app.post("/ml/risk-assessment", async (c) => {
 // AUTHENTICATION
 // ============================================
 
-import { login, refreshAccessToken, getUserFromToken, verifyToken, createAdminUser, hashPassword } from "./services/auth";
+import {
+  createAdminUser,
+  getUserFromToken,
+  hashPassword,
+  login,
+  refreshAccessToken,
+  verifyToken,
+} from "./services/auth";
 
 // Login
 app.post("/api/auth/login", async (c) => {
@@ -864,8 +975,8 @@ app.post("/api/auth/register", async (c) => {
         email: user[0].email,
         firstName: user[0].first_name,
         lastName: user[0].last_name,
-        role: user[0].role
-      }
+        role: user[0].role,
+      },
     });
   } catch (error: any) {
     console.error("Registration error:", error);
@@ -932,7 +1043,8 @@ app.post("/api/quote-requests", async (c) => {
 
     // Check if user exists
     let userId: number;
-    const existingUser = await sql`SELECT id FROM users WHERE email = ${email.toLowerCase()} LIMIT 1`;
+    const existingUser =
+      await sql`SELECT id FROM users WHERE email = ${email.toLowerCase()} LIMIT 1`;
 
     if (existingUser.length > 0) {
       userId = existingUser[0].id;
@@ -964,7 +1076,7 @@ app.post("/api/quote-requests", async (c) => {
         ${body.currentProtection || []}, ${body.pastIncidents || false}, ${body.incidentDetails || null},
         ${body.onlineActivity || null}, ${body.technicalComfort || null},
         ${body.budget || null}, ${body.securityConcerns || null}, ${body.urgency || null},
-        ${body.preferredContact || 'email'}
+        ${body.preferredContact || "email"}
       )
       RETURNING id
     `;
@@ -973,7 +1085,7 @@ app.post("/api/quote-requests", async (c) => {
       success: true,
       message: "Quote request submitted successfully",
       quoteRequestId: quoteRequest[0].id,
-      userId
+      userId,
     });
   } catch (error: any) {
     console.error("Quote request error:", error);
@@ -1000,7 +1112,7 @@ app.get("/api/admin/quote-requests/:id", async (c) => {
   const auth = await requireAdmin(c);
   if (auth instanceof Response) return auth;
 
-  const id = parseInt(c.req.param("id"));
+  const id = parseInt(c.req.param("id"), 10);
   const request = await sql`
     SELECT qr.*, u.email as user_email
     FROM quote_requests qr
@@ -1016,7 +1128,7 @@ app.patch("/api/admin/quote-requests/:id", async (c) => {
   const auth = await requireAdmin(c);
   if (auth instanceof Response) return auth;
 
-  const id = parseInt(c.req.param("id"));
+  const id = parseInt(c.req.param("id"), 10);
   const body = await c.req.json();
 
   await sql`
@@ -1095,7 +1207,7 @@ app.post("/api/admin/users", async (c) => {
   const passwordHash = await hashPassword(body.password || "changeme123");
   const result = await sql`
     INSERT INTO users (email, password_hash, first_name, last_name, role)
-    VALUES (${body.email.toLowerCase()}, ${passwordHash}, ${body.firstName}, ${body.lastName}, ${body.role || 'user'})
+    VALUES (${body.email.toLowerCase()}, ${passwordHash}, ${body.firstName}, ${body.lastName}, ${body.role || "user"})
     RETURNING id
   `;
   return c.json({ success: true, id: result[0].id });
@@ -1106,7 +1218,7 @@ app.patch("/api/admin/users/:id", async (c) => {
   try {
     const auth = await requireAdmin(c);
     if (auth instanceof Response) return auth;
-    const id = parseInt(c.req.param("id"));
+    const id = parseInt(c.req.param("id"), 10);
     const body = await c.req.json();
 
     // Build update fields dynamically
@@ -1156,7 +1268,7 @@ app.patch("/api/admin/users/:id", async (c) => {
 app.delete("/api/admin/users/:id", async (c) => {
   const auth = await requireAdmin(c);
   if (auth instanceof Response) return auth;
-  const id = parseInt(c.req.param("id"));
+  const id = parseInt(c.req.param("id"), 10);
   if (id === auth.userId) {
     return c.json({ error: "Cannot delete yourself" }, 400);
   }
@@ -1181,10 +1293,10 @@ app.get("/api/admin/stats", async (c) => {
   ]);
 
   return c.json({
-    totalQuotes: parseInt(quotes[0].total) || 0,
+    totalQuotes: parseInt(quotes[0].total, 10) || 0,
     totalRevenue: parseFloat(quotes[0].revenue) || 0,
-    totalClients: parseInt(clients[0].total) || 0,
-    totalUsers: parseInt(users[0].total) || 0,
+    totalClients: parseInt(clients[0].total, 10) || 0,
+    totalUsers: parseInt(users[0].total, 10) || 0,
     recentQuotes,
   });
 });
@@ -1193,7 +1305,13 @@ app.get("/api/admin/stats", async (c) => {
 // SERVICE MANAGEMENT (Pi1)
 // ============================================
 
-import { getAllServiceStatuses, controlService, getServiceLogs, remediateService, getPiSystemInfo } from "./services/pi-services";
+import {
+  controlService,
+  getAllServiceStatuses,
+  getPiSystemInfo,
+  getServiceLogs,
+  remediateService,
+} from "./services/pi-services";
 
 // Get all service statuses
 app.get("/api/admin/services", async (c) => {
@@ -1262,7 +1380,7 @@ app.get("/api/admin/services/:name/logs", async (c) => {
   if (auth instanceof Response) return auth;
 
   const name = c.req.param("name");
-  const lines = parseInt(c.req.query("lines") || "50");
+  const lines = parseInt(c.req.query("lines") || "50", 10);
 
   try {
     const result = await getServiceLogs(name, lines);
@@ -1292,14 +1410,15 @@ app.post("/api/webhooks", async (c) => {
 });
 
 app.delete("/api/webhooks/:id", async (c) => {
-  const id = parseInt(c.req.param("id"));
+  const id = parseInt(c.req.param("id"), 10);
   await sql`DELETE FROM webhooks WHERE id = ${id}`;
   return c.json({ success: true });
 });
 
 app.get("/api/webhooks/:id/logs", async (c) => {
-  const id = parseInt(c.req.param("id"));
-  const logs = await sql`SELECT * FROM webhook_logs WHERE webhook_id = ${id} ORDER BY created_at DESC LIMIT 50`;
+  const id = parseInt(c.req.param("id"), 10);
+  const logs =
+    await sql`SELECT * FROM webhook_logs WHERE webhook_id = ${id} ORDER BY created_at DESC LIMIT 50`;
   return c.json(logs);
 });
 
@@ -1309,27 +1428,43 @@ app.get("/api/webhooks/:id/logs", async (c) => {
 
 async function triggerWebhook(eventType: string, payload: any) {
   try {
-    const webhooks = await sql`SELECT id, url, secret, timeout_ms, events FROM webhooks WHERE is_active = true AND ${eventType} = ANY(events)`;
+    const webhooks =
+      await sql`SELECT id, url, secret, timeout_ms, events FROM webhooks WHERE is_active = true AND ${eventType} = ANY(events)`;
     for (const webhook of webhooks) {
-      const body = JSON.stringify({ event: eventType, timestamp: new Date().toISOString(), data: payload });
+      const body = JSON.stringify({
+        event: eventType,
+        timestamp: new Date().toISOString(),
+        data: payload,
+      });
       const signature = webhook.secret ? await createHmacSignature(body, webhook.secret) : null;
       try {
         const response = await fetch(webhook.url, {
           method: "POST",
-          headers: { "Content-Type": "application/json", ...(signature && { "X-Webhook-Signature": signature }) },
+          headers: {
+            "Content-Type": "application/json",
+            ...(signature && { "X-Webhook-Signature": signature }),
+          },
           body,
-          signal: AbortSignal.timeout(webhook.timeout_ms)
+          signal: AbortSignal.timeout(webhook.timeout_ms),
         });
         await sql`INSERT INTO webhook_logs (webhook_id, event_type, payload, response_status, delivered_at) VALUES (${webhook.id}, ${eventType}, ${body}::jsonb, ${response.status}, NOW())`;
       } catch (error: any) {
         await sql`INSERT INTO webhook_logs (webhook_id, event_type, payload, error_message) VALUES (${webhook.id}, ${eventType}, ${body}::jsonb, ${error.message})`;
       }
     }
-  } catch (error) { console.error("Webhook trigger error:", error); }
+  } catch (error) {
+    console.error("Webhook trigger error:", error);
+  }
 }
 
 async function createHmacSignature(payload: string, secret: string): Promise<string> {
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
   const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
   return btoa(String.fromCharCode(...new Uint8Array(signature)));
 }
@@ -1338,7 +1473,7 @@ async function createHmacSignature(payload: string, secret: string): Promise<str
 // WEBSOCKET INTEGRATION
 // ============================================
 
-import { handleOpen, handleMessage, handleClose, getWSStats } from "./services/websocket";
+import { getWSStats, handleClose, handleMessage, handleOpen } from "./services/websocket";
 
 // WebSocket stats endpoint
 app.get("/api/ws/stats", (c) => c.json(getWSStats()));

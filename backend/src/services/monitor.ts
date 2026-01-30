@@ -4,7 +4,7 @@
  */
 import { sql, testConnection } from "../db/connection";
 import { getCacheStats } from "./cache";
-import { getWSStats, broadcastToChannel } from "./websocket";
+import { broadcastToChannel, getWSStats } from "./websocket";
 
 // Service status types
 type ServiceStatus = "healthy" | "degraded" | "down" | "unknown";
@@ -16,10 +16,10 @@ type ServiceType =
   | "webhooks"
   | "ml"
   | "backup"
-  | "ldap"       // Future: AD/LDAP
-  | "gateway"    // Future: API Gateway
-  | "siem"       // Future: SIEM
-  | "storage";   // Future: Object Storage
+  | "ldap" // Future: AD/LDAP
+  | "gateway" // Future: API Gateway
+  | "siem" // Future: SIEM
+  | "storage"; // Future: Object Storage
 
 interface ServiceHealth {
   name: string;
@@ -53,11 +53,14 @@ const requestMetrics = {
 };
 
 // Service registry - extensible for future services
-const serviceRegistry: Map<ServiceType, {
-  name: string;
-  enabled: boolean;
-  checkFn: () => Promise<Partial<ServiceHealth>>;
-}> = new Map();
+const serviceRegistry: Map<
+  ServiceType,
+  {
+    name: string;
+    enabled: boolean;
+    checkFn: () => Promise<Partial<ServiceHealth>>;
+  }
+> = new Map();
 
 // ============================================
 // SERVICE HEALTH CHECKS
@@ -141,11 +144,13 @@ async function checkCacheHealth(): Promise<Partial<ServiceHealth>> {
     const latency = Math.round(performance.now() - start);
 
     return {
-      status: stats.redisConnected ? "healthy" : (stats.usingFallback ? "degraded" : "down"),
+      status: stats.redisConnected ? "healthy" : stats.usingFallback ? "degraded" : "down",
       latency,
       message: stats.redisConnected
         ? "Redis connected"
-        : (stats.usingFallback ? "Using in-memory fallback" : "Cache unavailable"),
+        : stats.usingFallback
+          ? "Using in-memory fallback"
+          : "Cache unavailable",
       metrics: stats,
     };
   } catch (error: any) {
@@ -191,17 +196,17 @@ async function checkWebhookHealth(): Promise<Partial<ServiceHealth>> {
     `;
     const latency = Math.round(performance.now() - start);
 
-    const total = parseInt(stats[0].recent_deliveries) || 0;
-    const successful = parseInt(stats[0].successful_deliveries) || 0;
+    const total = parseInt(stats[0].recent_deliveries, 10) || 0;
+    const successful = parseInt(stats[0].successful_deliveries, 10) || 0;
     const successRate = total > 0 ? Math.round((successful / total) * 100) : 100;
 
     return {
-      status: successRate >= 95 ? "healthy" : (successRate >= 80 ? "degraded" : "down"),
+      status: successRate >= 95 ? "healthy" : successRate >= 80 ? "degraded" : "down",
       latency,
       message: `${successRate}% delivery success rate`,
       metrics: {
-        totalWebhooks: parseInt(stats[0].total_webhooks) || 0,
-        activeWebhooks: parseInt(stats[0].active_webhooks) || 0,
+        totalWebhooks: parseInt(stats[0].total_webhooks, 10) || 0,
+        activeWebhooks: parseInt(stats[0].active_webhooks, 10) || 0,
         recentDeliveries: total,
         successfulDeliveries: successful,
         successRate: `${successRate}%`,
@@ -231,7 +236,7 @@ async function checkMLHealth(): Promise<Partial<ServiceHealth>> {
     `;
     const latency = Math.round(performance.now() - start);
 
-    const sampleCount = parseInt(stats[0].total_samples) || 0;
+    const sampleCount = parseInt(stats[0].total_samples, 10) || 0;
     const isHealthy = sampleCount >= 100; // Need at least 100 samples for decent predictions
 
     return {
@@ -240,7 +245,7 @@ async function checkMLHealth(): Promise<Partial<ServiceHealth>> {
       message: isHealthy ? `${sampleCount} training samples` : "Insufficient training data",
       metrics: {
         totalSamples: sampleCount,
-        eventTypes: parseInt(stats[0].event_types) || 0,
+        eventTypes: parseInt(stats[0].event_types, 10) || 0,
         avgPrice: Math.round(parseFloat(stats[0].avg_price) || 0),
         lastSample: stats[0].last_sample,
       },
@@ -305,14 +310,30 @@ async function checkSIEMHealth(): Promise<Partial<ServiceHealth>> {
 
 // Register all services
 serviceRegistry.set("api", { name: "API Server", enabled: true, checkFn: checkAPIHealth });
-serviceRegistry.set("database", { name: "PostgreSQL", enabled: true, checkFn: checkDatabaseHealth });
+serviceRegistry.set("database", {
+  name: "PostgreSQL",
+  enabled: true,
+  checkFn: checkDatabaseHealth,
+});
 serviceRegistry.set("cache", { name: "Redis Cache", enabled: true, checkFn: checkCacheHealth });
-serviceRegistry.set("websocket", { name: "WebSocket", enabled: true, checkFn: checkWebSocketHealth });
+serviceRegistry.set("websocket", {
+  name: "WebSocket",
+  enabled: true,
+  checkFn: checkWebSocketHealth,
+});
 serviceRegistry.set("webhooks", { name: "Webhooks", enabled: true, checkFn: checkWebhookHealth });
 serviceRegistry.set("ml", { name: "ML Service", enabled: true, checkFn: checkMLHealth });
-serviceRegistry.set("backup", { name: "Backup Service", enabled: false, checkFn: checkBackupHealth });
+serviceRegistry.set("backup", {
+  name: "Backup Service",
+  enabled: false,
+  checkFn: checkBackupHealth,
+});
 serviceRegistry.set("ldap", { name: "AD/LDAP", enabled: false, checkFn: checkLDAPHealth });
-serviceRegistry.set("gateway", { name: "API Gateway", enabled: false, checkFn: checkGatewayHealth });
+serviceRegistry.set("gateway", {
+  name: "API Gateway",
+  enabled: false,
+  checkFn: checkGatewayHealth,
+});
 serviceRegistry.set("siem", { name: "SIEM", enabled: false, checkFn: checkSIEMHealth });
 
 // ============================================
@@ -427,10 +448,10 @@ export async function getOverallStatus(): Promise<{
   const metrics = getSystemMetrics();
 
   const summary = {
-    healthy: services.filter(s => s.status === "healthy").length,
-    degraded: services.filter(s => s.status === "degraded").length,
-    down: services.filter(s => s.status === "down").length,
-    unknown: services.filter(s => s.status === "unknown").length,
+    healthy: services.filter((s) => s.status === "healthy").length,
+    degraded: services.filter((s) => s.status === "degraded").length,
+    down: services.filter((s) => s.status === "down").length,
+    unknown: services.filter((s) => s.status === "unknown").length,
   };
 
   // Overall status is the worst status
@@ -466,8 +487,10 @@ export function trackRequest(isError = false) {
 
   // Clean up old entries (older than 1 minute)
   const oneMinuteAgo = now - 60000;
-  requestMetrics.lastMinuteRequests = requestMetrics.lastMinuteRequests.filter(t => t > oneMinuteAgo);
-  requestMetrics.lastMinuteErrors = requestMetrics.lastMinuteErrors.filter(t => t > oneMinuteAgo);
+  requestMetrics.lastMinuteRequests = requestMetrics.lastMinuteRequests.filter(
+    (t) => t > oneMinuteAgo
+  );
+  requestMetrics.lastMinuteErrors = requestMetrics.lastMinuteErrors.filter((t) => t > oneMinuteAgo);
 }
 
 function getRequestsPerMinute(): number {
@@ -569,9 +592,9 @@ export function registerService(
 }
 
 export {
-  ServiceStatus,
-  ServiceType,
-  ServiceHealth,
-  SystemMetrics,
+  type ServiceStatus,
+  type ServiceType,
+  type ServiceHealth,
+  type SystemMetrics,
   trackRequest,
 };

@@ -24,7 +24,7 @@ const config = {
   level: (process.env.LOG_LEVEL || "info") as LogLevel,
   syslogEnabled: process.env.SYSLOG_ENABLED === "true",
   syslogHost: process.env.SYSLOG_HOST || "localhost",
-  syslogPort: parseInt(process.env.SYSLOG_PORT || "514"),
+  syslogPort: parseInt(process.env.SYSLOG_PORT || "514", 10),
   syslogProtocol: process.env.SYSLOG_PROTOCOL || "udp", // udp, tcp
   appName: process.env.APP_NAME || "guardquote",
   remoteLogUrl: process.env.REMOTE_LOG_URL, // For external log aggregation
@@ -53,7 +53,7 @@ const levelPriority: Record<LogLevel, number> = {
 };
 
 // Syslog UDP socket (lazy init)
-let syslogSocket: any = null;
+const _syslogSocket: any = null;
 
 // ============================================
 // CORE LOGGING FUNCTIONS
@@ -122,8 +122,8 @@ function log(
 function formatConsoleLog(entry: LogEntry): string {
   const colors: Record<LogLevel, string> = {
     debug: "\x1b[36m", // Cyan
-    info: "\x1b[32m",  // Green
-    warn: "\x1b[33m",  // Yellow
+    info: "\x1b[32m", // Green
+    warn: "\x1b[33m", // Yellow
     error: "\x1b[31m", // Red
     fatal: "\x1b[35m", // Magenta
   };
@@ -155,7 +155,7 @@ function formatConsoleLog(entry: LogEntry): string {
  */
 async function sendToSyslog(entry: LogEntry) {
   try {
-    const priority = (SYSLOG_FACILITY * 8) + SYSLOG_SEVERITY[entry.level];
+    const priority = SYSLOG_FACILITY * 8 + SYSLOG_SEVERITY[entry.level];
     const timestamp = entry.timestamp.toISOString();
     const hostname = process.env.HOSTNAME || "localhost";
 
@@ -200,13 +200,13 @@ async function sendTCPSyslog(message: string) {
       port: config.syslogPort,
       socket: {
         data: () => {},
-        error: (socket, error) => {
+        error: (_socket, error) => {
           console.error("[Logging] TCP syslog error:", error);
         },
       },
     });
 
-    socket.write(message + "\n");
+    socket.write(`${message}\n`);
     socket.end();
   } catch (error) {
     console.error("[Logging] TCP syslog connection failed:", error);
@@ -236,7 +236,7 @@ async function sendToRemoteLog(entry: LogEntry) {
       }),
       signal: AbortSignal.timeout(5000),
     });
-  } catch (error) {
+  } catch (_error) {
     // Don't log errors about logging to avoid infinite loops
   }
 }
@@ -300,14 +300,20 @@ export function requestLogger() {
 
     const level: LogLevel = status >= 500 ? "error" : status >= 400 ? "warn" : "info";
 
-    log(level, "HTTP", `${method} ${path} ${status} ${duration}ms`, {
-      method,
-      path,
-      status,
-      duration,
-      userAgent: c.req.header("user-agent"),
-      ip: c.req.header("x-forwarded-for") || c.req.header("x-real-ip"),
-    }, traceId);
+    log(
+      level,
+      "HTTP",
+      `${method} ${path} ${status} ${duration}ms`,
+      {
+        method,
+        path,
+        status,
+        duration,
+        userAgent: c.req.header("user-agent"),
+        ip: c.req.header("x-forwarded-for") || c.req.header("x-real-ip"),
+      },
+      traceId
+    );
   };
 }
 
@@ -325,28 +331,25 @@ function generateTraceId(): string {
 /**
  * Get recent logs
  */
-export function getRecentLogs(options: {
-  limit?: number;
-  level?: LogLevel;
-  service?: string;
-  since?: Date;
-} = {}): LogEntry[] {
+export function getRecentLogs(
+  options: { limit?: number; level?: LogLevel; service?: string; since?: Date } = {}
+): LogEntry[] {
   let logs = [...logBuffer];
 
   // Filter by level
   if (options.level) {
     const minPriority = levelPriority[options.level];
-    logs = logs.filter(l => levelPriority[l.level] >= minPriority);
+    logs = logs.filter((l) => levelPriority[l.level] >= minPriority);
   }
 
   // Filter by service
   if (options.service) {
-    logs = logs.filter(l => l.service === options.service);
+    logs = logs.filter((l) => l.service === options.service);
   }
 
   // Filter by time
   if (options.since) {
-    logs = logs.filter(l => l.timestamp >= options.since);
+    logs = logs.filter((l) => l.timestamp >= options.since);
   }
 
   // Limit results
@@ -432,4 +435,4 @@ export const backupLogger = {
   error: (msg: string, meta?: Record<string, any>) => logger.error("Backup", msg, meta),
 };
 
-export { LogLevel, LogEntry, config as loggingConfig };
+export { type LogLevel, type LogEntry, config as loggingConfig };

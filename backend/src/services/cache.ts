@@ -136,7 +136,7 @@ export async function set(key: string, value: any, ttlSeconds = 300): Promise<bo
     // Fallback to memory cache
     memoryCache.set(key, {
       value: serialized,
-      expiresAt: Date.now() + (ttlSeconds * 1000),
+      expiresAt: Date.now() + ttlSeconds * 1000,
     });
     stats.sets++;
     return true;
@@ -188,7 +188,7 @@ export async function invalidate(pattern: string): Promise<number> {
     }
 
     // Fallback: pattern matching for memory cache
-    const regex = new RegExp("^" + pattern.replace(/\*/g, ".*") + "$");
+    const regex = new RegExp(`^${pattern.replace(/\*/g, ".*")}$`);
     let count = 0;
     for (const key of memoryCache.keys()) {
       if (regex.test(key)) {
@@ -325,7 +325,7 @@ export async function checkRateLimit(
         await redisClient.expire(key, windowSeconds);
       }
       const ttl = await redisClient.ttl(key);
-      const resetAt = now + (ttl * 1000);
+      const resetAt = now + ttl * 1000;
 
       return {
         allowed: count <= maxRequests,
@@ -363,7 +363,7 @@ export async function checkRateLimit(
       remaining: maxRequests - 1,
       resetAt,
     };
-  } catch (error) {
+  } catch (_error) {
     // On error, allow the request
     return {
       allowed: true,
@@ -381,9 +381,10 @@ export async function checkRateLimit(
  * Get cache statistics
  */
 export function getCacheStats() {
-  const hitRate = stats.hits + stats.misses > 0
-    ? Math.round((stats.hits / (stats.hits + stats.misses)) * 100)
-    : 0;
+  const hitRate =
+    stats.hits + stats.misses > 0
+      ? Math.round((stats.hits / (stats.hits + stats.misses)) * 100)
+      : 0;
 
   return {
     ...stats,

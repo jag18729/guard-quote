@@ -3,116 +3,112 @@
  * Import from here for clean imports
  */
 
-// WebSocket Service
+// Backup Service
 export {
-  handleOpen as wsHandleOpen,
-  handleMessage as wsHandleMessage,
-  handleClose as wsHandleClose,
-  broadcastToChannel,
-  broadcastToAdmins,
-  sendToClient,
-  broadcastToType,
-  getWSStats,
-  cleanupStaleConnections,
-  type WSClient,
-  type ConnectionType,
-  type SubscriptionChannel,
-} from "./websocket";
+  type BackupRecord,
+  backupConfig,
+  cleanupOldBackups,
+  createDataExport,
+  createFullBackup,
+  createRemoteBackup,
+  createSchemaBackup,
+  getBackupHistory,
+  getBackupStats,
+  listBackups,
+  restoreFromBackup,
+  startScheduledBackups,
+  stopScheduledBackups,
+} from "./backup";
 
 // Cache Service
 export {
-  get as cacheGet,
-  set as cacheSet,
-  del as cacheDel,
-  invalidate as cacheInvalidate,
-  getCacheStats,
-  clearAll as cacheClearAll,
-  checkRateLimit,
-  cacheMLPrediction,
-  getCachedMLPrediction,
-  cacheEventTypes,
-  getCachedEventTypes,
-  cacheLocations,
-  getCachedLocations,
   cacheDashboardStats,
-  getCachedDashboardStats,
+  cacheEventTypes,
+  cacheLocations,
+  cacheMLPrediction,
   cacheSession,
+  checkRateLimit,
+  clearAll as cacheClearAll,
+  del as cacheDel,
+  get as cacheGet,
+  getCachedDashboardStats,
+  getCachedEventTypes,
+  getCachedLocations,
+  getCachedMLPrediction,
   getCachedSession,
-  invalidateSession,
+  getCacheStats,
   initCache,
+  invalidate as cacheInvalidate,
+  invalidateSession,
+  set as cacheSet,
 } from "./cache";
-
-// Monitoring Service
-export {
-  getServiceHealth,
-  getAllServicesHealth,
-  getEnabledServicesHealth,
-  getSystemMetrics,
-  getOverallStatus,
-  trackRequest,
-  startHealthBroadcast,
-  stopHealthBroadcast,
-  enableService,
-  disableService,
-  registerService,
-  type ServiceStatus,
-  type ServiceType,
-  type ServiceHealth,
-  type SystemMetrics,
-} from "./monitor";
-
-// Backup Service
-export {
-  createFullBackup,
-  createSchemaBackup,
-  createDataExport,
-  createRemoteBackup,
-  restoreFromBackup,
-  listBackups,
-  cleanupOldBackups,
-  getBackupStats,
-  getBackupHistory,
-  startScheduledBackups,
-  stopScheduledBackups,
-  backupConfig,
-  type BackupRecord,
-} from "./backup";
-
-// Logging Service
-export {
-  logger,
-  requestLogger,
-  getRecentLogs,
-  getLogStats,
-  clearLogs,
-  apiLogger,
-  dbLogger,
-  wsLogger,
-  mlLogger,
-  backupLogger,
-  loggingConfig,
-  type LogLevel,
-  type LogEntry,
-} from "./logging";
-
 // Infrastructure Service
 export {
+  addNode,
   checkAllNodes,
+  discoverNetwork,
+  futureInfrastructure,
   getInfrastructureOverview,
   getNodeStatus,
-  addNode,
+  type InfraNode,
+  infrastructure,
+  type NodeStatus,
+  type NodeType,
   removeNode,
-  updateNode,
+  scanPorts,
   startMonitoring as startInfraMonitoring,
   stopMonitoring as stopInfraMonitoring,
-  scanPorts,
-  discoverNetwork,
-  infrastructure,
-  futureInfrastructure,
-  type NodeType,
-  type NodeStatus,
-  type InfraNode,
+  updateNode,
 } from "./infrastructure";
+// Logging Service
+export {
+  apiLogger,
+  backupLogger,
+  clearLogs,
+  dbLogger,
+  getLogStats,
+  getRecentLogs,
+  type LogEntry,
+  type LogLevel,
+  logger,
+  loggingConfig,
+  mlLogger,
+  requestLogger,
+  wsLogger,
+} from "./logging";
+// Monitoring Service
+export {
+  disableService,
+  enableService,
+  getAllServicesHealth,
+  getEnabledServicesHealth,
+  getOverallStatus,
+  getServiceHealth,
+  getSystemMetrics,
+  registerService,
+  type ServiceHealth,
+  type ServiceStatus,
+  type ServiceType,
+  type SystemMetrics,
+  startHealthBroadcast,
+  stopHealthBroadcast,
+  trackRequest,
+} from "./monitor";
+// WebSocket Service
+export {
+  broadcastToAdmins,
+  broadcastToChannel,
+  broadcastToType,
+  type ConnectionType,
+  cleanupStaleConnections,
+  getWSStats,
+  handleClose as wsHandleClose,
+  handleMessage as wsHandleMessage,
+  handleOpen as wsHandleOpen,
+  type SubscriptionChannel,
+  sendToClient,
+  type WSClient,
+} from "./websocket";
 
 // ============================================
 // SERVICE INITIALIZATION
@@ -121,12 +117,14 @@ export {
 /**
  * Initialize all services
  */
-export async function initializeServices(options: {
-  cache?: boolean;
-  healthBroadcast?: boolean;
-  scheduledBackups?: boolean;
-  infraMonitoring?: boolean;
-} = {}) {
+export async function initializeServices(
+  options: {
+    cache?: boolean;
+    healthBroadcast?: boolean;
+    scheduledBackups?: boolean;
+    infraMonitoring?: boolean;
+  } = {}
+) {
   const {
     cache = true,
     healthBroadcast = true,

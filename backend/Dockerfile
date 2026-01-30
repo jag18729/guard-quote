@@ -9,9 +9,9 @@ RUN bun install --frozen-lockfile --production
 COPY src ./src
 COPY tsconfig.json ./
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 bunjs && \
+# Create non-root user (Debian-based image)
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 --gid nodejs bunjs && \
     chown -R bunjs:nodejs /app
 
 USER bunjs

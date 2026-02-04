@@ -1,96 +1,157 @@
 # GuardQuote
 
-AI-powered cybersecurity assessment platform that generates personalized security recommendations based on user risk profiles.
+**ML-powered security service pricing platform**
 
-## Quick Start (Clone & Go)
+Get instant, accurate quotes for security services — from event security to executive protection.
 
-### Prerequisites
-
-- **Node.js 18+** or **Bun 1.0+** (recommended)
-- **PostgreSQL 14+** (optional - runs in demo mode without it)
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/jag18729/guard-quote.git
-cd guard-quote
-```
-
-### 2. Install Dependencies
-
-```bash
-# Backend
-cd backend
-bun install   # or: npm install
-
-# Frontend
-cd ../frontend
-bun install   # or: npm install
-```
-
-### 3. Set Up Environment
-
-```bash
-# Backend - copy example env
-cd backend
-cp .env.example .env
-```
-
-Edit `.env` if you have a database, or leave defaults for **Demo Mode**:
-
-```env
-# Demo Mode (no database required)
-DATABASE_URL=postgres://localhost/guardquote
-PORT=3000
-JWT_SECRET=dev-secret-change-in-production
-```
-
-### 4. Run the App
-
-**Terminal 1 - Backend:**
-```bash
-cd backend
-bun run dev   # or: npm run dev
-```
-
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
-bun run dev   # or: npm run dev
-```
-
-### 5. Open in Browser
-
-- **Frontend:** http://localhost:5173
-- **Backend API:** http://localhost:3000
-- **Admin Panel:** http://localhost:5173/admin
+🌐 **Production:** https://guardquote.vandine.us  
+📊 **Admin:** https://guardquote.vandine.us/admin
 
 ---
 
-## Demo Mode vs Live Mode
+## Overview
 
-The app shows a **status indicator** in the header:
+GuardQuote helps businesses get security quotes without the back-and-forth. Clients answer simple questions, our ML engine calculates fair pricing, and vetted professionals follow up within 24 hours.
 
-| Status | Meaning |
-|--------|---------|
-| 🟡 **Demo Mode** | No database connected - mock data used |
-| 🔵 **Local DB** | Connected to local PostgreSQL |
-| 🟢 **Live** | Connected to production database |
+### Key Features
 
-**Demo Mode Features:**
-- Quote form submission works (stored in session)
-- Personalized reports generated from form data
-- Admin panel accessible with default credentials
-- No data persistence between sessions
+| For Clients | For Admins |
+|-------------|------------|
+| ✅ 4-step quote wizard | 📊 Real-time dashboard |
+| ✅ Instant price estimates | 📋 Quote management |
+| ✅ No account required | 🧠 ML model controls |
+| ✅ Mobile responsive | 👥 User management |
+| | 🔧 Service monitoring |
+| | 📜 Request logging |
 
 ---
 
-## Default Login Credentials
+## Architecture
 
 ```
-Email:    admin@guardquote.com
-Password: admin123
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              INTERNET                                         │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         CLOUDFLARE EDGE                                       │
+│                                                                               │
+│   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────────────┐   │
+│   │   Cloudflare    │   │  guardquote-    │   │    vandine-tunnel       │   │
+│   │   Zero Trust    │   │  gateway        │   │                         │   │
+│   │   Access        │   │  (Worker)       │   │   Argo Tunnel to Pi1    │   │
+│   │                 │   │                 │   │                         │   │
+│   │  • Email auth   │   │  • Rate limit   │   │   guardquote.vandine.us │   │
+│   │  • Admin only   │   │  • API keys     │   │   → localhost:3002      │   │
+│   │                 │   │  • Logging      │   │   → localhost:80        │   │
+│   └─────────────────┘   └─────────────────┘   └─────────────────────────┘   │
+│                                                                               │
+└──────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    │ Secure Tunnel
+                                    ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         PI CLUSTER (Home Lab)                                 │
+│                                                                               │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │                    PI1 - Services Host                               │   │
+│   │                    192.168.2.70 (Raspbian 12)                        │   │
+│   │                                                                      │   │
+│   │   ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐           │   │
+│   │   │  nginx   │  │ GuardQt  │  │ Postgres │  │  Docker  │           │   │
+│   │   │   :80    │  │   API    │  │  :5432   │  │ Services │           │   │
+│   │   │          │  │  :3002   │  │          │  │          │           │   │
+│   │   │ Frontend │  │ Node.js  │  │ Quotes   │  │ Grafana  │           │   │
+│   │   │  React   │  │  Hono    │  │ Users    │  │ Prom/Loki│           │   │
+│   │   └──────────┘  └──────────┘  └──────────┘  └──────────┘           │   │
+│   │                                                                      │   │
+│   │   Files:                                                             │   │
+│   │   • Frontend: /var/www/guardquote/                                   │   │
+│   │   • Backend:  ~/guard-quote/backend/                                 │   │
+│   │   • Logs:     journalctl -u guardquote                               │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                               │
+│   ┌─────────────────────────────────────────────────────────────────────┐   │
+│   │                    PI0 - Monitoring Host                             │   │
+│   │                    192.168.2.101 (Ubuntu 25.10)                      │   │
+│   │                                                                      │   │
+│   │   • WireGuard VPN (:51820)    • NFS Server (:2049)                  │   │
+│   │   • Rsyslog (:514)            • GitHub Runner                        │   │
+│   │   • NetFlow (:2055)           • Node Exporter (:9100)               │   │
+│   └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                               │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Tech Stack
+
+### Frontend (`/frontend`)
+| Technology | Purpose |
+|------------|---------|
+| React 18 | UI framework |
+| TypeScript | Type safety |
+| Vite | Build tool |
+| TailwindCSS | Styling |
+| React Router 7 | Navigation |
+| Lucide React | Icons |
+| Framer Motion | Animations |
+
+### Backend (Pi1)
+| Technology | Purpose |
+|------------|---------|
+| Node.js 22 | Runtime |
+| Hono | API framework |
+| PostgreSQL | Database |
+| bcrypt | Password hashing |
+| tsx | TypeScript execution |
+
+### Infrastructure
+| Service | Purpose |
+|---------|---------|
+| Cloudflare Tunnel | Secure ingress |
+| Cloudflare Access | Zero Trust auth |
+| Cloudflare Workers | API gateway |
+| Pi Cluster | Self-hosted compute |
+
+---
+
+## ML Engine
+
+### Current Model: v2.0 (Formula-Based)
+
+```
+Price = BaseRate × RiskMultiplier × LocationModifier × Hours × Guards
+```
+
+| Factor | Source | Example |
+|--------|--------|---------|
+| BaseRate | Event type lookup | Concert: $45/hr |
+| RiskMultiplier | Event risk level | High risk: 1.3x |
+| LocationModifier | City/region data | Hollywood: 1.35x |
+| Hours | User input | 8 hours |
+| Guards | Calculated/input | 4 guards |
+
+### Features
+- **Risk scoring** (0-10 scale)
+- **Confidence scores** (70-95%)
+- **Price ranges** (±15% estimates)
+- **Recommended guards** (crowd-based)
+
+### Training Data
+- 500+ historical quotes
+- 15 event types
+- 28 locations
+- Acceptance/rejection tracking
+
+### Admin Controls
+- View model status
+- Browse training data
+- Export datasets (JSON)
+- Rollback to previous versions
+- Trigger retraining
 
 ---
 
@@ -98,241 +159,214 @@ Password: admin123
 
 ```
 guard-quote/
-├── backend/                 # Bun + Hono API
+├── .github/
+│   ├── CODEOWNERS           # Auto-request reviews
+│   └── workflows/
+│       └── frontend-ci.yml  # CI for frontend
+├── frontend/                # React application
 │   ├── src/
-│   │   ├── index.ts        # Main server & routes
-│   │   └── db/             # Database schema
-│   ├── .env.example        # Environment template
-│   └── package.json
-│
-├── frontend/               # React + Vite + TypeScript
-│   ├── src/
-│   │   ├── pages/          # Page components
-│   │   │   ├── IndividualQuote.tsx   # 4-step quote wizard
-│   │   │   ├── Report.tsx            # Personalized report
-│   │   │   └── admin/                # Admin pages
-│   │   ├── components/     # Reusable components
-│   │   ├── layouts/        # Page layouts
-│   │   ├── context/        # React context (auth)
-│   │   └── router/         # Route definitions
-│   └── package.json
-│
-└── ml-engine/              # Python ML service (optional)
-    └── ...
+│   │   ├── context/         # Auth state
+│   │   ├── layouts/         # Page shells
+│   │   └── pages/
+│   │       ├── Landing.tsx      # Public homepage
+│   │       ├── QuoteForm.tsx    # Quote wizard
+│   │       ├── Login.tsx        # Admin login
+│   │       └── admin/
+│   │           ├── Dashboard.tsx
+│   │           ├── QuoteRequests.tsx
+│   │           ├── ML.tsx       # ML management
+│   │           ├── Users.tsx
+│   │           ├── Services.tsx
+│   │           └── Logs.tsx
+│   ├── package.json
+│   └── vite.config.ts
+├── backend/                 # Node.js API (on Pi1)
+├── ml-engine/               # ML components
+├── CONTRIBUTING.md
+└── README.md
 ```
 
 ---
 
-## Features
+## Quick Start
 
-### Public Pages
-- **Landing Page** - Service overview with CTA
-- **Quote Wizard** - 4-step personalized assessment
-- **Security Report** - AI-generated recommendations based on:
-  - Current protection (antivirus, VPN, 2FA, etc.)
-  - Device count & usage patterns
-  - Work-from-home status
-  - Budget constraints
-  - Technical comfort level
+### Prerequisites
+- Node.js 20+ or Bun
+- Git
 
-### Admin Dashboard
-- **Quote Requests** - View and manage submissions
-- **User Management** - Create admin accounts
-- **Status Overview** - Request pipeline visualization
-- **Quick Actions** - Common tasks
-
----
-
-## Database Setup (Optional)
-
-If you want data persistence, set up PostgreSQL:
-
-### Local PostgreSQL
+### Development
 
 ```bash
-# macOS
-brew install postgresql
-brew services start postgresql
-createdb guardquote
+# Clone
+git clone https://github.com/jag18729/guard-quote.git
+cd guard-quote/frontend
 
-# Run migrations
-cd backend
-psql -d guardquote -f src/db/schema.sql
+# Install
+npm install
+
+# Run dev server (proxies to production API)
+npm run dev
+# → http://localhost:5173
+
+# Build
+npm run build
 ```
 
-Update `.env`:
-```env
-DATABASE_URL=postgres://localhost/guardquote
-```
+### Local API Development
 
-### Docker (Alternative)
-
+If working on the backend locally:
 ```bash
-docker run -d \
-  --name guardquote-db \
-  -e POSTGRES_DB=guardquote \
-  -e POSTGRES_PASSWORD=password \
-  -p 5432:5432 \
-  postgres:15
+# Create .env.local in frontend/
+echo "VITE_API_URL=http://localhost:3002" > .env.local
 
-# Update .env
-DATABASE_URL=postgres://postgres:password@localhost:5432/guardquote
+# Run frontend
+npm run dev
 ```
 
 ---
 
-## API Endpoints
+## Deployment
 
-### Public
+### Frontend (to Pi1)
+
+```bash
+cd frontend
+npm run build
+scp -r dist/* pi1:/var/www/guardquote/
+```
+
+### Backend (on Pi1)
+
+```bash
+ssh pi1
+cd ~/guard-quote/backend
+sudo systemctl restart guardquote
+```
+
+### CI/CD
+
+GitHub Actions runs on every push:
+1. **Type check** - TypeScript validation
+2. **Build** - Vite production build
+3. **Artifacts** - Upload dist/ for 7 days
+
+---
+
+## API Reference
+
+### Public Endpoints
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/health` | Health check |
-| GET | `/api/status` | System status (mode, connections) |
-| POST | `/api/quote-requests` | Submit quote (creates user + request) |
-| POST | `/api/auth/login` | Login |
-| POST | `/api/auth/register` | User signup |
+| GET | `/api/health` | Health check |
+| POST | `/api/predict` | Get price prediction |
+| POST | `/api/auth/login` | Admin authentication |
 
-### Admin (requires auth)
+### Admin Endpoints (auth required)
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/admin/stats` | Dashboard statistics |
-| GET | `/api/admin/quote-requests` | List all requests |
-| PATCH | `/api/admin/quote-requests/:id` | Update request status |
-| GET | `/api/admin/users` | List users |
-| POST | `/api/admin/users` | Create user |
+| GET | `/api/admin/quote-requests` | List all quotes |
+| PATCH | `/api/admin/quote-requests/:id` | Update quote status |
+| GET | `/api/admin/users` | List admin users |
+| POST | `/api/admin/users` | Create admin user |
+| GET | `/api/admin/services` | System services |
+| GET | `/api/admin/services/system` | Pi1 system metrics |
+| GET | `/api/admin/logs` | Request logs |
+| GET | `/api/admin/ml/status` | ML model status |
+| GET | `/api/admin/ml/training-data` | Training dataset |
+| GET | `/api/admin/ml/training-stats` | Training statistics |
+| POST | `/api/admin/ml/rollback` | Rollback model |
+| POST | `/api/admin/ml/retrain` | Trigger retraining |
+| GET | `/api/admin/ml/export` | Export training data |
 
----
+### Example: Price Prediction
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 19, Vite, TypeScript, React Router |
-| Backend | Bun, Hono, PostgreSQL |
-| Auth | JWT (access + refresh tokens) |
-| Styling | CSS Modules |
-| Forms | React Hook Form |
-
----
-
-## Development
-
-### Run Linting
 ```bash
-# Frontend (ESLint + Prettier)
-cd frontend && bun run lint
-
-# Backend (Biome)
-cd backend && bun run lint
+curl -X POST https://guardquote.vandine.us/api/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_type": "CONCERT",
+    "location": "Hollywood",
+    "duration_hours": 8,
+    "num_guards": 4,
+    "crowd_size": 2000
+  }'
 ```
 
-### Run Tests
-```bash
-# Frontend (Vitest - 5 tests)
-cd frontend && bun run test
-
-# Backend (Bun Test - 7 tests)
-cd backend && bun test
-```
-
-### Build for Production
-```bash
-cd frontend && bun run build
-```
-
-### Docker Build
-```bash
-docker build -t guardquote-frontend ./frontend
-docker build -t guardquote-backend ./backend
-docker build -t guardquote-ml ./ml-engine
-```
-
-### Environment Variables
-
-**Backend (.env):**
-```env
-DATABASE_URL=postgres://user:pass@host:5432/db
-PORT=3000
-JWT_SECRET=your-secret-key
-ML_ENGINE_URL=http://localhost:8000  # optional
+Response:
+```json
+{
+  "prediction": {
+    "total_price": 2527.20,
+    "price_low": 2148.12,
+    "price_high": 2906.28,
+    "hourly_rate": 78.98,
+    "risk_score": 6,
+    "risk_level": "medium",
+    "confidence_score": 95,
+    "recommended_guards": 8
+  },
+  "event_type": { "code": "CONCERT", "name": "Concert/Live Music" },
+  "location": { "city": "Hollywood", "state": "CA", "risk_zone": "high" }
+}
 ```
 
 ---
 
-## Troubleshooting
+## Branch Strategy
 
-### "Cannot connect to database"
-- This is fine! The app runs in **Demo Mode** without a database
-- Check the status indicator in the header
-
-### "Port 3000 already in use"
-```bash
-lsof -ti :3000 | xargs kill -9
+```
+main (production)     ← Protected: PR + approval + CI
+  │
+  └── dev (staging)   ← Integration branch
+        │
+        ├── feature/xyz
+        ├── fix/abc
+        └── ...
 ```
 
-### "Module not found"
-```bash
-cd backend && bun install
-cd frontend && bun install
-```
-
-### Admin login not working
-- Use default credentials: `admin@guardquote.com` / `admin123`
-- Or check if database has the admin user seeded
+| Branch | Purpose | Protection |
+|--------|---------|------------|
+| `main` | Production | PR required, 1 approval, CI must pass |
+| `dev` | Staging | Open for development |
+| `feature/*` | New features | PR to dev |
+| `fix/*` | Bug fixes | PR to dev |
 
 ---
 
-## CI/CD
+## Contributing
 
-GitHub Actions workflows in `.github/workflows/`:
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for:
+- Workflow guidelines
+- Code style
+- Do's and don'ts
+- Getting help
 
-| Workflow | Trigger | Status |
-|----------|---------|--------|
-| `pr-check.yml` | Push/PR to main | ✅ Active |
-| `integration.yml.disabled` | — | ⏸️ Disabled |
+---
 
-**PR Check** runs 4 jobs on every push:
+## Security
 
-| Job | Steps |
-|-----|-------|
-| `lint-backend` | Install → Biome lint → TypeCheck |
-| `lint-frontend` | Install → ESLint → TypeCheck → Vitest → Build |
-| `test-ml-engine` | Install → Ruff → Pytest |
-| `docker-build` | Build all 3 Dockerfiles |
+- **Admin access**: Cloudflare Zero Trust (email verification)
+- **API protection**: Rate limiting via Cloudflare Worker
+- **Passwords**: bcrypt hashed
+- **Branch protection**: PRs required for production
 
-**Integration Tests** (disabled) require:
-- Self-hosted runner on local network
-- Access to Pi1 (192.168.2.70) for PostgreSQL/Redis
-
-To re-enable: rename `integration.yml.disabled` → `integration.yml`
-
-## Docker
-
-All services have Dockerfiles:
-
-| Service | Base Image | Port |
-|---------|------------|------|
-| Frontend | `nginx:alpine` | 80 |
-| Backend | `oven/bun:latest` | 3000 |
-| ML Engine | `python:3.12-slim` | 8000 |
-
-```bash
-# Build and run with docker-compose
-docker-compose up -d
-
-# Or build individually
-docker build -t guardquote-frontend ./frontend
-docker build -t guardquote-backend ./backend
-docker build -t guardquote-ml ./ml-engine
-```
+Report security issues to: john@vandine.us
 
 ---
 
 ## Team
 
-Built for CIT 480 - California State University, Northridge
+| Role | Contact |
+|------|---------|
+| Project Lead | John (john@vandine.us) |
+| Infrastructure | Cloudflare + Pi Cluster |
+| Repository | https://github.com/jag18729/guard-quote |
+
+---
 
 ## License
 
-MIT
-
+Private - Vandine Infrastructure

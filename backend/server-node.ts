@@ -660,15 +660,16 @@ app.get("/api/admin/ml/status", async (c) => {
     
     // Get model versions (stored in a simple way for now)
     const versions = [
-      { version: "v2.0", type: "formula-based", date: "2026-02-03", active: true, accuracy: 94.5 },
+      { version: "v3.0", type: "formula-based", date: "2026-02-04", active: true, accuracy: 94.5 },
+      { version: "v2.0", type: "formula-based", date: "2026-02-03", active: false, accuracy: 92.1 },
       { version: "v1.0", type: "formula-based", date: "2026-01-15", active: false, accuracy: 89.2 },
     ];
     
     return c.json({
       currentModel: {
-        version: "v2.0",
+        version: "v3.0",
         type: "formula-based",
-        lastUpdated: "2026-02-03",
+        lastUpdated: "2026-02-04",
         status: "active"
       },
       trainingData: {
@@ -767,7 +768,7 @@ app.get("/api/admin/ml/export", async (c) => {
     const data = await sql`SELECT * FROM ml_training_data ORDER BY id`;
     return c.json({ 
       exportedAt: new Date().toISOString(),
-      version: "v2.0",
+      version: "v3.0",
       recordCount: data.length,
       data 
     });

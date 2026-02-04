@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 interface User {
   id: number;
@@ -10,151 +10,67 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => void;
   isLoading: boolean;
-  isAuthenticated: boolean;
-  isAdmin: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => Promise<void>;
-  refreshAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const TOKEN_KEY = "guardquote_access_token";
-const REFRESH_KEY = "guardquote_refresh_token";
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
   const [isLoading, setIsLoading] = useState(true);
 
-  const clearAuth = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_KEY);
-    setUser(null);
-  }, []);
-
-  const refreshAuth = useCallback(async () => {
-    const refreshToken = localStorage.getItem(REFRESH_KEY);
-    if (!refreshToken) {
-      clearAuth();
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/auth/refresh", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      if (!res.ok) {
-        clearAuth();
-        return;
-      }
-
-      const data = await res.json();
-      localStorage.setItem(TOKEN_KEY, data.accessToken);
-      setUser(data.user);
-    } catch {
-      clearAuth();
-    }
-  }, [clearAuth]);
-
-  // Check auth on mount
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem(TOKEN_KEY);
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
+    if (token) {
+      fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
+        .then((res) => res.ok ? res.json() : Promise.reject())
+        .then((data) => setUser(data.user || data))
+        .catch(() => { setToken(null); localStorage.removeItem("token"); })
+        .finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
+    }
+  }, [token]);
 
-      try {
-        const res = await fetch("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-        } else if (res.status === 401) {
-          // Try refresh
-          await refreshAuth();
-        } else {
-          clearAuth();
-        }
-      } catch {
-        clearAuth();
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, [refreshAuth, clearAuth]);
-
-  const login = useCallback(async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
+      if (!res.ok) return false;
       const data = await res.json();
-
-      if (!res.ok) {
-        return { success: false, error: data.error || "Login failed" };
-      }
-
-      localStorage.setItem(TOKEN_KEY, data.accessToken);
-      localStorage.setItem(REFRESH_KEY, data.refreshToken);
+      setToken(data.token);
       setUser(data.user);
+      localStorage.setItem("token", data.token);
+      return true;
+    } catch { return false; }
+  };
 
-      return { success: true };
-    } catch (_error) {
-      return { success: false, error: "Network error" };
-    }
-  }, []);
-
-  const logout = useCallback(async () => {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (token) {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => {});
-    }
-    clearAuth();
-  }, [clearAuth]);
+  const logout = () => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem("token");
+  };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        isAdmin: user?.role === "admin",
-        login,
-        logout,
-        refreshAuth,
-      }}
-    >
+    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  return ctx;
 }
 
-// Helper to get auth headers for API calls
 export function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem(TOKEN_KEY);
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
 }

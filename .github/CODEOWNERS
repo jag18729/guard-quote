@@ -1,0 +1,12 @@
+# Code Owners - require review from John for all changes
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @jag18729
+
+# Critical paths - definitely need John's approval
+/src/context/         @jag18729
+/src/layouts/         @jag18729
+/.github/             @jag18729
+/package.json         @jag18729
+/vite.config.ts       @jag18729

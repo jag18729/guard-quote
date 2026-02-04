@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuardQuote Architecture</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            padding: 40px;
+            color: #e0e0e0;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #f97316, #fb923c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+        .diagram {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .zone {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+        }
+        .zone-label {
+            position: absolute;
+            top: -12px;
+            left: 24px;
+            background: #1a1a2e;
+            padding: 4px 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-radius: 4px;
+        }
+        .zone-internet .zone-label { color: #60a5fa; border: 1px solid #60a5fa; }
+        .zone-cloudflare .zone-label { color: #f97316; border: 1px solid #f97316; }
+        .zone-home .zone-label { color: #22c55e; border: 1px solid #22c55e; }
+        
+        .services {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .service {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 16px 20px;
+            min-width: 160px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .service:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.2);
+        }
+        .service-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        .service-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+        }
+        .service-desc {
+            font-size: 0.75rem;
+            color: #888;
+            line-height: 1.4;
+        }
+        .service-port {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.7rem;
+            color: #f97316;
+            margin-top: 6px;
+        }
+        
+        /* Zone-specific colors */
+        .zone-internet .service { border-color: rgba(96, 165, 250, 0.3); }
+        .zone-cloudflare .service { border-color: rgba(249, 115, 22, 0.3); }
+        .zone-home .service { border-color: rgba(34, 197, 94, 0.3); }
+        
+        .arrow {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            color: #666;
+        }
+        .arrow svg {
+            width: 40px;
+            height: 40px;
+        }
+        .arrow-label {
+            font-size: 0.75rem;
+            color: #888;
+            margin: 0 12px;
+        }
+        
+        .host-group {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+        .host-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .host-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .host-ip {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .host-os {
+            font-size: 0.75rem;
+            color: #888;
+        }
+        
+        .flow-section {
+            margin-top: 40px;
+            padding: 24px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+        }
+        .flow-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #f97316;
+        }
+        .flow-steps {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 10px 0;
+        }
+        .flow-step {
+            flex: 0 0 200px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+        }
+        .flow-step::after {
+            content: '→';
+            position: absolute;
+            right: -16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-size: 1.5rem;
+        }
+        .flow-step:last-child::after { display: none; }
+        .step-num {
+            background: #f97316;
+            color: #000;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .step-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+        .step-desc {
+            font-size: 0.75rem;
+            color: #888;
+            line-height: 1.4;
+        }
+        
+        .legend {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 0.8rem;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+        .legend-internet { background: #60a5fa; }
+        .legend-cloudflare { background: #f97316; }
+        .legend-home { background: #22c55e; }
+
+        .urls {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+        .url-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .url-name { font-weight: 500; }
+        .url-value {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>GuardQuote Architecture</h1>
+    <p class="subtitle">Infrastructure Overview for Development Team</p>
+    
+    <div class="diagram">
+        <!-- Internet Zone -->
+        <div class="zone zone-internet">
+            <div class="zone-label">🌐 Internet</div>
+            <div class="services">
+                <div class="service">
+                    <div class="service-icon">👤</div>
+                    <div class="service-name">Client</div>
+                    <div class="service-desc">Business owner requesting security quote</div>
+                </div>
+                <div class="service">
+                    <div class="service-icon">👨‍💼</div>
+                    <div class="service-name">Admin</div>
+                    <div class="service-desc">Team member managing quotes & system</div>
+                </div>
+                <div class="service">
+                    <div class="service-icon">🤖</div>
+                    <div class="service-name">API Consumer</div>
+                    <div class="service-desc">External integrations via API</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12l7 7 7-7"/>
+            </svg>
+            <span class="arrow-label">HTTPS (443)</span>
+        </div>
+        
+        <!-- Cloudflare Zone -->
+        <div class="zone zone-cloudflare">
+            <div class="zone-label">☁️ Cloudflare Edge</div>
+            <div class="services">
+                <div class="service">
+                    <div class="service-icon">🌍</div>
+                    <div class="service-name">DNS</div>
+                    <div class="service-desc">guardquote.vandine.us<br>→ Cloudflare proxy</div>
+                </div>
+                <div class="service">
+                    <div class="service-icon">⚡</div>
+                    <div class="service-name">CDN</div>
+                    <div class="service-desc">Static asset caching<br>Global edge network</div>
+                </div>
+                <div class="service">
+                    <div class="service-icon">🔐</div>
+                    <div class="service-name">Zero Trust Access</div>
+                    <div class="service-desc">Email verification<br>for /admin routes</div>
+                </div>
+                <div class="service">
+                    <div class="service-icon">🛡️</div>
+                    <div class="service-name">API Gateway</div>
+                    <div class="service-desc">guardquote-gateway Worker<br>Rate limiting: 100 req/min</div>
+                </div>
+                <div class="service">
+                    <div class="service-icon">🚇</div>
+                    <div class="service-name">Argo Tunnel</div>
+                    <div class="service-desc">vandine-tunnel<br>Secure connection to Pi1</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12l7 7 7-7"/>
+            </svg>
+            <span class="arrow-label">Encrypted Tunnel (No port forwarding needed)</span>
+        </div>
+        
+        <!-- Home Zone -->
+        <div class="zone zone-home">
+            <div class="zone-label">🏠 Home Network (192.168.2.0/27)</div>
+            
+            <!-- PI1 -->
+            <div class="host-group">
+                <div class="host-header">
+                    <div class="service-icon">🍓</div>
+                    <div class="host-name">PI1 - Services Host</div>
+                    <div class="host-ip">192.168.2.70</div>
+                    <div class="host-os">Raspbian 12 (32-bit)</div>
+                </div>
+                <div class="services">
+                    <div class="service">
+                        <div class="service-icon">🌐</div>
+                        <div class="service-name">nginx</div>
+                        <div class="service-desc">Frontend static files<br>/var/www/guardquote/</div>
+                        <div class="service-port">:80</div>
+                    </div>
+                    <div class="service">
+                        <div class="service-icon">⚙️</div>
+                        <div class="service-name">GuardQuote API</div>
+                        <div class="service-desc">Node.js + Hono<br>~/guard-quote/backend/</div>
+                        <div class="service-port">:3002</div>
+                    </div>
+                    <div class="service">
+                        <div class="service-icon">🐘</div>
+                        <div class="service-name">PostgreSQL</div>
+                        <div class="service-desc">Quotes, users, ML data<br>Docker container</div>
+                        <div class="service-port">:5432</div>
+                    </div>
+                    <div class="service">
+                        <div class="service-icon">📊</div>
+                        <div class="service-name">Grafana</div>
+                        <div class="service-desc">Metrics dashboards<br>Docker container</div>
+                        <div class="service-port">:3000</div>
+                    </div>
+                    <div class="service">
+                        <div class="service-icon">📈</div>
+                        <div class="service-name">Prometheus</div>
+                        <div class="service-desc">Metrics collection<br>Docker container</div>
+                        <div class="service-port">:9090</div>
+                    </div>
+                    <div class="service">
+                        <div class="service-icon">🔗</div>
+                        <div class="service-name">cloudflared</div>
+                        <div class="service-desc">Tunnel daemon<br>systemd service</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- PI0 -->
+            <div class="host-group">
+                <div class="host-header">
+                    <div class="service-icon">🍓</div>
+                    <div class="host-name">PI0 - Monitoring Host</div>
+                    <div class="host-ip">192.168.2.101</div>
+                    <div class="host-os">Ubuntu 25.10 (64-bit)</div>
+                </div>
+                <div class="services">
+                    <div class="service">
+                        <div class="service-icon">🔒</div>
+                        <div class="service-name">WireGuard VPN</div>
+                        <div class="service-desc">Remote access<br>4 clients configured</div>
+                        <div class="service-port">:51820</div>
+                    </div>
+                    <div class="service">
+                        <div class="service-icon">📝</div>
+                        <div class="service-name">Rsyslog</div>
+                        <div class="service-desc">Central logging<br>All devices</div>
+                        <div class="service-port">:514</div>
+                    </div>
+                    <div class="service">
+                        <div class="service-icon">📡</div>
+                        <div class="service-name">NetFlow</div>
+                        <div class="service-desc">Traffic analysis<br>nfcapd collector</div>
+                        <div class="service-port">:2055</div>
+                    </div>
+                    <div class="service">
+                        <div class="service-icon">💾</div>
+                        <div class="service-name">NFS Server</div>
+                        <div class="service-desc">Shared storage<br>/srv/nfs/</div>
+                        <div class="service-port">:2049</div>
+                    </div>
+                    <div class="service">
+                        <div class="service-icon">🔄</div>
+                        <div class="service-name">GitHub Runner</div>
+                        <div class="service-desc">Self-hosted CI/CD<br>actions-runner</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Request Flow -->
+        <div class="flow-section">
+            <div class="flow-title">📍 Request Flow: Client Gets a Quote</div>
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <div class="step-num">1</div>
+                    <div class="step-title">Client visits site</div>
+                    <div class="step-desc">Browser → guardquote.vandine.us</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">2</div>
+                    <div class="step-title">Cloudflare DNS</div>
+                    <div class="step-desc">Resolves to CF edge, assets cached</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">3</div>
+                    <div class="step-title">React loads</div>
+                    <div class="step-desc">SPA from nginx via tunnel</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">4</div>
+                    <div class="step-title">Quote form</div>
+                    <div class="step-desc">Client fills 4-step wizard</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">5</div>
+                    <div class="step-title">API call</div>
+                    <div class="step-desc">POST /api/predict → Worker → API</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">6</div>
+                    <div class="step-title">ML prediction</div>
+                    <div class="step-desc">Formula calculates price, risk, confidence</div>
+                </div>
+                <div class="flow-step">
+                    <div class="step-num">7</div>
+                    <div class="step-title">Response</div>
+                    <div class="step-desc">Price range shown to client</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- URLs Reference -->
+        <div class="flow-section">
+            <div class="flow-title">🔗 Key URLs</div>
+            <div class="urls">
+                <div class="url-item">
+                    <span class="url-name">Production</span>
+                    <span class="url-value">https://guardquote.vandine.us</span>
+                </div>
+                <div class="url-item">
+                    <span class="url-name">Admin Dashboard</span>
+                    <span class="url-value">https://guardquote.vandine.us/admin</span>
+                </div>
+                <div class="url-item">
+                    <span class="url-name">API Health</span>
+                    <span class="url-value">https://guardquote.vandine.us/api/health</span>
+                </div>
+                <div class="url-item">
+                    <span class="url-name">Grafana (internal)</span>
+                    <span class="url-value">http://192.168.2.70:3000</span>
+                </div>
+                <div class="url-item">
+                    <span class="url-name">GitHub Repo</span>
+                    <span class="url-value">github.com/jag18729/guard-quote</span>
+                </div>
+                <div class="url-item">
+                    <span class="url-name">Local Dev</span>
+                    <span class="url-value">http://localhost:5173</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color legend-internet"></div>
+                <span>Public Internet</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-cloudflare"></div>
+                <span>Cloudflare Edge</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-home"></div>
+                <span>Home Network</span>
+            </div>
+        </div>
+    </div>
+    
+    <p style="text-align: center; margin-top: 40px; color: #666; font-size: 0.8rem;">
+        GuardQuote Architecture Diagram • Updated Feb 2026 • Vandine Infrastructure
+    </p>
+</body>
+</html>

@@ -56,6 +56,7 @@ const infrastructure = {
         { name: "rsyslog", port: 514, desc: "Syslog receiver", status: "running" },
         { name: "nfcapd", port: 2055, desc: "NetFlow", status: "error" },
         { name: "cloudflared", port: null, desc: "CF Tunnel", status: "running" },
+        { name: "nettools", port: 7681, desc: "Bastion/ttyd", status: "running" },
       ],
       uptime: "7d 4h",
     },
@@ -75,6 +76,7 @@ const infrastructure = {
         { name: "Loki", port: 3100, status: "running" },
         { name: "Alertmanager", port: 9093, status: "running" },
         { name: "Node Exporter", port: 9100, status: "running" },
+        { name: "SNMP Exporter", port: 9116, desc: "UDM/PA-220 metrics", status: "running" },
         { name: "cloudflared", port: null, desc: "CF Tunnel", status: "running" },
       ],
       uptime: "3d 12h",
@@ -101,12 +103,14 @@ const infrastructure = {
       name: "UDM (Core Router)",
       ip: "192.168.2.1",
       role: "DHCP, Routing, WiFi",
+      snmp: "v3 (SHA/AES)",
     },
     pa220: {
       name: "PA-220 Firewall",
       ip: "192.168.2.14",
       role: "Edge Security",
-      note: "SNMP not configured",
+      snmp: "v2c (matrixlab)",
+      note: "SNMP configured",
     },
   },
 
@@ -153,6 +157,7 @@ const quickCommands = {
     { label: "Ping pi0", cmd: "tailscale ping pi0", desc: "Via Tailscale" },
     { label: "Ping pi1", cmd: "tailscale ping pi1", desc: "Via Tailscale" },
     { label: "Check tunnel", cmd: "ssh pi1 'systemctl status cloudflared'", desc: "CF Tunnel" },
+    { label: "Nettools shell", cmd: "ssh pi0 'docker exec -it nettools bash'", desc: "Bastion container" },
   ],
 };
 
@@ -274,12 +279,13 @@ export default function NetworkPage() {
               Active Data Flows
             </h3>
             <div className="grid md:grid-cols-3 gap-4">
-              <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
-                <h4 className="font-medium text-orange-400 mb-2">SNMP Metrics</h4>
+              <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <h4 className="font-medium text-green-400 mb-2">SNMP Metrics ✓</h4>
                 <ul className="text-sm space-y-1 text-text-secondary">
-                  <li>• UDM → SNMPv3 (SHA/AES) → Prometheus</li>
-                  <li>• PA-220 → SNMPv2c → Prometheus</li>
-                  <li>• Interface stats, system info</li>
+                  <li>• UDM → SNMPv3 (SHA/AES) → :9116 → Prometheus</li>
+                  <li>• PA-220 → SNMPv2c (matrixlab) → :9116 → Prometheus</li>
+                  <li>• Interface stats, uptime, system info</li>
+                  <li className="text-green-400">• All targets UP</li>
                 </ul>
               </div>
               <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
@@ -297,6 +303,46 @@ export default function NetworkPage() {
                   <li>• FIM, rootkit, vulnerability scan</li>
                   <li>• Awaiting manager address</li>
                 </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Nettools Bastion */}
+          <div className="bg-surface border border-border rounded-xl p-5">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <Terminal className="w-4 h-4 text-accent" />
+              Nettools Bastion (pi0)
+            </h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-text-secondary mb-3">
+                  Web-based terminal with network diagnostic tools. Access via browser or SSH into container.
+                </p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-text-muted w-20">Image:</span>
+                    <code className="text-xs text-green-400">nicolaka/netshoot:latest</code>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-text-muted w-20">Port:</span>
+                    <code className="text-xs text-accent">7681 (ttyd)</code>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-text-muted w-20">Access:</span>
+                    <a href="https://nettools.vandine.us" target="_blank" rel="noopener noreferrer" 
+                       className="text-xs text-accent hover:underline flex items-center gap-1">
+                      nettools.vandine.us <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div className="p-3 bg-elevated rounded-lg">
+                <div className="text-xs text-text-muted mb-2">Available Tools</div>
+                <div className="flex flex-wrap gap-1">
+                  {["nmap", "tcpdump", "mtr", "iperf3", "curl", "dig", "netstat", "ss", "ip", "traceroute", "nslookup", "whois"].map(tool => (
+                    <span key={tool} className="px-2 py-0.5 bg-void rounded text-xs font-mono text-green-400">{tool}</span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -401,6 +447,7 @@ export default function NetworkPage() {
                   <div className="flex justify-between"><span>LAM UI</span><span className="text-green-400">:8080</span></div>
                   <div className="flex justify-between"><span>rsyslog</span><span className="text-green-400">:514</span></div>
                   <div className="flex justify-between"><span>Vector</span><span className="text-green-400">bg</span></div>
+                  <div className="flex justify-between"><span>nettools</span><span className="text-green-400">:7681</span></div>
                   <div className="flex justify-between"><span>nfcapd</span><span className="text-red-400">:2055 ⚠</span></div>
                 </div>
                 <div className="mt-2 pt-2 border-t border-border">
@@ -423,6 +470,7 @@ export default function NetworkPage() {
                   <div className="flex justify-between"><span>Prometheus</span><span className="text-green-400">:9090</span></div>
                   <div className="flex justify-between"><span>Loki</span><span className="text-green-400">:3100</span></div>
                   <div className="flex justify-between"><span>Alertmanager</span><span className="text-green-400">:9093</span></div>
+                  <div className="flex justify-between"><span>SNMP Exp</span><span className="text-green-400">:9116</span></div>
                 </div>
                 <div className="mt-2 pt-2 border-t border-border">
                   <div className="text-xs text-purple-400 font-mono">ts: 100.66.167.62</div>
@@ -465,12 +513,12 @@ export default function NetworkPage() {
                 </div>
                 <div className="text-xs text-text-muted">DHCP • WiFi • Switching</div>
               </div>
-              <div className="bg-void border border-yellow-500/30 rounded-lg p-3">
+              <div className="bg-void border border-green-500/30 rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-sm">PA-220 (Firewall)</span>
                   <span className="text-xs font-mono text-text-secondary">192.168.2.14</span>
                 </div>
-                <div className="text-xs text-yellow-400">⚠ No SNMP configured</div>
+                <div className="text-xs text-green-400">✓ SNMP v2c configured</div>
               </div>
             </div>
           </div>
@@ -664,15 +712,15 @@ export default function NetworkPage() {
                 </div>
                 <p className="text-sm text-text-muted">{infrastructure.network.udm.role}</p>
               </div>
-              <div className="p-4 bg-elevated rounded-lg border border-yellow-500/20">
+              <div className="p-4 bg-elevated rounded-lg border border-green-500/20">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium">{infrastructure.network.pa220.name}</span>
                   <code className="text-sm text-text-secondary">{infrastructure.network.pa220.ip}</code>
                 </div>
                 <p className="text-sm text-text-muted">{infrastructure.network.pa220.role}</p>
-                <div className="flex items-center gap-1 mt-2 text-yellow-400 text-xs">
-                  <AlertTriangle className="w-3 h-3" />
-                  {infrastructure.network.pa220.note}
+                <div className="flex items-center gap-1 mt-2 text-green-400 text-xs">
+                  <Check className="w-3 h-3" />
+                  SNMP v2c configured
                 </div>
               </div>
             </div>
@@ -731,6 +779,7 @@ export default function NetworkPage() {
                 { name: "Grafana", url: "https://grafana.vandine.us", internal: "http://192.168.2.70:3000" },
                 { name: "Prometheus", url: "https://prometheus.vandine.us", internal: "http://192.168.2.70:9090" },
                 { name: "LDAP Admin", url: "https://ldap.vandine.us", internal: "http://192.168.2.101:8080" },
+                { name: "Nettools", url: "https://nettools.vandine.us", internal: "http://192.168.2.101:7681" },
               ].map((svc, i) => (
                 <div key={i} className="p-3 bg-elevated rounded-lg">
                   <div className="font-medium text-sm mb-1">{svc.name}</div>

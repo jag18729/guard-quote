@@ -45,13 +45,12 @@ We moved **off AWS entirely**. New architecture:
 - Security dashboards
 - IDS/IPS integration
 
-### Xavier — Developer (API + UAT)
-- **API Development:** Add new endpoints, integrations
-- **User Acceptance Testing (UAT):** End-to-end workflow testing
-- **Dataset Acquisition:** Finding new leads, sample datasets
+### Xavier ([@xan942](https://github.com/xan942)) — Frontend & Documentation
+- **UI/UX:** Frontend improvements, styling, responsiveness
+- **User Acceptance Testing:** End-to-end workflow testing
+- **Documentation:** Presentations, timeline, cost analysis
 - Test client-facing features (quote flow, form validation)
 - Report bugs and UX issues
-- Bastion access: SSH to pi1, database read access
 
 ---
 

@@ -17,7 +17,7 @@ Get instant, accurate quotes for security services — from event security to ex
 | **Rafael Garcia** | [@jag18729](https://github.com/jag18729) | Lead Developer | App dev, CI/CD, ML, SSO/OAuth, networking & infrastructure |
 | **Milkias Kassa** | [@Malachizirgod](https://github.com/Malachizirgod) | Documentation | Docs, project management, presentations, IAM writeups |
 | **Isaiah Bernal** | [@ibernal1815](https://github.com/ibernal1815) | Security Ops | SIEM (Wazuh), bastion host, IDS/IPS, detection rules |
-| **Xavier Nguyen** | TBD | Documentation | Presentations, timeline, cost analysis, references |
+| **Xavier Nguyen** | [@xan942](https://github.com/xan942) | Frontend | UI/UX, presentations, timeline, cost analysis |
 
 ---
 

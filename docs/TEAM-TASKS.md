@@ -38,7 +38,7 @@ We moved **off AWS entirely**. New architecture:
 - IAM writeups
 
 ### Isaiah — Security Operations
-- SIEM setup (Elastic Cloud)
+- SIEM setup (Wazuh)
 - Bastion host configuration
 - Detection rules & alerts
 - Security dashboards
@@ -103,17 +103,17 @@ We moved **off AWS entirely**. New architecture:
 | pi1 | 192.168.2.70 | 100.66.167.62 | API, Grafana, Prometheus |
 | ThinkStation | 192.168.2.80 | 100.126.232.42 | Development |
 
-### Elastic Cloud SIEM Integration
+### Wazuh SIEM Integration
 
 Isaiah will set up:
-1. Elastic Cloud deployment (free tier)
-2. Fleet Server for agent management
-3. Elastic Agents on pi0 and pi1
-4. Security dashboards and detection rules
+1. Wazuh manager (on his infrastructure)
+2. Agent registration for pi0 and pi1
+3. Security dashboards and detection rules
+4. Alert routing (Slack or email)
 
 Data flow:
 ```
-pi0/pi1 → Elastic Agent → Tailscale → Elastic Cloud
+pi0/pi1 → Wazuh Agent → Tailscale → Isaiah's Wazuh Manager
 ```
 
 ---
@@ -125,7 +125,7 @@ The current presentation is AWS-focused. Need to update:
 - [ ] Architecture diagrams (Pi cluster, not AWS)
 - [ ] Cost analysis ($0/month operational)
 - [ ] Security model (Cloudflare Access, Tailscale)
-- [ ] SIEM section (Elastic Cloud, not AWS Security Hub)
+- [ ] SIEM section (Wazuh, not AWS Security Hub)
 - [ ] Network diagrams
 - [ ] Technology stack slides
 

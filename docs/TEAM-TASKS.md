@@ -30,12 +30,13 @@ We moved **off AWS entirely**. New architecture:
 - Networking & infrastructure
 - Review and consolidate all deliverables
 
-### Milkias ([@Malachizirgod](https://github.com/Malachizirgod)) — Documentation & Project Management
+### Milkias ([@Malachizirgod](https://github.com/Malachizirgod)) — ICAM & Project Management
+- **ICAM Review:** Security audit of auth/RBAC implementation
+- Verify password hashing, JWT handling, session security
+- Certify best practices compliance (OWASP ASVS)
 - Documentation updates
 - Project management (GitHub Projects)
-- Presentation updates
-- Procedure documentation
-- IAM writeups
+- IAM procedure writeups
 
 ### Isaiah ([@ibernal1815](https://github.com/ibernal1815)) — Security Operations
 - SIEM setup (Wazuh)
@@ -44,12 +45,13 @@ We moved **off AWS entirely**. New architecture:
 - Security dashboards
 - IDS/IPS integration
 
-### Xavier — Documentation & Presentation
-- Documentation support
-- Presentation slides
-- Timeline/schedule updates
-- Cost analysis
-- References and citations
+### Xavier — User Testing & Customer Liaison
+- **User Acceptance Testing (UAT):** End-to-end workflow testing
+- **Dataset Acquisition:** Finding new leads, sample datasets
+- **Customer Liaison:** Gather feedback, represent end-user perspective
+- Test client-facing features (quote flow, form validation)
+- Report bugs and UX issues
+- Help with presentation/demo from user perspective
 
 ---
 

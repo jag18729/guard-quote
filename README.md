@@ -15,15 +15,9 @@ Get instant, accurate quotes for security services — from event security to ex
 | Name | GitHub | Role | Responsibilities |
 |------|--------|------|------------------|
 | **Rafael Garcia** | [@jag18729](https://github.com/jag18729) | Lead Developer | App dev, CI/CD, ML, SSO/OAuth, networking & infrastructure |
-<<<<<<< HEAD
 | **Milkias Kassa** | [@Malachizirgod](https://github.com/Malachizirgod) | ICAM Lead + PM | Security review (OWASP), GitHub Projects, documentation |
 | **Isaiah Bernal** | [@ibernal1815](https://github.com/ibernal1815) | Security Ops | SIEM (Elastic Stack), his bastion host, IDS/IPS, detection rules |
 | **Xavier Nguyen** | [@xan942](https://github.com/xan942) | UX Lead + UAT | User experience, UAT driver, presentations, slides |
-=======
-| **Milkias Kassa** | [@Malachizirgod](https://github.com/Malachizirgod) | Documentation | Docs, project management, presentations, IAM writeups |
-| **Isaiah Bernal** | [@ibernal1815](https://github.com/ibernal1815) | Security Ops | SIEM (ElasticStack), bastion host, IDS/IPS, detection rules |
-| **Xavier Nguyen** | [@xan942](https://github.com/xan942) | Frontend | UI/UX, presentations, timeline, cost analysis |
->>>>>>> ead1545d6d342ce5ce17ebede9fbf8b50e707013
 
 ---
 
@@ -91,7 +85,6 @@ Get instant, accurate quotes for security services — from event security to ex
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-<<<<<<< HEAD
 │                         SECURITY / SIEM                                      │
 │                                                                              │
 │   ┌────────────────────────┐          ┌────────────────────────┐            │
@@ -112,17 +105,6 @@ Get instant, accurate quotes for security services — from event security to ex
 │               │   • Detection rules & alerts      │                          │
 │               │   • Security dashboards           │                          │
 │               └───────────────────────────────────┘                          │
-=======
-│                                Bastion Host                                 |
-│                                    │                                        |
-                                     ▼                                        │
-│   ┌──────────────────────────────────────────────────────────────────────┐  │
-│   │                      ElasticStack SIEM (Isaiah)                      │  │
-│   │  • Agent-based log collection    • File integrity monitoring         │  │
-│   │  • Detection rules               • Vulnerability scanning            │  │
-│   │  • Security dashboards           • Incident response                 │  │
-│   └──────────────────────────────────────────────────────────────────────┘  │
->>>>>>> ead1545d6d342ce5ce17ebede9fbf8b50e707013
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -136,13 +118,8 @@ Get instant, accurate quotes for security services — from event security to ex
 | **Backend** | Deno 2.6 + Hono | Replaced Bun (ARM compatibility) |
 | **Database** | PostgreSQL 16 | Self-hosted on Pi1 |
 | **Monitoring** | Grafana + Prometheus + Loki | Full observability stack |
-<<<<<<< HEAD
 | **Log Pipeline** | Vector → Loki / Elastic | Centralized logging |
-| **SIEM** | Wazuh (self-hosted) | Security monitoring |
-=======
-| **Log Pipeline** | Vector → Loki / Wazuh | Centralized logging |
-| **SIEM** | ElasticStack SIEM (self-hosted) | Security monitoring |
->>>>>>> ead1545d6d342ce5ce17ebede9fbf8b50e707013
+| **SIEM** | Elastic Stack (ELK) | Security monitoring |
 | **Auth** | bcrypt + JWT | Admin authentication |
 | **Edge** | Cloudflare Workers + Tunnel | Zero Trust access |
 | **Mesh VPN** | Tailscale | Site-to-site connectivity |
@@ -252,7 +229,7 @@ ssh johnmarston@100.77.26.41  # pi1
 - 🗺️ Interactive data pipeline diagram
 - 📈 Prometheus + Grafana monitoring
 - 📝 Centralized logging (Vector → Loki)
-- 🛡️ SIEM integration (Wazuh)
+- 🛡️ SIEM integration (Elastic Stack)
 - 🔒 Zero Trust access (Cloudflare)
 
 ---
@@ -283,16 +260,8 @@ Price = BaseRate × RiskMultiplier × LocationModifier × Hours × Guards
 
 See [docs/TEAM-TASKS.md](./docs/TEAM-TASKS.md) for:
 - Role assignments
-- Saturday meeting prep
 - Task checklist
-
-### Open Issues
-
-| Issue | Owner | Status |
-|-------|-------|--------|
-| [#8 SIEM Wazuh Integration](https://github.com/jag18729/guard-quote/issues/8) | Isaiah | In Progress |
-| [#9 Update Presentation](https://github.com/jag18729/guard-quote/issues/9) | Milkias, Xavier | Todo |
-| [#10 Site Review Feedback](https://github.com/jag18729/guard-quote/issues/10) | Milkias, Xavier | Todo |
+- Meeting notes
 
 ---
 
@@ -314,4 +283,4 @@ Private - California State University, Los Angeles - Capstone Project
 
 ---
 
-*Last updated: 2026-02-06*
+*Last updated: 2026-02-07*

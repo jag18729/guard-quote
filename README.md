@@ -85,15 +85,26 @@ Get instant, accurate quotes for security services — from event security to ex
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         SECURITY / SIEM (Isaiah's Bastion)                   │
+│                         SECURITY / SIEM                                      │
 │                                                                              │
-│   ┌──────────────────────────────────────────────────────────────────────┐  │
-│   │                    Elastic Stack (ELK)                                │  │
-│   │  • Elasticsearch — search & analytics                                 │  │
-│   │  • Logstash — log ingestion & parsing                                 │  │
-│   │  • Kibana — dashboards & visualization                                │  │
-│   │  • Detection rules & alerts                                           │  │
-│   └──────────────────────────────────────────────────────────────────────┘  │
+│   ┌────────────────────────┐          ┌────────────────────────┐            │
+│   │   Rafa's Bastion       │          │   Isaiah's Bastion     │            │
+│   │   (nettools.vandine.us)│          │   (his infrastructure) │            │
+│   │   • pi0 hosted         │          │   • Elastic Stack      │            │
+│   │   • Web terminal       │          │   • Elasticsearch      │            │
+│   │   • LDAP auth          │          │   • Logstash           │            │
+│   │   • Network diag       │          │   • Kibana dashboards  │            │
+│   └───────────┬────────────┘          └───────────┬────────────┘            │
+│               │                                   │                          │
+│               └───────────────┬───────────────────┘                          │
+│                               │                                              │
+│                               ▼                                              │
+│               ┌───────────────────────────────────┐                          │
+│               │         Elastic Stack (ELK)       │                          │
+│               │   • Centralized log aggregation   │                          │
+│               │   • Detection rules & alerts      │                          │
+│               │   • Security dashboards           │                          │
+│               └───────────────────────────────────┘                          │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 

@@ -15,9 +15,15 @@ Get instant, accurate quotes for security services — from event security to ex
 | Name | GitHub | Role | Responsibilities |
 |------|--------|------|------------------|
 | **Rafael Garcia** | [@jag18729](https://github.com/jag18729) | Lead Developer | App dev, CI/CD, ML, SSO/OAuth, networking & infrastructure |
+<<<<<<< HEAD
 | **Milkias Kassa** | [@Malachizirgod](https://github.com/Malachizirgod) | ICAM Lead + PM | Security review (OWASP), GitHub Projects, documentation |
 | **Isaiah Bernal** | [@ibernal1815](https://github.com/ibernal1815) | Security Ops | SIEM (Elastic Stack), his bastion host, IDS/IPS, detection rules |
 | **Xavier Nguyen** | [@xan942](https://github.com/xan942) | UX Lead + UAT | User experience, UAT driver, presentations, slides |
+=======
+| **Milkias Kassa** | [@Malachizirgod](https://github.com/Malachizirgod) | Documentation | Docs, project management, presentations, IAM writeups |
+| **Isaiah Bernal** | [@ibernal1815](https://github.com/ibernal1815) | Security Ops | SIEM (ElasticStack), bastion host, IDS/IPS, detection rules |
+| **Xavier Nguyen** | [@xan942](https://github.com/xan942) | Frontend | UI/UX, presentations, timeline, cost analysis |
+>>>>>>> ead1545d6d342ce5ce17ebede9fbf8b50e707013
 
 ---
 
@@ -85,6 +91,7 @@ Get instant, accurate quotes for security services — from event security to ex
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
+<<<<<<< HEAD
 │                         SECURITY / SIEM                                      │
 │                                                                              │
 │   ┌────────────────────────┐          ┌────────────────────────┐            │
@@ -105,6 +112,17 @@ Get instant, accurate quotes for security services — from event security to ex
 │               │   • Detection rules & alerts      │                          │
 │               │   • Security dashboards           │                          │
 │               └───────────────────────────────────┘                          │
+=======
+│                                Bastion Host                                 |
+│                                    │                                        |
+                                     ▼                                        │
+│   ┌──────────────────────────────────────────────────────────────────────┐  │
+│   │                      ElasticStack SIEM (Isaiah)                      │  │
+│   │  • Agent-based log collection    • File integrity monitoring         │  │
+│   │  • Detection rules               • Vulnerability scanning            │  │
+│   │  • Security dashboards           • Incident response                 │  │
+│   └──────────────────────────────────────────────────────────────────────┘  │
+>>>>>>> ead1545d6d342ce5ce17ebede9fbf8b50e707013
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -118,8 +136,13 @@ Get instant, accurate quotes for security services — from event security to ex
 | **Backend** | Deno 2.6 + Hono | Replaced Bun (ARM compatibility) |
 | **Database** | PostgreSQL 16 | Self-hosted on Pi1 |
 | **Monitoring** | Grafana + Prometheus + Loki | Full observability stack |
+<<<<<<< HEAD
 | **Log Pipeline** | Vector → Loki / Elastic | Centralized logging |
 | **SIEM** | Wazuh (self-hosted) | Security monitoring |
+=======
+| **Log Pipeline** | Vector → Loki / Wazuh | Centralized logging |
+| **SIEM** | ElasticStack SIEM (self-hosted) | Security monitoring |
+>>>>>>> ead1545d6d342ce5ce17ebede9fbf8b50e707013
 | **Auth** | bcrypt + JWT | Admin authentication |
 | **Edge** | Cloudflare Workers + Tunnel | Zero Trust access |
 | **Mesh VPN** | Tailscale | Site-to-site connectivity |

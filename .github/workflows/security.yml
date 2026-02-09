@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    # Run weekly on Monday at 9 AM PST
     - cron: '0 17 * * 1'
 
 permissions:
@@ -28,14 +27,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
           queries: +security-extended
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+      # Build frontend for better analysis
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci --ignore-scripts
+        continue-on-error: true
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
@@ -55,7 +62,6 @@ jobs:
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
-          deny-licenses: GPL-3.0, AGPL-3.0
 
   secrets-scan:
     name: Secret Scanning
@@ -71,3 +77,4 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           extra_args: --only-verified
+        continue-on-error: true

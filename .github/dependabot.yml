@@ -1,0 +1,93 @@
+# Dependabot configuration for GuardQuote
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Frontend (React + Vite)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "deps(frontend)"
+    groups:
+      react:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      vite:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+      ui:
+        patterns:
+          - "lucide-react"
+          - "framer-motion"
+          - "@xyflow/*"
+
+  # Backend (Node/Bun API)
+  - package-ecosystem: "npm"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "deps(backend)"
+    groups:
+      hono:
+        patterns:
+          - "hono*"
+          - "@hono/*"
+      drizzle:
+        patterns:
+          - "drizzle*"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "ci(deps)"
+
+  # Docker images
+  - package-ecosystem: "docker"
+    directory: "/backend"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "docker(backend)"
+
+  - package-ecosystem: "docker"
+    directory: "/ml-engine"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "ml"
+    commit-message:
+      prefix: "docker(ml)"

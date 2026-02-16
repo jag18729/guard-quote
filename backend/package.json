@@ -23,7 +23,7 @@
     "dotenv": "^17.2.3",
     "hono": "^4.11.9",
     "postgres": "3.3.5",
-    "resend": "^6.9.1"
+    "resend": "^6.9.2"
   },
   "engines": {
     "node": ">=22.0.0"

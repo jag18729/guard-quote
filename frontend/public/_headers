@@ -1,0 +1,9 @@
+# Security headers for all pages
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Cache built assets aggressively (hashed filenames = safe)
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

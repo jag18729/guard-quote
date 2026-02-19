@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
-import { Shield, ArrowRight, Building2, User, ShieldCheck, CheckCircle2, Clock, MessageSquare, Headphones, Star, Quote, Zap } from "lucide-react";
+import { Shield, ArrowRight, Building2, User, ShieldCheck, CheckCircle2, Clock, MessageSquare, Headphones, Star, Quote, Zap, FileSearch } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Landing() {
+  const { user } = useAuth();
+  
   return (
     <div className="relative">
       {/* Hero glow */}
@@ -32,11 +35,26 @@ export default function Landing() {
               Get a Free Quote
               <ArrowRight className="w-5 h-5" />
             </Link>
+            <Link 
+              to="/quote/lookup" 
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-zinc-700 hover:border-accent text-zinc-300 hover:text-accent font-medium rounded-lg transition-all text-lg"
+            >
+              <FileSearch className="w-5 h-5" />
+              Review a Past Quote
+            </Link>
           </div>
           
           <p className="mt-6 text-sm text-zinc-500">
             No commitment • Response within 24 hours • Transparent pricing
           </p>
+          
+          {/* Quick actions for returning users */}
+          {user && (
+            <div className="mt-4 flex items-center justify-center gap-3 text-sm">
+              <span className="text-zinc-500">Welcome back —</span>
+              <Link to="/admin" className="text-accent hover:underline font-medium">Go to Dashboard</Link>
+            </div>
+          )}
         </div>
       </section>
       
@@ -138,12 +156,19 @@ export default function Landing() {
             ))}
           </div>
           
-          <div className="text-center mt-12">
+          <div className="text-center mt-12 flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               to="/quote" 
               className="inline-flex items-center gap-2 px-8 py-4 bg-accent hover:bg-orange-600 text-black font-semibold rounded-lg transition-all hover:scale-105"
             >
               Start Your Free Quote <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link 
+              to="/quote/lookup" 
+              className="inline-flex items-center gap-2 px-6 py-4 border border-zinc-700 hover:border-zinc-500 text-zinc-400 hover:text-white font-medium rounded-lg transition-all"
+            >
+              <FileSearch className="w-5 h-5" />
+              Look Up Existing Quote
             </Link>
           </div>
         </div>
@@ -245,15 +270,24 @@ export default function Landing() {
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to protect what matters?</h2>
           <p className="text-zinc-400 mb-8">Get a free quote in under 2 minutes. No commitment, no pressure.</p>
-          <Link 
-            to="/quote" 
-            className="inline-flex items-center gap-2 px-10 py-5 bg-accent hover:bg-orange-600 text-black font-semibold rounded-lg transition-all hover:scale-105 text-lg"
-          >
-            Get Your Free Quote <ArrowRight className="w-5 h-5" />
-          </Link>
-          <p className="mt-6 text-sm text-zinc-500">
-            Questions? <a href="mailto:hello@guardquote.com" className="text-accent hover:underline">hello@guardquote.com</a>
-          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link 
+              to="/quote" 
+              className="inline-flex items-center gap-2 px-10 py-5 bg-accent hover:bg-orange-600 text-black font-semibold rounded-lg transition-all hover:scale-105 text-lg"
+            >
+              Get Your Free Quote <ArrowRight className="w-5 h-5" />
+            </Link>
+          </div>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-zinc-500">
+            <Link to="/quote/lookup" className="hover:text-accent transition flex items-center gap-1.5">
+              <FileSearch className="w-4 h-4" />
+              Review a past quote
+            </Link>
+            <span className="hidden sm:block">•</span>
+            <a href="mailto:hello@guardquote.com" className="hover:text-accent transition">
+              Questions? hello@guardquote.com
+            </a>
+          </div>
         </div>
       </section>
     </div>

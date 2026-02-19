@@ -7,6 +7,8 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { sql, testConnection } from "./db/connection";
 import { checkMLHealth, getMLClientStatus } from "./services/ml-client";
+import { getAuthorizationUrl, exchangeCode, getUserInfo } from "./services/oauth";
+import { getConfiguredProviders, isProviderConfigured } from "./services/oauth-config";
 
 const app = new Hono();
 
@@ -1002,6 +1004,124 @@ app.post("/api/auth/register", async (c) => {
     console.error("Registration error:", error);
     return c.json({ error: "Registration failed. Please try again." }, 500);
   }
+});
+
+// ============================================
+// OAUTH AUTHENTICATION
+// ============================================
+
+// Get available OAuth providers
+app.get("/api/auth/providers", (c) => {
+  return c.json({
+    providers: getConfiguredProviders(),
+  });
+});
+
+// Start OAuth flow
+app.get("/api/auth/login/:provider", async (c) => {
+  const provider = c.req.param("provider");
+  const returnUrl = c.req.query("returnUrl") || "/";
+
+  if (!isProviderConfigured(provider)) {
+    return c.json({ error: "Provider not configured" }, 400);
+  }
+
+  const baseUrl = process.env.BASE_URL || "http://localhost:3002";
+  const redirectUri = `${baseUrl}/api/auth/callback/${provider}`;
+
+  const authUrl = await getAuthorizationUrl(provider, redirectUri, returnUrl);
+  if (!authUrl) {
+    return c.json({ error: "Failed to generate auth URL" }, 500);
+  }
+
+  return c.redirect(authUrl);
+});
+
+// OAuth callback
+app.get("/api/auth/callback/:provider", async (c) => {
+  const provider = c.req.param("provider");
+  const code = c.req.query("code");
+  const state = c.req.query("state");
+  const error = c.req.query("error");
+
+  if (error) {
+    return c.redirect(`/login?error=${encodeURIComponent(error)}`);
+  }
+
+  if (!code || !state) {
+    return c.redirect("/login?error=missing_params");
+  }
+
+  const baseUrl = process.env.BASE_URL || "http://localhost:3002";
+  const redirectUri = `${baseUrl}/api/auth/callback/${provider}`;
+
+  // Exchange code for token
+  const tokenResult = await exchangeCode(state, code, redirectUri);
+  if (!tokenResult) {
+    return c.redirect("/login?error=token_exchange_failed");
+  }
+
+  // Get user info
+  const userInfo = await getUserInfo(provider, tokenResult.accessToken);
+  if (!userInfo) {
+    return c.redirect("/login?error=user_info_failed");
+  }
+
+  // Find existing OAuth link
+  let user = await sql`
+    SELECT u.* FROM users u
+    JOIN oauth_accounts oa ON oa.user_id = u.id
+    WHERE oa.provider = ${provider} AND oa.provider_id = ${userInfo.providerId}
+  `.then((rows) => rows[0]);
+
+  if (!user) {
+    // Check if email already exists
+    const existingUser = await sql`
+      SELECT * FROM users WHERE email = ${userInfo.email.toLowerCase()}
+    `.then((rows) => rows[0]);
+
+    if (existingUser) {
+      // Link OAuth to existing account
+      await sql`
+        INSERT INTO oauth_accounts (user_id, provider, provider_id, email)
+        VALUES (${existingUser.id}, ${provider}, ${userInfo.providerId}, ${userInfo.email})
+        ON CONFLICT (provider, provider_id) DO NOTHING
+      `;
+      user = existingUser;
+    } else {
+      // Create new user
+      const nameParts = userInfo.name.split(" ");
+      const firstName = nameParts[0] || "User";
+      const lastName = nameParts.slice(1).join(" ") || "";
+
+      const newUser = await sql`
+        INSERT INTO users (email, first_name, last_name, role, password_hash)
+        VALUES (${userInfo.email.toLowerCase()}, ${firstName}, ${lastName}, 'user', 'oauth-only')
+        RETURNING *
+      `.then((rows) => rows[0]);
+
+      await sql`
+        INSERT INTO oauth_accounts (user_id, provider, provider_id, email)
+        VALUES (${newUser.id}, ${provider}, ${userInfo.providerId}, ${userInfo.email})
+      `;
+      user = newUser;
+    }
+  }
+
+  // Import createToken from auth service
+  const { createToken } = await import("./services/auth");
+
+  // Create JWT
+  const accessToken = await createToken({
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+  });
+
+  // Redirect with token (frontend will extract and store it)
+  const returnUrl = tokenResult.returnUrl || "/dashboard";
+  const separator = returnUrl.includes("?") ? "&" : "?";
+  return c.redirect(`${returnUrl}${separator}token=${accessToken}`);
 });
 
 // ============================================

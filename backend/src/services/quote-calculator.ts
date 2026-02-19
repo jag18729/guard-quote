@@ -5,16 +5,26 @@
 import { sql } from "../db/connection";
 
 // Event type mapping from frontend values to DB codes
+// DB stores lowercase codes: corporate, concert, sports, private, construction, retail, residential
+// Frontend may send variations — normalize to DB codes here
 const EVENT_TYPE_MAP: Record<string, string> = {
-  corporate: "CORPORATE",
-  concert: "CONCERT",
-  sports: "SPORT",
-  private: "WEDDING",
-  construction: "RETAIL",
-  retail: "RETAIL",
-  residential: "EXECUTIVE",
-  festival: "FESTIVAL",
-  nightclub: "NIGHTCLUB",
+  corporate: "corporate",
+  concert: "concert",
+  sports: "sports",
+  private: "private",
+  construction: "construction",
+  retail: "retail",
+  residential: "residential",
+  festival: "festival",
+  nightclub: "nightclub",
+  // Production DB also has these (v3.0.0):
+  gov_rally: "gov_rally",
+  industrial: "industrial",
+  music_festival: "music_festival",
+  retail_lp: "retail_lp",
+  social_wedding: "social_wedding",
+  tech_summit: "tech_summit",
+  vip_protection: "vip_protection",
 };
 
 export interface QuoteInput {
@@ -76,7 +86,7 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
   const eventDateStr = input.date || input.eventDate;
   const eventDate = eventDateStr ? new Date(eventDateStr) : new Date();
 
-  const eventTypeCode = EVENT_TYPE_MAP[eventTypeRaw] || eventTypeRaw.toUpperCase();
+  const eventTypeCode = EVENT_TYPE_MAP[eventTypeRaw] || eventTypeRaw.toLowerCase();
 
   // Get event type data from DB
   const eventType = await sql`SELECT * FROM event_types WHERE code = ${eventTypeCode}`;

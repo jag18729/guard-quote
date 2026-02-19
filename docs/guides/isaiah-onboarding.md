@@ -168,7 +168,7 @@ bun run dev
 | Rafael Garcia | Lead — CI/CD, ML, Data | @jag18729 |
 | Milkias Kassa | IAM — Identity & Access | @Malachizirgod |
 | Isaiah Bernal | SecOps — SIEM & Security | @ibernal1815 |
-| Xavier Nguyen | Infra — Networking | @xan942 |
+| Xavier Nguyen | UX — Design & Frontend | @xan942 |
 
 ---
 

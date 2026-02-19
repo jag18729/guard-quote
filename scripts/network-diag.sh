@@ -48,7 +48,7 @@ else
     echo ""
     echo "Likely causes:"
     echo "  - ISP blocking (call them or check terms)"
-    echo "  - Pi-hole blocking (check http://192.168.2.70/admin)"
+    echo "  - Pi-hole blocking (check http://$PI1_HOST/admin)"
     echo "  - Router firewall rule"
     echo "  - DNS poisoning"
 fi

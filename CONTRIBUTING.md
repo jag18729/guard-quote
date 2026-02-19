@@ -138,8 +138,8 @@ Contact the team lead (Rafa) for:
 
 ```bash
 # From Tailscale network
-ssh rafaeljg@100.114.94.18    # pi0
-ssh johnmarston@100.77.26.41  # pi1
+ssh rafaeljg@[tailscale-ip]    # pi0
+ssh johnmarston@[tailscale-ip]  # pi1
 ```
 
 ## 📋 Current Tasks

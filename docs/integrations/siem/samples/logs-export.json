@@ -12,10 +12,10 @@
       "source": "auth",
       "severity": "info",
       "facility": "auth",
-      "message": "Accepted publickey for johnmarston from 192.168.2.80 port 54321 ssh2",
+      "message": "Accepted publickey for user from 10.0.0.x port 54321 ssh2",
       "fields": {
-        "user": "johnmarston",
-        "source_ip": "192.168.2.80",
+        "user": "user",
+        "source_ip": "10.0.0.x",
         "auth_method": "publickey",
         "event_type": "ssh_login_success"
       }
@@ -41,9 +41,9 @@
       "source": "auth",
       "severity": "info",
       "facility": "auth",
-      "message": "johnmarston : TTY=pts/0 ; PWD=/home/johnmarston ; USER=root ; COMMAND=/usr/bin/docker ps",
+      "message": "user : TTY=pts/0 ; PWD=/home/user ; USER=root ; COMMAND=/usr/bin/docker ps",
       "fields": {
-        "user": "johnmarston",
+        "user": "user",
         "target_user": "root",
         "command": "/usr/bin/docker ps",
         "event_type": "sudo_command"

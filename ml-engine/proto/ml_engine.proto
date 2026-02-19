@@ -1,0 +1,169 @@
+// GuardQuote ML Engine - gRPC Service Definitions
+// Version: 1.0.0
+// 
+// Internal service for backend → ML engine communication
+// Not exposed to external clients (REST API handles that)
+
+syntax = "proto3";
+
+package guardquote.ml;
+
+option python_package = "guardquote_ml_pb2";
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================================
+// Enums
+// ============================================================================
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  EVENT_TYPE_CORPORATE = 1;
+  EVENT_TYPE_CONCERT = 2;
+  EVENT_TYPE_SPORTS = 3;
+  EVENT_TYPE_PRIVATE = 4;
+  EVENT_TYPE_CONSTRUCTION = 5;
+  EVENT_TYPE_RETAIL = 6;
+  EVENT_TYPE_RESIDENTIAL = 7;
+}
+
+enum RiskLevel {
+  RISK_LEVEL_UNSPECIFIED = 0;
+  RISK_LEVEL_LOW = 1;
+  RISK_LEVEL_MEDIUM = 2;
+  RISK_LEVEL_HIGH = 3;
+  RISK_LEVEL_CRITICAL = 4;
+}
+
+// ============================================================================
+// Quote Service
+// ============================================================================
+
+service QuoteService {
+  // Generate a price quote using trained ML model
+  rpc GenerateQuote(QuoteRequest) returns (QuoteResponse);
+  
+  // Generate a price quote using rule-based engine (fallback)
+  rpc GenerateQuoteRuleBased(QuoteRequest) returns (QuoteResponse);
+  
+  // Streaming batch quotes for bulk pricing
+  rpc GenerateQuotesBatch(stream QuoteRequest) returns (stream QuoteResponse);
+}
+
+message QuoteRequest {
+  EventType event_type = 1;
+  string location_zip = 2;
+  int32 num_guards = 3;
+  float hours = 4;
+  google.protobuf.Timestamp event_date = 5;
+  bool is_armed = 6;
+  bool requires_vehicle = 7;
+  int32 crowd_size = 8;
+  
+  // Optional request metadata
+  string request_id = 10;
+  string client_id = 11;
+}
+
+message QuoteResponse {
+  float base_price = 1;
+  float risk_multiplier = 2;
+  float final_price = 3;
+  RiskLevel risk_level = 4;
+  float confidence_score = 5;
+  QuoteBreakdown breakdown = 6;
+  
+  // Response metadata
+  string request_id = 10;
+  int64 processing_time_ms = 11;
+}
+
+message QuoteBreakdown {
+  string model_used = 1;
+  repeated string risk_factors = 2;
+  int32 num_guards = 3;
+  float hours = 4;
+  bool is_armed = 5;
+  bool has_vehicle = 6;
+}
+
+// ============================================================================
+// Risk Assessment Service
+// ============================================================================
+
+service RiskService {
+  // Get detailed risk assessment
+  rpc AssessRisk(RiskRequest) returns (RiskResponse);
+  
+  // Streaming risk assessments for batch processing
+  rpc AssessRiskBatch(stream RiskRequest) returns (stream RiskResponse);
+}
+
+message RiskRequest {
+  EventType event_type = 1;
+  string location_zip = 2;
+  int32 num_guards = 3;
+  float hours = 4;
+  google.protobuf.Timestamp event_date = 5;
+  bool is_armed = 6;
+  int32 crowd_size = 7;
+  
+  string request_id = 10;
+}
+
+message RiskResponse {
+  RiskLevel risk_level = 1;
+  float risk_score = 2;
+  repeated string factors = 3;
+  repeated string recommendations = 4;
+  
+  string request_id = 10;
+  int64 processing_time_ms = 11;
+}
+
+// ============================================================================
+// Model Info Service
+// ============================================================================
+
+service ModelService {
+  // Health check
+  rpc HealthCheck(HealthRequest) returns (HealthResponse);
+  
+  // Get model information
+  rpc GetModelInfo(ModelInfoRequest) returns (ModelInfoResponse);
+  
+  // Get available event types
+  rpc GetEventTypes(EventTypesRequest) returns (EventTypesResponse);
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string status = 1;
+  string version = 2;
+  bool model_loaded = 3;
+}
+
+message ModelInfoRequest {}
+
+message ModelInfoResponse {
+  string status = 1;
+  string price_model_name = 2;
+  string trained_at = 3;
+  int32 price_features_count = 4;
+  int32 risk_features_count = 5;
+  string message = 6;
+}
+
+message EventTypesRequest {}
+
+message EventTypesResponse {
+  repeated EventTypeInfo event_types = 1;
+}
+
+message EventTypeInfo {
+  EventType type = 1;
+  string name = 2;
+  float base_rate = 3;
+  float risk_weight = 4;
+}

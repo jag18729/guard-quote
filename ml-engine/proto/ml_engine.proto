@@ -8,8 +8,6 @@ syntax = "proto3";
 
 package guardquote.ml;
 
-option python_package = "guardquote_ml_pb2";
-
 import "google/protobuf/timestamp.proto";
 
 // ============================================================================

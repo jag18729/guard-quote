@@ -1,12 +1,14 @@
 import { broadcastToChannel } from "./websocket";
 
 // Backup configuration
+if (!process.env.DB_PASSWORD) throw new Error("DB_PASSWORD environment variable is required");
+
 const config = {
   enabled: process.env.BACKUP_ENABLED === "true",
-  dbHost: process.env.DB_HOST || "192.168.2.70",
+  dbHost: process.env.DB_HOST || "localhost",
   dbName: process.env.DB_NAME || "guardquote",
   dbUser: process.env.DB_USER || "guardquote",
-  dbPassword: process.env.DB_PASSWORD || "WPU8bj3nbwFyZFEtHZQz",
+  dbPassword: process.env.DB_PASSWORD,
   backupDir: process.env.BACKUP_DIR || "/tmp/guardquote-backups",
   retentionDays: parseInt(process.env.BACKUP_RETENTION_DAYS || "7", 10),
   scheduleHour: parseInt(process.env.BACKUP_SCHEDULE_HOUR || "2", 10), // 2 AM

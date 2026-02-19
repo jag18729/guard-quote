@@ -1,8 +1,11 @@
 /**
  * Quote Calculator Service - Extracted ML calculation logic
  * Used by both REST API and WebSocket for real-time quotes
+ *
+ * Strategy: Try ML engine via gRPC first, fall back to local rule-based calculation
  */
 import { sql } from "../db/connection";
+import { generateQuoteML, type MLQuoteRequest } from "./ml-client";
 
 // Event type mapping from frontend values to DB codes
 // DB stores lowercase codes: corporate, concert, sports, private, construction, retail, residential
@@ -87,6 +90,49 @@ export async function calculateQuote(input: QuoteInput): Promise<QuoteResult> {
   const eventDate = eventDateStr ? new Date(eventDateStr) : new Date();
 
   const eventTypeCode = EVENT_TYPE_MAP[eventTypeRaw] || eventTypeRaw.toLowerCase();
+
+  // Try ML engine first (gRPC)
+  try {
+    const mlRequest: MLQuoteRequest = {
+      event_type: eventTypeCode,
+      location_zip: zipCode,
+      num_guards: numGuards,
+      hours: hours,
+      event_date: eventDate,
+      is_armed: isArmed,
+      requires_vehicle: hasVehicle,
+      crowd_size: crowdSize,
+    };
+
+    const mlResult = await generateQuoteML(mlRequest);
+
+    if (mlResult) {
+      console.log(`[Quote] ML engine responded in ${mlResult.processing_time_ms}ms`);
+      return {
+        base_price: mlResult.base_price,
+        risk_multiplier: mlResult.risk_multiplier,
+        final_price: mlResult.final_price,
+        risk_level: mlResult.risk_level,
+        confidence_score: mlResult.confidence_score,
+        breakdown: {
+          ...mlResult.breakdown,
+          location: zipCode,
+          event_type: eventTypeCode,
+        },
+        risk_assessment: {
+          risk_level: mlResult.risk_level,
+          risk_score: mlResult.risk_multiplier - 1,
+          factors: mlResult.breakdown.risk_factors,
+          recommendations: [],
+        },
+      };
+    }
+  } catch (err) {
+    console.warn(`[Quote] ML engine error, falling back to local: ${err}`);
+  }
+
+  // Fall back to local rule-based calculation
+  console.log("[Quote] Using local rule-based calculation");
 
   // Get event type data from DB
   const eventType = await sql`SELECT * FROM event_types WHERE code = ${eventTypeCode}`;

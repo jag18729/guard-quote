@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { sql, testConnection } from "./db/connection";
+import { checkMLHealth, getMLClientStatus } from "./services/ml-client";
 
 const app = new Hono();
 
@@ -459,6 +460,25 @@ app.post("/api/ml/predict/batch", async (c) => {
   } catch (error: any) {
     return c.json({ error: "Batch prediction failed", message: error.message }, 500);
   }
+});
+
+// ML Engine gRPC Health Check
+app.get("/api/ml/health", async (c) => {
+  const status = getMLClientStatus();
+  const health = await checkMLHealth();
+
+  return c.json({
+    ml_engine: {
+      connected: status.connected,
+      host: status.host,
+      port: status.port,
+      healthy: health.healthy,
+      version: health.version || null,
+      model_loaded: health.model_loaded || false,
+    },
+    transport: "gRPC",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Get ML model stats

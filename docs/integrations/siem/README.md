@@ -255,7 +255,7 @@ See [webhook-receiver.py](./samples/webhook-receiver.py) for reference implement
 
 **Syslog (auth.log):**
 ```
-Feb  6 13:45:22 pi1 sshd[1234]: Accepted publickey for johnmarston from 192.168.2.80 port 54321 ssh2: RSA SHA256:xxx
+Feb  6 13:45:22 pi1 sshd[1234]: Accepted publickey for user from 10.0.0.x port 54321 ssh2: RSA SHA256:xxx
 ```
 
 **GuardQuote API:**
@@ -267,7 +267,7 @@ Feb  6 13:45:22 pi1 sshd[1234]: Accepted publickey for johnmarston from 192.168.
 
 **Nginx Access:**
 ```
-192.168.2.80 - - [06/Feb/2026:13:45:22 -0800] "GET /api/status HTTP/1.1" 200 156 "-" "curl/8.5.0"
+10.0.0.x - - [06/Feb/2026:13:45:22 -0800] "GET /api/status HTTP/1.1" 200 156 "-" "curl/8.5.0"
 ```
 
 ---

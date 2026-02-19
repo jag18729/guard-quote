@@ -8,7 +8,7 @@
 import type { Context, Next } from "hono";
 
 // Redis connection config (Pi1)
-const REDIS_HOST = process.env.REDIS_HOST || "192.168.2.70";
+const REDIS_HOST = process.env.REDIS_HOST || "localhost";
 const REDIS_PORT = parseInt(process.env.REDIS_PORT || "6379", 10);
 const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
 if (!REDIS_PASSWORD) console.warn("REDIS_PASSWORD not set — rate limiting may fail");

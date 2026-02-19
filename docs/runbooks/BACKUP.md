@@ -30,7 +30,7 @@
 ssh johnmarston@pi1
 
 # Dump database
-PGPASSWORD=guardquote123 pg_dump -h localhost -U postgres guardquote > ~/backups/guardquote-$(date +%Y%m%d).sql
+PGPASSWORD=$DB_PASSWORD pg_dump -h localhost -U postgres guardquote > ~/backups/guardquote-$(date +%Y%m%d).sql
 
 # Compress
 gzip ~/backups/guardquote-$(date +%Y%m%d).sql

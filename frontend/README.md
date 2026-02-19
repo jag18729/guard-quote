@@ -39,7 +39,7 @@ npm run build
           │                  │                        │
           ▼                  ▼                        ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         PI1 (192.168.2.70)                          │
+│                         PI1 ([see .env])                          │
 │                                                                     │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                 │
 │  │ GuardQuote  │  │ PostgreSQL  │  │  Grafana    │                 │
@@ -142,7 +142,7 @@ GitHub Actions runs on every push:
 
 **Credentials:**
 - Email: admin@guardquote.vandine.us
-- Password: admin123
+- Password: [see .env]
 
 ---
 

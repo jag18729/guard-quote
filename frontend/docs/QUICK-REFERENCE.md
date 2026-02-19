@@ -8,7 +8,7 @@
 
 ## Default Admin
 - Email: admin@guardquote.vandine.us
-- Password: admin123
+- Password: [see .env]
 
 ## Navigation
 | Key | Section |
@@ -39,7 +39,7 @@ pkill -f "deno run"
 cd ~/guardquote-deno && nohup deno run -A server.ts > /tmp/gq.log 2>&1 &
 
 # Check database
-PGPASSWORD=guardquote123 psql -h 127.0.0.1 -U postgres -d guardquote -c "SELECT COUNT(*) FROM quotes;"
+PGPASSWORD=$DB_PASSWORD psql -h 127.0.0.1 -U postgres -d guardquote -c "SELECT COUNT(*) FROM quotes;"
 ```
 
 ## Team Contacts

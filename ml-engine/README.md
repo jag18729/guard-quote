@@ -137,7 +137,7 @@ MODEL_PATH=./models/trained
 LOG_LEVEL=INFO
 
 # PostgreSQL on Pi1
-DB_HOST=192.168.2.70
+DB_HOST=[see .env]
 DB_PORT=5432
 DB_USER=guardquote
 DB_PASSWORD=WPU8bj3nbwFyZFEtHZQz

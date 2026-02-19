@@ -195,7 +195,7 @@ src/
 |-----------|-------------|------|
 | Bun API+WS | Deployment + Service | NodePort 305XX |
 | ML Engine (Python) | Deployment + Service | ClusterIP (internal only) |
-| PostgreSQL | External (192.168.2.70) or K8s pod | 5432 |
+| PostgreSQL | External ([see .env]) or K8s pod | 5432 |
 | Redis | Deployment + Service | ClusterIP |
 
 **Migration path** (from MarketPulse lessons):

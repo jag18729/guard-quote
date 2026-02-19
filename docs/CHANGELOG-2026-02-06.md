@@ -27,8 +27,8 @@ Major infrastructure and documentation sprint. Completed SNMP monitoring, create
 
 ### SNMP Monitoring (Complete)
 - **SNMP Exporter** deployed on pi1:9116
-- **UDM** (192.168.2.1): SNMPv3 with SHA auth
-- **PA-220** (192.168.2.14): SNMPv2c community `matrixlab`
+- **UDM** ([internal]): SNMPv3 with SHA auth
+- **PA-220** ([internal]): SNMPv2c community `matrixlab`
 - **16+ Prometheus targets** all UP
 - Interface stats, system info, uptime metrics
 

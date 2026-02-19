@@ -85,16 +85,18 @@ Internet → Cloudflare Tunnel → Pi1 (cloudflared)
 ### Network Topology
 ```
 Studio (Reveal SOHO):
-├── ThinkStation (192.168.2.80)    — Dev workstation, OpenClaw gateway
-├── PA-220 reveal-fw (192.168.2.20) — Palo Alto firewall, 4 security zones
-├── UDM (192.168.2.1)              — UniFi gateway/router
-├── pi0 (192.168.21.10)            — DNS, SNMP, log shipping (dmz-mgmt)
-├── pi1 (192.168.20.10)            — Monitoring: Grafana/Prometheus/Loki (dmz-services)
-├── pi2 (192.168.22.10)            — K3s workloads, 16GB RAM, 234GB NVMe (dmz-security)
-└── Orange Pi RV2 (TBD)            — PostgreSQL server, 8GB RAM, 500GB NVMe
+├── ThinkStation           — Dev workstation, OpenClaw gateway
+├── PA-220 reveal-fw       — Palo Alto firewall, 4 security zones
+├── UDM                    — UniFi gateway/router
+├── pi0                    — DNS, SNMP, log shipping (dmz-mgmt)
+├── pi1                    — Monitoring: Grafana/Prometheus/Loki (dmz-services)
+├── pi2                    — K3s workloads, 16GB RAM, 234GB NVMe (dmz-security)
+└── Orange Pi RV2 (TBD)    — PostgreSQL server, 8GB RAM, 500GB NVMe
 
 Remote:
-└── pi3 (TBD)                      — Off-site monitoring, WireGuard tunnel
+└── pi3 (TBD)              — Off-site monitoring, WireGuard tunnel
+
+# IPs and access details are in the team .env file (shared privately)
 ```
 
 ---
@@ -308,8 +310,7 @@ Full migration: [`docs/plans/guardquote-v2-schema-migration.sql`](./docs/plans/g
 
 ### Admin Login
 ```
-Email: admin@guardquote.com
-Password: admin123
+Credentials in team .env file (shared privately)
 ```
 
 ---

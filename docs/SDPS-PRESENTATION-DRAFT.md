@@ -146,11 +146,11 @@ Internet → Cloudflare Tunnel (free)
 
 ### 4. Cross-Zone Networking Is Hard
 ```
-ThinkStation (192.168.2.x)  ←  untrust zone
+ThinkStation (10.x.x.x)  ←  untrust zone
        ↕ PA-220 rule needed
-Pi2 (192.168.22.x)          ←  dmz-security zone
+Pi2 (10.x.x.x)          ←  dmz-security zone
        ↕ PA-220 rule needed
-Pi1 (192.168.20.x)          ←  dmz-services zone
+Pi1 (10.x.x.x)          ←  dmz-services zone
 ```
 - Each zone-to-zone hop needs an explicit firewall rule
 - Order matters — rules evaluated top-to-bottom, `deny-interzone` at the bottom catches everything
@@ -217,10 +217,10 @@ Pi1 (192.168.20.x)          ←  dmz-services zone
 ### Network Segmentation (PA-220)
 | Zone | Subnet | Purpose | Devices |
 |------|--------|---------|---------|
-| untrust | 192.168.2.0/24 | Main LAN, internet access | ThinkStation, UDM |
-| dmz-mgmt | 192.168.21.0/24 | Management plane | Pi0 (DNS, logs, SNMP) |
-| dmz-services | 192.168.20.0/24 | Application services | Pi1 (monitoring, ingress) |
-| dmz-security | 192.168.22.0/24 | Workloads + security | Pi2 (K3s, Suricata) |
+| untrust | 10.x.x.x/24 | Main LAN, internet access | ThinkStation, UDM |
+| dmz-mgmt | 10.x.x.x/24 | Management plane | Pi0 (DNS, logs, SNMP) |
+| dmz-services | 10.x.x.x/24 | Application services | Pi1 (monitoring, ingress) |
+| dmz-security | 10.x.x.x/24 | Workloads + security | Pi2 (K3s, Suricata) |
 
 ### Auth Security
 - OAuth 2.0 with PKCE (prevents code interception)

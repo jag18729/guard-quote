@@ -712,7 +712,7 @@ Remove ~2,350 lines of infrastructure management code from GuardQuote. A quoting
 
 ### Why This Is Important
 
-This isn't just about line count. Having SSH credentials (`pi-services.ts` line 8: `const PI_PASS = process.env.PI_PASS || "481526"`) and systemd control inside a web application is a **security surface area problem**. If GuardQuote gets compromised, the attacker gets SSH access to the Pi fleet. Separation of concerns isn't just clean architecture — it's defense in depth.
+This isn't just about line count. Having SSH credentials (`pi-services.ts` line 8: `const PI_PASS = process.env.PI_PASS` (previously had hardcoded fallback)) and systemd control inside a web application is a **security surface area problem**. If GuardQuote gets compromised, the attacker gets SSH access to the Pi fleet. Separation of concerns isn't just clean architecture — it's defense in depth.
 
 ### What Gets Removed
 
@@ -1050,7 +1050,7 @@ Namespace: guardquote
 │           ▼                        ▼              │
 │  ┌─────────────────┐    ┌──────────────────────┐ │
 │  │ Redis            │    │ PostgreSQL           │ │
-│  │ ClusterIP        │    │ External: 192.168.   │ │
+│  │ ClusterIP        │    │ External: [DB host]   │ │
 │  │                  │    │ 2.70:5432            │ │
 │  │ Cache, sessions, │    │                      │ │
 │  │ rate limiting    │    │ OR K8s pod (future)  │ │
@@ -1092,7 +1092,7 @@ CMD ["uvicorn", "ml_engine.main:app", "--host", "0.0.0.0", "--port", "8000"]
 |------|----|------|------|
 | pi1 (CF tunnel) | pi2 (guardquote-api) | 305XX | PA-220 rule (new, same pattern as MarketPulse) |
 | guardquote-api | guardquote-ml | 8000 | K8s ClusterIP (same namespace, no firewall) |
-| guardquote-api | PostgreSQL | 5432 | Direct DB connection (192.168.2.70 or K8s service) |
+| guardquote-api | PostgreSQL | 5432 | Direct DB connection ([see .env] or K8s service) |
 | guardquote-api | Redis | 6379 | K8s ClusterIP |
 | guardquote-api | External APIs | 443 | Outbound HTTPS (crime, weather, events APIs) |
 

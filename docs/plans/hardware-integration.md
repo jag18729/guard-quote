@@ -57,17 +57,17 @@ Already planned in `docs/PI3-PLAN.md`. Going to mom's house as off-site monitori
 
 ```
 Studio (Reveal SOHO):
-├── ThinkStation (192.168.2.80) — WSL2, OpenClaw gateway
-├── PA-220 reveal-fw (192.168.2.20) — firewall
-├── UDM (192.168.2.1) — gateway/router
-├── pi0 (192.168.21.10) — DNS, identity, log shipping, SNMP
-├── pi1 (192.168.20.10) — Grafana, Prometheus, Loki
-├── pi2 (192.168.22.10) — K3s workloads, security stack
+├── ThinkStation ([see .env]) — WSL2, OpenClaw gateway
+├── PA-220 reveal-fw ([see .env]) — firewall
+├── UDM ([see .env]) — gateway/router
+├── pi0 ([see .env]) — DNS, identity, log shipping, SNMP
+├── pi1 ([see .env]) — Grafana, Prometheus, Loki
+├── pi2 ([see .env]) — K3s workloads, security stack
 ├── Orange Pi RV2 — ??? (to be planned)
-└── PostgreSQL host (192.168.2.70) — ??? (status unclear, needs recovery)
+└── PostgreSQL host ([see .env]) — ??? (status unclear, needs recovery)
 
 Mom's House (Vandine):
-├── PA-220 vandine-fw (192.168.2.14) — unreachable
+├── PA-220 vandine-fw ([see .env]) — unreachable
 ├── pi3 (2GB) — off-site monitoring (planned)
 └── UniFi APs + switch — offline
 ```
@@ -76,7 +76,7 @@ Mom's House (Vandine):
 
 #### Orange Pi RV2 + SN580: **PostgreSQL Database Server**
 
-**The case for this**: The current PostgreSQL host (192.168.2.70) has unclear status — unreachable from pi2, needs recovery from backups, and needs to move onto the matrix network. Instead of fighting with an unstable host, deploy the Orange Pi RV2 as a dedicated database server.
+**The case for this**: The current PostgreSQL host ([see .env]) has unclear status — unreachable from pi2, needs recovery from backups, and needs to move onto the matrix network. Instead of fighting with an unstable host, deploy the Orange Pi RV2 as a dedicated database server.
 
 **Why it fits**:
 - **8GB RAM** — PostgreSQL loves RAM for shared_buffers and OS cache. 8GB is generous for our DB sizes (GuardQuote + MarketPulse are small).
@@ -97,31 +97,31 @@ Mom's House (Vandine):
 
 ```
 Option A: On dmz-services (alongside pi1)
-  IP: 192.168.20.20 (or .70 if we want to reuse the old DB IP concept)
+  IP: [see .env] (or .70 if we want to reuse the old DB IP concept)
   Zone: dmz-services (eth1/8)
   Pro: Same zone as Grafana/monitoring, no new firewall rules for Prometheus scraping
   Con: pi1's switch port may already be in use
 
 Option B: On dmz-security (alongside pi2)
-  IP: 192.168.22.20
+  IP: [see .env]
   Zone: dmz-security (eth1/2)
   Pro: Closest to the K3s pods that query it, minimal latency
   Con: Need PA-220 rules for pi1 Prometheus to scrape it
 
 Option C: Dedicated zone (lab)
-  IP: 192.168.23.10 or 192.168.24.10
+  IP: [see .env] or [see .env]
   Zone: lab (eth1/5 or eth1/6)
   Pro: Isolated database zone, cleanest security posture
   Con: Need PA-220 rules for ALL access (pi1 monitoring, pi2 apps)
 
-Option D: On main LAN (192.168.2.x)
-  IP: 192.168.2.70 (replace the old host)
+Option D: On main LAN ([see .env]x)
+  IP: [see .env] (replace the old host)
   Zone: untrust (via UDM)
-  Pro: No PA-220 changes needed — existing allow-guardquote-db rule already targets 192.168.2.70
+  Pro: No PA-220 changes needed — existing allow-guardquote-db rule already targets [see .env]
   Con: DB on the untrust zone is not ideal security-wise
 ```
 
-**Recommendation: Option B (dmz-security, 192.168.22.20)**
+**Recommendation: Option B (dmz-security, [see .env])**
 
 Rationale:
 - GuardQuote and MarketPulse pods on pi2 K3s are the primary DB consumers
@@ -130,12 +130,12 @@ Rationale:
 - One new PA-220 rule: `allow-monitoring-db` (dmz-services → dmz-security : TCP 9100 for node_exporter)
 - We already proved cross-zone access works (allow-marketpulse-tunnel, allow-guardquote-db)
 
-**Alternative recommendation: Option D (192.168.2.70 replacement)**
+**Alternative recommendation: Option D ([see .env] replacement)**
 
 If simplicity wins over security posture:
-- The `allow-guardquote-db` PA-220 rule we JUST committed points to 192.168.2.70
+- The `allow-guardquote-db` PA-220 rule we JUST committed points to [see .env]
 - Assigning the Orange Pi that same IP means zero firewall changes
-- pi1 can already reach 192.168.2.x (untrust zone) for Prometheus
+- pi1 can already reach [see .env]x (untrust zone) for Prometheus
 - Trade-off: DB sits on the untrust LAN, reachable from any device on the main network
 
 #### Pi3 (2GB): **Off-Site Node** (plan already exists)
@@ -196,10 +196,10 @@ effective_io_concurrency = 200  # NVMe can handle parallel I/O
 # Local
 local   all    all    trust
 # Studio matrix network
-host    all    all    192.168.20.0/24    md5    # pi1 (monitoring)
-host    all    all    192.168.22.0/24    md5    # pi2 (K3s apps)
-host    all    all    192.168.21.0/24    md5    # pi0 (if needed)
-host    all    all    192.168.2.0/24     md5    # Main LAN (ThinkStation dev)
+host    all    all    [see .env]/24    md5    # pi1 (monitoring)
+host    all    all    [see .env]/24    md5    # pi2 (K3s apps)
+host    all    all    [see .env]/24    md5    # pi0 (if needed)
+host    all    all    [see .env]/24     md5    # Main LAN (ThinkStation dev)
 # Remote (via WireGuard)
 host    all    all    10.7.7.0/24        md5    # WireGuard tunnel
 ```
@@ -255,15 +255,15 @@ Comfortable fit. No changes to the existing PI3-PLAN needed.
 
 Depending on Orange Pi placement:
 
-**If Option B (dmz-security, 192.168.22.20)**:
-- Modify existing `allow-guardquote-db` rule: change destination from `192.168.2.70` to `192.168.22.20`
+**If Option B (dmz-security, [see .env])**:
+- Modify existing `allow-guardquote-db` rule: change destination from `[see .env]` to `[see .env]`
 - Actually — K3s pods on pi2 and the Orange Pi would be on the SAME zone (dmz-security). **No PA-220 rule needed for app→DB traffic** — it stays within the zone.
 - New rule needed: `allow-monitoring-db` — pi1 (dmz-services) → Orange Pi (dmz-security) : TCP 9100 (node_exporter), TCP 5432 (postgres-exporter)
 
-**If Option D (main LAN, 192.168.2.70)**:
-- Existing `allow-guardquote-db` rule already works (targets 192.168.2.70:5432)
+**If Option D (main LAN, [see .env])**:
+- Existing `allow-guardquote-db` rule already works (targets [see .env]:5432)
 - No new rules needed
-- pi1 can reach 192.168.2.70 natively (same route as current)
+- pi1 can reach [see .env] natively (same route as current)
 
 ### Switch/Cabling
 
@@ -289,7 +289,7 @@ Depending on Orange Pi placement:
 | 7 | Update K8s secrets + test apps | Step 6 |
 | 8 | PA-220 rules if needed | Step 4 |
 | 9 | Add to Prometheus monitoring | Step 5 |
-| 10 | Decommission old DB host (192.168.2.70) | Step 7 verified |
+| 10 | Decommission old DB host ([see .env]) | Step 7 verified |
 
 ---
 

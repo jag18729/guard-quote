@@ -56,10 +56,10 @@ GuardQuote is a secure web application platform enabling businesses to request n
 | Component | Location | Notes |
 |-----------|----------|-------|
 | **Frontend** | Cloudflare Pages | guardquote.vandine.us |
-| **Backend API** | Pi1 (192.168.2.70) | Port 3002 |
+| **Backend API** | Pi1 ([see .env]) | Port 3002 |
 | **Database** | Pi1 | PostgreSQL :5432 |
 | **Monitoring** | Pi1 | Grafana :3000, Prometheus :9090 |
-| **Log Collector** | Pi0 (192.168.2.101) | Vector |
+| **Log Collector** | Pi0 ([see .env]) | Vector |
 | **SIEM** | Isaiah's Host | Wazuh via Tailscale |
 | **Development** | ThinkStation | WSL2 |
 | **Repository** | GitHub | jag18729/guard-quote |

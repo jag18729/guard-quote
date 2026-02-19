@@ -6,7 +6,7 @@
 
 | Component | Technology | Location |
 |-----------|------------|----------|
-| Runtime | Deno 2.6.8 | pi1 (192.168.2.70) |
+| Runtime | Deno 2.6.8 | pi1 ([see .env]) |
 | Framework | Hono | `~/guardquote-deno/server.ts` |
 | Database | PostgreSQL 16 | pi1 Docker |
 | Auth | bcrypt + djwt (JWT) | Native Deno |
@@ -54,7 +54,7 @@ deno run -A server.ts
 
 ```bash
 # Copy updated server.ts to pi1
-scp server.ts johnmarston@192.168.2.70:~/guardquote-deno/
+scp server.ts user@host:~/guardquote-deno/
 
 # Restart on pi1
 ssh pi1 'pkill -f "deno run"; cd ~/guardquote-deno && nohup deno run -A server.ts > /tmp/gq.log 2>&1 &'
@@ -71,7 +71,7 @@ ssh pi1 'tail -f /tmp/gq.log'
 ```bash
 # Connect to PostgreSQL
 ssh pi1
-PGPASSWORD=guardquote123 psql -h 127.0.0.1 -U postgres -d guardquote
+PGPASSWORD=$DB_PASSWORD psql -h 127.0.0.1 -U postgres -d guardquote
 
 # Tables
 \dt
@@ -82,7 +82,7 @@ PGPASSWORD=guardquote123 psql -h 127.0.0.1 -U postgres -d guardquote
 
 ```bash
 # ~/guardquote-deno/.env
-DATABASE_URL=postgres://postgres:guardquote123@localhost:5432/guardquote
+DATABASE_URL=postgres://postgres:$DB_PASSWORD@localhost:5432/guardquote
 JWT_SECRET=<secret>
 GITHUB_TOKEN=<ghp_token>
 GITHUB_PROJECT_ID=<project_id>

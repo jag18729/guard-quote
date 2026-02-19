@@ -1485,7 +1485,7 @@ app.get("/api/ws/stats", (c) => c.json(getWSStats()));
 const port = process.env.PORT || 3000;
 
 console.log(`GuardQuote API v2.0 running on http://localhost:${port}`);
-console.log(`Connected to PostgreSQL on Raspberry Pi (192.168.2.70)`);
+console.log(`Connected to PostgreSQL on Raspberry Pi ([configured host])`);
 console.log(`WebSocket available at ws://localhost:${port}/ws`);
 
 export default {

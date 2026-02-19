@@ -1,35 +1,31 @@
 # GuardQuote - Claude Code Context
 
 ## Project Overview
-ML-powered insurance quoting platform. Self-hosted on Raspberry Pi cluster with Cloudflare edge.
+ML-powered security service quoting platform. Self-hosted on Raspberry Pi cluster with Cloudflare edge.
 
-**Live Site:** https://guardquote.vandine.us  
-**GitHub:** https://github.com/jag18729/guard-quote  
-**Project Board:** https://github.com/users/jag18729/projects/1
+**Live Site:** https://guardquote.vandine.us
+**GitHub:** https://github.com/jag18729/guard-quote
+**Project Board:** https://github.com/users/jag18729/projects/3
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         CLOUDFLARE EDGE                                  │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                   │
-│  │    Pages     │  │   Workers    │  │    Tunnel    │                   │
-│  │  (Frontend)  │  │  (Gateway)   │  │   (Origin)   │                   │
-│  └──────────────┘  └──────────────┘  └──────────────┘                   │
-└─────────────────────────────┬───────────────────────────────────────────┘
-                              │
-              ┌───────────────┴───────────────┐
-              ▼                               ▼
-┌─────────────────────────┐     ┌─────────────────────────┐
-│ pi0 (192.168.2.101)     │     │ pi1 (192.168.2.70)      │
-│ ┌─────────────────────┐ │     │ ┌─────────────────────┐ │
-│ │ Vector (logs)       │ │────►│ │ Deno API :3002      │ │
-│ │ LDAP :389           │ │     │ │ PostgreSQL :5432    │ │
-│ │ Syslog aggregation  │ │     │ │ Grafana :3000       │ │
-│ │ Cloudflared         │ │     │ │ Prometheus :9090    │ │
-│ └─────────────────────┘ │     │ │ Loki :3100          │ │
-└─────────────────────────┘     │ │ Cloudflared         │ │
-                                └─────────────────────────┘
+┌──────────────────────────────────────────────┐
+│              CLOUDFLARE EDGE                  │
+│  ┌────────┐  ┌──────────┐  ┌──────────┐     │
+│  │ Pages  │  │ Workers  │  │  Tunnel  │     │
+│  └────────┘  └──────────┘  └──────────┘     │
+└───────────────────┬──────────────────────────┘
+                    │
+         PA-220 Firewall (4 DMZ zones)
+                    │
+    ┌───────────────┼───────────────┐
+    ▼               ▼               ▼
+  pi0             pi1             pi2
+  DNS/Logs     Monitoring      K3s Workloads
+  SNMP         Grafana/Prom    GuardQuote (v2)
+  LDAP         Loki            ML Engine
+               GuardQuote(v1)  SentinelNet
 ```
 
 ## Tech Stack
@@ -37,50 +33,33 @@ ML-powered insurance quoting platform. Self-hosted on Raspberry Pi cluster with 
 | Component | Technology |
 |-----------|------------|
 | Frontend | React 18 + TypeScript + Vite + Tailwind |
-| Backend | Deno 2.6 + Hono |
+| Backend (v1) | Node.js + Hono |
+| Backend (v2) | Bun 1.3 native `Bun.serve()` |
 | Database | PostgreSQL 16 |
-| Auth | bcrypt + JWT (djwt) |
+| Auth | bcrypt + JWT → OAuth 2.0 (GitHub + Google) + argon2id |
+| ML Engine | Python FastAPI + XGBoost (v2) |
 | Hosting | Cloudflare Pages + Tunnel |
-| Monitoring | Grafana + Prometheus + Loki |
-| Diagrams | React Flow (@xyflow/react) |
+| Monitoring | Grafana + Prometheus + Loki + Vector |
 
 ## Key Locations
 
 | What | Where |
 |------|-------|
 | Frontend | `frontend/src/` |
-| Backend (prod) | `pi1:~/guardquote-deno/server.ts` |
+| Backend | `backend/src/` |
+| ML Engine | `ml-engine/` |
 | Docs | `docs/` |
-| Roadmap | `docs/ROADMAP.md` |
-| Team Tasks | `docs/TEAM-TASKS.md` |
+| v2 Architecture | `docs/plans/guardquote-v2-architecture.md` |
+| v2 Schema | `docs/plans/guardquote-v2-schema-migration.sql` |
 
-## Servers
+## Environment Setup
 
-| Server | IP | User | Role |
-|--------|-----|------|------|
-| pi1 | 192.168.2.70 | johnmarston | API, Database, Monitoring |
-| pi0 | 192.168.2.101 | rafaeljg | Logs, LDAP, Syslog |
-| PA-220 | 192.168.2.14 | admin | Firewall |
-| UDM | 192.168.2.1 | rafaeljg | Router |
-
-## SSH Access
+All IPs, credentials, and SSH access details are in the team `.env` file.
+See `.env.example` for the required variables.
 
 ```bash
-# SSH config (~/.ssh/config)
-ssh pi0   # 192.168.2.101
-ssh pi1   # 192.168.2.70
-
-# With password
-sshpass -p '481526' ssh johnmarston@192.168.2.70
-```
-
-## Database
-
-```bash
-# On pi1
-PGPASSWORD=guardquote123 psql -h 127.0.0.1 -U postgres -d guardquote
-
-# Tables: users, clients, quotes, blog_posts, blog_comments, feature_requests
+# Copy .env to repo root (it's gitignored)
+cp ~/path/to/shared.env .env
 ```
 
 ## API Endpoints
@@ -90,52 +69,46 @@ PGPASSWORD=guardquote123 psql -h 127.0.0.1 -U postgres -d guardquote
 | GET | `/api/status` | Health check |
 | POST | `/api/auth/login` | Admin login |
 | GET | `/api/quotes` | List quotes |
+| POST | `/api/quotes` | Create quote |
 | GET | `/api/features` | Feature requests |
 | POST | `/api/features/:id/vote` | Vote on feature |
-| POST | `/api/features/sync-github-all` | Sync to GitHub |
-| GET | `/api/blog-posts` | Blog posts |
-| GET | `/api/admin/stats` | Dashboard stats |
+
+### v2 Additions
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/auth/github` | OAuth — GitHub |
+| GET | `/auth/google` | OAuth — Google |
+| GET | `/api/ml/predict` | ML price prediction |
+| GET | `/api/siem/events` | SIEM auth events |
 
 ## Development
 
-### Frontend
 ```bash
-cd frontend
-npm install
-npm run dev    # http://localhost:5173
-npm run build  # Build to dist/
-```
+# Frontend
+cd frontend && bun install && bun run dev
 
-### Deploy Frontend
-```bash
-npm run build
-npx wrangler pages deploy dist --project-name=guardquote
-```
+# Backend
+cd backend && bun install && bun run dev
 
-### Backend (on pi1)
-```bash
-ssh pi1
-cd ~/guardquote-deno
-deno run -A server.ts
+# Demo mode (v2 — no DB/Redis needed)
+DEMO_MODE=true bun run src/server.ts
 ```
 
 ## Team
 
 | Member | GitHub | Role |
 |--------|--------|------|
-| Rafa | @jag18729 | Lead Dev / Infrastructure |
-| Milkias | @Malachizirgod | Documentation / PM |
-| Isaiah | @ibernal1815 | SIEM / Security |
-| Xavier | TBD | Presentations |
+| Rafael Garcia | @jag18729 | Lead — CI/CD, ML, Data |
+| Milkias Kassa | @Malachizirgod | IAM — Identity & Access |
+| Isaiah Bernal | @ibernal1815 | SecOps — SIEM & Security |
+| Xavier Nguyen | @xan942 | UX — Design & Frontend |
 
 ## Milestones
 
-| Milestone | Date |
-|-----------|------|
-| UAT Round 1 | Feb 14, 2026 |
-| UAT Round 2 | Feb 19, 2026 |
-| Presentation Ready | Feb 28, 2026 |
+| Milestone | Date | Status |
+|-----------|------|--------|
+| v2.0 — Bun + ML + SDPS | March 3, 2026 | 🔄 In Progress |
 
 ## Version
-- **Current:** v3.0.0
-- **Last Updated:** February 6, 2026
+- **Current:** v3.0.0-node (production), v2 in development
+- **Last Updated:** February 18, 2026

@@ -38,7 +38,7 @@ npm run dev
 
 ### 4. Backend Setup (Deno)
 
-The backend runs on pi1 (192.168.2.70). For local development:
+The backend runs on pi1. For local development:
 
 ```bash
 cd backend  # If exists, or work directly on pi1

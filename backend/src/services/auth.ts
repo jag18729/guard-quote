@@ -112,11 +112,25 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 // Login user
 export async function login(email: string, password: string): Promise<AuthResult> {
   try {
-    const users = await sql`
-      SELECT id, email, password_hash, first_name, last_name, role, is_active
-      FROM users
-      WHERE email = ${email.toLowerCase()}
-    `;
+    // Quick clock sanity check (JWT tokens will fail if clock is off)
+    const now = Date.now();
+    const year = new Date(now).getFullYear();
+    if (year < 2026 || year > 2030) {
+      console.error(`CRITICAL: System clock appears wrong. Year: ${year}`);
+      return { success: false, error: "Service temporarily unavailable (clock sync issue)" };
+    }
+
+    let users;
+    try {
+      users = await sql`
+        SELECT id, email, password_hash, first_name, last_name, role, is_active
+        FROM users
+        WHERE email = ${email.toLowerCase()}
+      `;
+    } catch (dbError: any) {
+      console.error("Database query failed:", dbError.message);
+      return { success: false, error: "Service temporarily unavailable (database)" };
+    }
 
     if (users.length === 0) {
       return { success: false, error: "Invalid email or password" };
@@ -168,8 +182,20 @@ export async function login(email: string, password: string): Promise<AuthResult
       refreshToken,
     };
   } catch (error: any) {
-    console.error("Login error:", error);
-    return { success: false, error: "Authentication failed" };
+    console.error("Login error:", error.message || error);
+    
+    // Provide more specific error messages
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+      return { success: false, error: "Service temporarily unavailable (database connection)" };
+    }
+    if (error.message?.includes('timeout')) {
+      return { success: false, error: "Service temporarily unavailable (database timeout)" };
+    }
+    if (error.message?.includes('password') || error.message?.includes('authentication')) {
+      return { success: false, error: "Service configuration error (database credentials)" };
+    }
+    
+    return { success: false, error: "Authentication service error" };
   }
 }
 

@@ -30,9 +30,19 @@ app.get("/", (c) =>
 
 app.get("/health", async (c) => {
   const dbOk = await testConnection();
+  
+  // Clock sanity check (critical for JWT)
+  const now = new Date();
+  const year = now.getFullYear();
+  const clockOk = year >= 2026 && year <= 2030;
+  
+  const isHealthy = dbOk && clockOk;
+  
   return c.json({
-    status: dbOk ? "healthy" : "degraded",
+    status: isHealthy ? "healthy" : "degraded",
     database: dbOk ? "connected" : "disconnected",
+    clock: clockOk ? "ok" : `ERROR: year=${year}`,
+    timestamp: now.toISOString(),
   });
 });
 

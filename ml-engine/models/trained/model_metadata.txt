@@ -1,4 +1,8 @@
-price_model: Gradient Boosting
-price_features: 15
-risk_features: 12
-trained_at: 2026-01-14T16:43:15.033095
+version: 2.1.0
+price_model: GradientBoostingRegressor
+price_r2: 0.9315
+price_mae: 5001.20
+price_mape: 11.1%
+risk_accuracy: 0.2545
+training_samples: 1100
+trained_at: 2026-02-20T17:37:49.310393

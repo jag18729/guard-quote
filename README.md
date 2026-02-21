@@ -6,7 +6,7 @@ Get instant, accurate quotes for security services — from event security to ex
 
 🌐 **Live Site:** https://guardquote.vandine.us
 📊 **Admin Dashboard:** https://guardquote.vandine.us/admin
-📋 **Project Board:** https://github.com/users/jag18729/projects/3
+📋 **Project Board:** [https://github.com/users/jag18729/projects/3](https://github.com/users/jag18729/projects/1)
 📐 **Architecture Doc:** [docs/plans/guardquote-v2-architecture.md](./docs/plans/guardquote-v2-architecture.md)
 
 ---

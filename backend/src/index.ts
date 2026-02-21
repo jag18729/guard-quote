@@ -9,6 +9,18 @@ import { sql, testConnection } from "./db/connection";
 import { checkMLHealth, getMLClientStatus } from "./services/ml-client";
 import { getAuthorizationUrl, exchangeCode, getUserInfo } from "./services/oauth";
 import { getConfiguredProviders, isProviderConfigured } from "./services/oauth-config";
+import {
+  DEMO_MODE,
+  DEMO_STATS,
+  DEMO_QUOTES,
+  DEMO_CLIENTS,
+  DEMO_ML_MODEL,
+  DEMO_ADMIN_USER,
+  DEMO_USERS,
+  DEMO_EVENT_TYPES,
+  DEMO_LOCATIONS,
+  calculateDemoQuote,
+} from "./services/demo";
 
 const app = new Hono();
 
@@ -57,6 +69,26 @@ app.get("/api/health", async (c) => {
 
 // Environment status with async connection checks
 app.get("/api/status", async (c) => {
+  // DEMO MODE: Show fully operational system
+  if (DEMO_MODE) {
+    return c.json({
+      mode: "demo",
+      database: { connected: true, local: false },
+      mlEngine: { connected: true, version: DEMO_ML_MODEL.version, model_loaded: true },
+      services: {
+        api: "healthy",
+        ml: "healthy",
+        websocket: "healthy",
+      },
+      demo_info: {
+        clients: DEMO_CLIENTS.length,
+        quotes: DEMO_QUOTES.length,
+        scenarios: "5 pre-configured demo scenarios",
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   const dbUrl = process.env.DATABASE_URL || "";
   const mlUrl = process.env.ML_ENGINE_URL || "http://localhost:8000";
 
@@ -305,6 +337,46 @@ app.post("/api/ml/predict", async (c) => {
   try {
     const input: PredictionInput = await c.req.json();
 
+    // DEMO MODE: Return impressive, deterministic results
+    if (DEMO_MODE) {
+      const demoResult = calculateDemoQuote({
+        event_type: input.eventTypeCode,
+        location_zip: input.zipCode,
+        num_guards: input.numGuards,
+        hours: input.hoursPerGuard,
+        crowd_size: input.crowdSize,
+        is_armed: input.isArmed,
+        requires_vehicle: input.hasVehicle,
+      });
+
+      return c.json({
+        predictedPrice: demoResult.final_price,
+        riskScore: Math.round(demoResult.risk_score * 100),
+        riskLevel: demoResult.risk_level,
+        confidenceScore: demoResult.confidence_score,
+        breakdown: {
+          baseRate: 45,
+          laborCost: demoResult.base_price,
+          eventMultiplier: 1.2,
+          locationMultiplier: 1.15,
+          timeMultiplier: 1.1,
+          riskPremium: 1 + demoResult.risk_score * 0.5,
+        },
+        recommendations: [
+          demoResult.risk_level === "high" || demoResult.risk_level === "critical"
+            ? "Armed security recommended for this risk profile"
+            : "Standard security protocols adequate",
+          "Consider adding vehicle patrol for enhanced coverage",
+          `Acceptance probability: ${Math.round(demoResult.acceptance_probability * 100)}%`,
+        ],
+        model_info: {
+          name: DEMO_ML_MODEL.model_name,
+          version: DEMO_ML_MODEL.version,
+          confidence: demoResult.confidence_score,
+        },
+      });
+    }
+
     // Get event type data
     const eventType = await sql`SELECT * FROM event_types WHERE code = ${input.eventTypeCode}`;
     if (!eventType.length) {
@@ -552,6 +624,38 @@ app.get("/ml/health", async (c) => {
 });
 
 app.get("/ml/model-info", async (c) => {
+  // DEMO MODE: Return impressive ML model stats
+  if (DEMO_MODE) {
+    return c.json({
+      model_name: DEMO_ML_MODEL.model_name,
+      model_type: DEMO_ML_MODEL.model_type,
+      version: DEMO_ML_MODEL.version,
+      status: DEMO_ML_MODEL.status,
+      features: [
+        "event_type",
+        "location_zip",
+        "num_guards",
+        "hours",
+        "crowd_size",
+        "is_armed",
+        "requires_vehicle",
+        "day_of_week",
+        "hour_of_day",
+        "month",
+        "is_weekend",
+        "is_night_shift",
+        "risk_zone",
+        "rate_modifier",
+      ],
+      training_samples: DEMO_ML_MODEL.training_info.training_samples,
+      accuracy_metrics: DEMO_ML_MODEL.accuracy_metrics,
+      feature_importance: DEMO_ML_MODEL.feature_importance,
+      intelligence_sources: DEMO_ML_MODEL.sources,
+      last_trained: DEMO_ML_MODEL.training_info.last_trained,
+      last_updated: new Date().toISOString(),
+    });
+  }
+
   const stats = await sql`SELECT COUNT(*) as samples FROM ml_training_data`;
   return c.json({
     model_name: "GuardQuote ML v2.0",
@@ -1430,6 +1534,24 @@ app.delete("/api/admin/users/:id", async (c) => {
 app.get("/api/admin/stats", async (c) => {
   const auth = await requireAdmin(c);
   if (auth instanceof Response) return auth;
+
+  // DEMO MODE: Return impressive mock stats
+  if (DEMO_MODE) {
+    return c.json({
+      totalQuotes: DEMO_STATS.totalQuotes,
+      totalRevenue: DEMO_STATS.totalRevenue,
+      totalClients: DEMO_STATS.totalClients,
+      totalUsers: DEMO_STATS.totalUsers,
+      recentQuotes: DEMO_QUOTES.slice(0, 5).map((q) => ({
+        id: q.id,
+        quote_number: q.quote_number,
+        total_price: q.total_price,
+        status: q.status,
+        created_at: q.created_at,
+        company_name: q.client.company_name,
+      })),
+    });
+  }
 
   const [quotes, clients, users, recentQuotes] = await Promise.all([
     sql`SELECT COUNT(*) as total, SUM(total_price) as revenue FROM quotes`,

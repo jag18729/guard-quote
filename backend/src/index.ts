@@ -1574,92 +1574,72 @@ app.get("/api/admin/stats", async (c) => {
 });
 
 // ============================================
-// SERVICE MANAGEMENT (Pi1)
+// SERVICE MANAGEMENT → GRAFANA REDIRECT
 // ============================================
+// Infrastructure management moved to dedicated tools:
+//   - Metrics: Prometheus + Grafana (grafana.vandine.us)
+//   - Logs: Loki + Grafana
+//   - Service control: OpenClaw
+//   - Alerting: Alertmanager
 
-import {
-  controlService,
-  getAllServiceStatuses,
-  getPiSystemInfo,
-  getServiceLogs,
-  remediateService,
-} from "./services/pi-services";
+const GRAFANA_URL = process.env.GRAFANA_URL || "https://grafana.vandine.us";
+const GRAFANA_DASHBOARD = "/d/guardquote-ops/guardquote-operations";
 
-// Get all service statuses
+// Service management redirect
 app.get("/api/admin/services", async (c) => {
-  const auth = await requireAdmin(c);
-  if (auth instanceof Response) return auth;
-
-  try {
-    const services = await getAllServiceStatuses();
-    return c.json(services);
-  } catch (error: any) {
-    return c.json({ error: error.message }, 500);
-  }
+  return c.json({
+    message: "Service management moved to Grafana",
+    grafana: GRAFANA_URL,
+    dashboards: {
+      operations: `${GRAFANA_URL}${GRAFANA_DASHBOARD}`,
+      infrastructure: `${GRAFANA_URL}/d/matrix-lab/matrix-lab-overview`,
+      logs: `${GRAFANA_URL}/explore`,
+    },
+    note: "Use OpenClaw for service control (start/stop/restart)",
+  });
 });
 
-// Get Pi system info
+// System info - basic local info only
 app.get("/api/admin/services/system", async (c) => {
   const auth = await requireAdmin(c);
   if (auth instanceof Response) return auth;
 
   try {
-    const info = await getPiSystemInfo();
-    return c.json(info);
-  } catch (error: any) {
-    return c.json({ error: error.message }, 500);
+    const uptimeSecs = Math.floor(process.uptime());
+    const memUsage = process.memoryUsage();
+    
+    return c.json({
+      process: {
+        uptime: `${Math.floor(uptimeSecs / 3600)}h ${Math.floor((uptimeSecs % 3600) / 60)}m`,
+        memory: {
+          heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`,
+          heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)}MB`,
+          rss: `${Math.round(memUsage.rss / 1024 / 1024)}MB`,
+        },
+        nodeVersion: process.version,
+      },
+      monitoring: {
+        grafana: GRAFANA_URL,
+        prometheus: "http://192.168.20.10:9090",
+        loki: "http://192.168.20.10:3100",
+      },
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return c.json({ error: message }, 500);
   }
 });
 
-// Control a service (start/stop/restart)
-app.post("/api/admin/services/:name/:action", async (c) => {
-  const auth = await requireAdmin(c);
-  if (auth instanceof Response) return auth;
-
-  const name = c.req.param("name");
-  const action = c.req.param("action") as "start" | "stop" | "restart";
-
-  if (!["start", "stop", "restart"].includes(action)) {
-    return c.json({ error: "Invalid action. Use: start, stop, restart" }, 400);
-  }
-
-  try {
-    const result = await controlService(name, action);
-    return c.json(result, result.success ? 200 : 500);
-  } catch (error: any) {
-    return c.json({ success: false, message: error.message }, 500);
-  }
-});
-
-// Remediate a service
-app.post("/api/admin/services/:name/remediate", async (c) => {
-  const auth = await requireAdmin(c);
-  if (auth instanceof Response) return auth;
-
-  const name = c.req.param("name");
-
-  try {
-    const result = await remediateService(name);
-    return c.json(result, result.success ? 200 : 500);
-  } catch (error: any) {
-    return c.json({ success: false, message: error.message }, 500);
-  }
-});
-
-// Get service logs
-app.get("/api/admin/services/:name/logs", async (c) => {
-  const auth = await requireAdmin(c);
-  if (auth instanceof Response) return auth;
-
-  const name = c.req.param("name");
-  const lines = parseInt(c.req.query("lines") || "50", 10);
-
-  try {
-    const result = await getServiceLogs(name, lines);
-    return c.json(result);
-  } catch (error: any) {
-    return c.json({ logs: "", error: error.message }, 500);
-  }
+// Removed routes (return helpful error):
+// - POST /api/admin/services/:name/:action → Use OpenClaw
+// - POST /api/admin/services/:name/remediate → Use OpenClaw
+// - GET /api/admin/services/:name/logs → Use Grafana/Loki
+app.all("/api/admin/services/:name/:action", async (c) => {
+  return c.json({
+    error: "Service control removed from application",
+    message: "Use OpenClaw or Grafana for service management",
+    grafana: GRAFANA_URL,
+  }, 410); // 410 Gone
 });
 
 // ============================================

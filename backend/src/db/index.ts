@@ -1,2 +1,3 @@
 export { db } from "./connection";
-export * from "./schema";
+// Note: Drizzle ORM schema removed — using raw pg queries instead
+// See schema.sql for database structure

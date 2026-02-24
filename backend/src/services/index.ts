@@ -1,24 +1,26 @@
 /**
  * Services Index - Central export for all services
- * Import from here for clean imports
+ * 
+ * Infrastructure management removed — use Grafana/OpenClaw instead:
+ *   - Grafana: https://grafana.vandine.us
+ *   - Prometheus: Metrics collection
+ *   - Loki: Log aggregation
+ *   - OpenClaw: Service control
  */
 
-// Backup Service
+// Auth Service
 export {
-  type BackupRecord,
-  backupConfig,
-  cleanupOldBackups,
-  createDataExport,
-  createFullBackup,
-  createRemoteBackup,
-  createSchemaBackup,
-  getBackupHistory,
-  getBackupStats,
-  listBackups,
-  restoreFromBackup,
-  startScheduledBackups,
-  stopScheduledBackups,
-} from "./backup";
+  createToken,
+  hashPassword,
+  verifyPassword,
+  verifyToken,
+  login,
+  refreshAccessToken,
+  getUserFromToken,
+  createAdminUser,
+  type JWTPayload,
+  type AuthResult,
+} from "./auth";
 
 // Cache Service
 export {
@@ -42,58 +44,42 @@ export {
   invalidateSession,
   set as cacheSet,
 } from "./cache";
-// Infrastructure Service
+
+// Demo Service
 export {
-  addNode,
-  checkAllNodes,
-  discoverNetwork,
-  futureInfrastructure,
-  getInfrastructureOverview,
-  getNodeStatus,
-  type InfraNode,
-  infrastructure,
-  type NodeStatus,
-  type NodeType,
-  removeNode,
-  scanPorts,
-  startMonitoring as startInfraMonitoring,
-  stopMonitoring as stopInfraMonitoring,
-  updateNode,
-} from "./infrastructure";
-// Logging Service
+  DEMO_MODE,
+  DEMO_STATS,
+  DEMO_QUOTES,
+  DEMO_CLIENTS,
+  DEMO_ML_MODEL,
+  DEMO_ADMIN_USER,
+  DEMO_USERS,
+  DEMO_EVENT_TYPES,
+  DEMO_LOCATIONS,
+  calculateDemoQuote,
+} from "./demo";
+
+// ML Client Service
 export {
-  apiLogger,
-  backupLogger,
-  clearLogs,
-  dbLogger,
-  getLogStats,
-  getRecentLogs,
-  type LogEntry,
-  type LogLevel,
-  logger,
-  loggingConfig,
-  mlLogger,
-  requestLogger,
-  wsLogger,
-} from "./logging";
-// Monitoring Service
+  checkMLHealth,
+  generateQuoteML,
+  getMLClientStatus,
+  initMLClient,
+  type MLQuoteRequest,
+  type MLQuoteResponse,
+} from "./ml-client";
+
+// OAuth Services
+export { getAuthorizationUrl, exchangeCode, getUserInfo } from "./oauth";
+export { getConfiguredProviders, isProviderConfigured, getProvider } from "./oauth-config";
+
+// Quote Calculator Service
 export {
-  disableService,
-  enableService,
-  getAllServicesHealth,
-  getEnabledServicesHealth,
-  getOverallStatus,
-  getServiceHealth,
-  getSystemMetrics,
-  registerService,
-  type ServiceHealth,
-  type ServiceStatus,
-  type ServiceType,
-  type SystemMetrics,
-  startHealthBroadcast,
-  stopHealthBroadcast,
-  trackRequest,
-} from "./monitor";
+  calculateQuote,
+  type QuoteInput,
+  type QuoteResult,
+} from "./quote-calculator";
+
 // WebSocket Service
 export {
   broadcastToAdmins,
@@ -115,65 +101,30 @@ export {
 // ============================================
 
 /**
- * Initialize all services
+ * Initialize core services (cache only now — monitoring moved to Grafana/Prometheus)
  */
 export async function initializeServices(
   options: {
     cache?: boolean;
-    healthBroadcast?: boolean;
-    scheduledBackups?: boolean;
-    infraMonitoring?: boolean;
   } = {}
 ) {
-  const {
-    cache = true,
-    healthBroadcast = true,
-    scheduledBackups = false,
-    infraMonitoring = true,
-  } = options;
+  const { cache = true } = options;
 
   console.log("[Services] Initializing...");
 
-  // Initialize cache
   if (cache) {
     const { initCache } = await import("./cache");
     await initCache();
-  }
-
-  // Start health broadcasts
-  if (healthBroadcast) {
-    const { startHealthBroadcast } = await import("./monitor");
-    startHealthBroadcast(5000); // Every 5 seconds
-  }
-
-  // Start scheduled backups
-  if (scheduledBackups) {
-    const { startScheduledBackups } = await import("./backup");
-    startScheduledBackups();
-  }
-
-  // Start infrastructure monitoring
-  if (infraMonitoring) {
-    const { startMonitoring } = await import("./infrastructure");
-    startMonitoring(30000); // Every 30 seconds
   }
 
   console.log("[Services] Initialization complete");
 }
 
 /**
- * Shutdown all services gracefully
+ * Shutdown services gracefully
  */
 export async function shutdownServices() {
   console.log("[Services] Shutting down...");
-
-  const { stopHealthBroadcast } = await import("./monitor");
-  const { stopScheduledBackups } = await import("./backup");
-  const { stopMonitoring } = await import("./infrastructure");
-
-  stopHealthBroadcast();
-  stopScheduledBackups();
-  stopMonitoring();
-
+  // Cache cleanup handled by Redis connection pool
   console.log("[Services] Shutdown complete");
 }

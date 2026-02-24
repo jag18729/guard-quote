@@ -1585,8 +1585,11 @@ app.get("/api/admin/stats", async (c) => {
 const GRAFANA_URL = process.env.GRAFANA_URL || "https://grafana.vandine.us";
 const GRAFANA_DASHBOARD = "/d/guardquote-ops/guardquote-operations";
 
-// Service management redirect
+// Service management redirect (auth required)
 app.get("/api/admin/services", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+
   return c.json({
     message: "Service management moved to Grafana",
     grafana: GRAFANA_URL,
@@ -1635,11 +1638,35 @@ app.get("/api/admin/services/system", async (c) => {
 // - POST /api/admin/services/:name/remediate → Use OpenClaw
 // - GET /api/admin/services/:name/logs → Use Grafana/Loki
 app.all("/api/admin/services/:name/:action", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+
+  const name = c.req.param("name");
+  const action = c.req.param("action");
+
   return c.json({
     error: "Service control removed from application",
-    message: "Use OpenClaw or Grafana for service management",
-    grafana: GRAFANA_URL,
+    message: `Cannot ${action} service '${name}' — use OpenClaw or Grafana`,
+    alternatives: {
+      openclaw: "Use OpenClaw for service control",
+      grafana: `${GRAFANA_URL}/d/matrix-lab/matrix-lab-overview`,
+      logs: `${GRAFANA_URL}/explore?orgId=1&left=["now-1h","now","Loki",{"expr":"{service_name=\\"${name}\\"}"}]`,
+    },
   }, 410); // 410 Gone
+});
+
+// Also catch single-param routes like /api/admin/services/:name/logs
+app.get("/api/admin/services/:name/logs", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+
+  const name = c.req.param("name");
+
+  return c.json({
+    error: "Log viewing moved to Grafana/Loki",
+    message: `View logs for '${name}' in Grafana`,
+    url: `${GRAFANA_URL}/explore?orgId=1&left=["now-1h","now","Loki",{"expr":"{service_name=\\"${name}\\"}"}]`,
+  }, 410);
 });
 
 // ============================================

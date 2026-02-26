@@ -51,9 +51,21 @@ export default function Login() {
 
   // Fetch available OAuth providers
   useEffect(() => {
+    const providerNames: Record<string, string> = {
+      github: "GitHub",
+      google: "Google", 
+      microsoft: "Microsoft",
+    };
     fetch(`${API_URL}/api/auth/providers`)
       .then((r) => r.json())
-      .then((data) => setProviders(data.providers || []))
+      .then((data) => {
+        const list = data.providers || [];
+        // Handle both string[] and {id, name}[] formats
+        const mapped = list.map((p: string | { id: string; name: string }) =>
+          typeof p === "string" ? { id: p, name: providerNames[p] || p } : p
+        );
+        setProviders(mapped);
+      })
       .catch(() => setProviders([]));
   }, []);
 
@@ -105,7 +117,7 @@ export default function Login() {
   const handleOAuth = (provider: string) => {
     setOauthLoading(provider);
     // Redirect to backend OAuth endpoint
-    window.location.href = `${API_URL}/api/auth/${provider}?redirect=/admin`;
+    window.location.href = `${API_URL}/api/auth/login/${provider}?returnUrl=/dashboard`;
   };
 
   const getProviderIcon = (id: string) => {

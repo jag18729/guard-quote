@@ -1,18 +1,19 @@
 import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
 
 export default function OAuthHandler() {
-  const [searchParams] = useSearchParams();
-
   useEffect(() => {
-    const token = searchParams.get("token");
+    // Use native URL API to get token (more reliable than React Router)
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    
     if (token) {
+      console.log("[OAuth] Token found, storing...");
       // Store token in localStorage
       localStorage.setItem("token", token);
-      // Redirect to admin (full page reload to reinit AuthContext)
+      // Redirect to admin without token in URL
       window.location.replace("/admin");
     }
-  }, [searchParams]);
+  }, []);
 
   return null;
 }

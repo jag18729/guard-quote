@@ -1,4 +1,149 @@
-import { Shield, Server, Database, Cloud, Cpu, Zap, Globe, Lock, ArrowRight, Activity, BarChart3, Rocket, Timer, HardDrive, Network } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Shield, Server, Database, Cloud, Cpu, Zap, Globe, Lock, ArrowRight, Activity, BarChart3, Rocket, Timer, HardDrive, Network, ExternalLink } from "lucide-react";
+import mermaid from "mermaid";
+
+// Initialize mermaid with Nord-inspired theme
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  themeVariables: {
+    primaryColor: '#88c0d0',
+    primaryTextColor: '#eceff4',
+    primaryBorderColor: '#4c566a',
+    lineColor: '#81a1c1',
+    secondaryColor: '#a3be8c',
+    tertiaryColor: '#3b4252',
+    background: '#3b4252',
+    mainBkg: '#434c5e',
+    nodeBorder: '#4c566a',
+    clusterBkg: '#3b4252',
+    clusterBorder: '#4c566a',
+    titleColor: '#eceff4',
+    edgeLabelBackground: '#3b4252',
+    fontFamily: 'ui-sans-serif, system-ui, sans-serif'
+  },
+  flowchart: {
+    curve: 'basis',
+    padding: 24,
+    nodeSpacing: 80,
+    rankSpacing: 100,
+    htmlLabels: true
+  }
+});
+
+const architectureDiagram = `
+flowchart LR
+    subgraph Internet["☁️ INTERNET"]
+        direction TB
+        User([👤 Users])
+        CF[Cloudflare<br/>CDN + WAF]
+    end
+
+    subgraph Isaiah["🏠 ISAIAH'S SITE"]
+        direction TB
+        IB[🛡️ Security<br/>Bastion]
+        ITS[Tailscale<br/>Node]
+    end
+
+    subgraph Studio["🏠 RAFAEL'S STUDIO"]
+        direction TB
+        
+        subgraph Matrix["MATRIX NETWORK"]
+            UDM[UniFi<br/>Gateway]
+            TS[ThinkStation<br/>OpenClaw]
+            DB[(PostgreSQL)]
+        end
+
+        subgraph Firewall["🔥 PA-220 FIREWALL"]
+            FW[PAN-OS 10.2<br/>4 Zones]
+        end
+
+        subgraph MGMT["DMZ-MGMT · pi0"]
+            direction LR
+            AdminB[🔐 Admin<br/>Bastion]
+            DNS[AdGuard<br/>DNS]
+            LDAP[OpenLDAP]
+            Vector[Vector<br/>Logs]
+        end
+
+        subgraph Services["DMZ-MONITORING · pi1"]
+            Tunnel[cloudflared<br/>Tunnel]
+            Graf[Grafana]
+            Prom[Prometheus]
+            Loki[Loki]
+        end
+
+        subgraph Apps["DMZ-APPS · pi2"]
+            subgraph K3s["☸️ K3s Cluster"]
+                FE[📱 Frontend]
+                BE[⚡ Bun Backend]
+                ML[🧠 ML Engine]
+            end
+        end
+
+        subgraph Security["DMZ-SECURITY · rv2"]
+            direction LR
+            subgraph RV2["🦎 Orange Pi RV2"]
+                direction TB
+                IDS[🛡️ Suricata<br/>48K Rules]
+                LLM[🤖 Qwen2<br/>LLM]
+                SN[🕵️ SentinelNet]
+            end
+        end
+    end
+
+    User --> CF
+    CF --> Tunnel
+    
+    IB --> ITS
+    ITS <-.->|Tailscale| Tunnel
+    ITS -.-> Graf
+    
+    Tunnel --> FE
+    FE --> BE
+    BE --> ML
+    BE --> DB
+    
+    FW -.-> Vector
+    IDS -.-> Vector
+    Vector --> Loki
+
+    classDef internet fill:#5e81ac,stroke:#4c566a,color:#eceff4
+    classDef remote fill:#88c0d0,stroke:#4c566a,color:#2e3440
+    classDef infra fill:#d08770,stroke:#4c566a,color:#2e3440
+    classDef app fill:#a3be8c,stroke:#4c566a,color:#2e3440
+    classDef security fill:#bf616a,stroke:#4c566a,color:#eceff4
+    classDef data fill:#b48ead,stroke:#4c566a,color:#2e3440
+
+    class User,CF internet
+    class IB,ITS remote
+    class UDM,TS,Tunnel,FW,DNS,LDAP,Vector,Graf,Prom,Loki infra
+    class FE,BE,ML,SN app
+    class IDS,LLM security
+    class DB data
+`;
+
+function ArchitectureDiagram() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const renderDiagram = async () => {
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+        const { svg } = await mermaid.render('architecture-diagram', architectureDiagram);
+        containerRef.current.innerHTML = svg;
+      }
+    };
+    renderDiagram();
+  }, []);
+
+  return (
+    <div 
+      ref={containerRef} 
+      className="w-full overflow-x-auto flex justify-center min-h-[400px] items-center"
+    />
+  );
+}
 
 const techStack = {
   frontend: {
@@ -163,45 +308,6 @@ const bunFeatures = [
   },
 ];
 
-const architecture = `
-┌─────────────────────────────────────────────────────────────────────┐
-│                        CLOUDFLARE EDGE                              │
-│    ┌─────────────┐                      ┌─────────────────────┐    │
-│    │   WAF/DDoS  │──────────────────────│  Cloudflare Tunnel  │    │
-│    └─────────────┘                      └──────────┬──────────┘    │
-└────────────────────────────────────────────────────┼────────────────┘
-                                                     │
-┌────────────────────────────────────────────────────▼────────────────┐
-│                          PI1 (Monitoring)                           │
-│    ┌──────────────────────────────────────────────────────────┐    │
-│    │  cloudflared  ─────►  Tailscale Mesh  ────►  pi2 K3s     │    │
-│    └──────────────────────────────────────────────────────────┘    │
-│    ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐     │
-│    │ Grafana  │  │Prometheus│  │   Loki   │  │ Alertmanager │     │
-│    └──────────┘  └──────────┘  └──────────┘  └──────────────┘     │
-└─────────────────────────────────────────────────────────────────────┘
-                                    │
-┌───────────────────────────────────▼─────────────────────────────────┐
-│                          PI2 (K3s Apps)                             │
-│                                                                     │
-│    ┌─────────────────────────────────────────────────────────┐     │
-│    │                    ☸️ K3s Cluster                        │     │
-│    │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │     │
-│    │  │   Frontend   │  │   Backend    │  │  ML Engine   │  │     │
-│    │  │  React/Vite  │  │  Bun + Hono  │  │   FastAPI    │  │     │
-│    │  │    :30522    │  │    :30520    │  │    :30521    │  │     │
-│    │  └──────────────┘  └──────┬───────┘  └──────▲───────┘  │     │
-│    │                           │    gRPC         │          │     │
-│    │                           └─────────────────┘          │     │
-│    └─────────────────────────────────────────────────────────┘     │
-│                                    │                                │
-│                           ┌────────▼────────┐                      │
-│                           │   PostgreSQL    │                      │
-│                           │  192.168.2.70   │                      │
-│                           └─────────────────┘                      │
-└─────────────────────────────────────────────────────────────────────┘
-`;
-
 const formatNumber = (n: number) => {
   if (n >= 1000) return `${(n/1000).toFixed(0)}K`;
   return n.toString();
@@ -303,14 +409,25 @@ export default function TechStack() {
         </div>
 
         {/* Architecture Diagram */}
-        <div className="mb-16 p-6 bg-zinc-900 border border-zinc-800 rounded-xl overflow-x-auto">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-accent" />
-            Architecture Overview
-          </h2>
-          <pre className="text-xs md:text-sm text-zinc-400 font-mono leading-relaxed whitespace-pre">
-            {architecture}
-          </pre>
+        <div className="mb-16 p-6 bg-zinc-900 border border-zinc-800 rounded-xl">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <Zap className="w-5 h-5 text-accent" />
+              System Architecture
+            </h2>
+            <a 
+              href="https://htmlpreview.github.io/?https://gist.githubusercontent.com/jag18729/968ce9b880b5d7164187fa9f1a29b9b8/raw/guardquote-architecture.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-emerald-400 transition-colors"
+            >
+              Full diagram <ExternalLink className="w-4 h-4" />
+            </a>
+          </div>
+          <ArchitectureDiagram />
+          <p className="text-center text-zinc-500 text-sm mt-4">
+            Multi-site deployment with Tailscale mesh VPN, PA-220 zone segmentation, and K3s orchestration
+          </p>
         </div>
 
         {/* Tech Grid */}

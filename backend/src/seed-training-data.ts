@@ -13,7 +13,7 @@
 
 import postgres from "postgres";
 
-const sql = postgres("postgres://guardquote:WPU8bj3nbwFyZFEtHZQz@192.168.2.70/guardquote", {
+const sql = postgres("${process.env.DATABASE_URL}", {
   max: 5,
   idle_timeout: 20,
   connect_timeout: 10,

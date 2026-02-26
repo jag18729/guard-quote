@@ -14,6 +14,10 @@ dependencies = [
     "httpx>=0.28.0",
     "python-dotenv>=1.0.0",
     "mysql-connector-python>=9.0.0",
+    # gRPC support (internal backend communication)
+    "grpcio>=1.68.0",
+    "grpcio-tools>=1.68.0",
+    "protobuf>=5.29.0",
 ]
 
 [project.optional-dependencies]

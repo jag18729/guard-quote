@@ -162,13 +162,13 @@ cp .env.example .env
         <pre><code class="bash">
 # .env
 DB_HOST=100.66.167.62
-DB_PASSWORD=WPU8bj3nbwFyZFEtHZQz
+DB_PASSWORD=[see .env]
 
 REDIS_HOST=100.66.167.62
-REDIS_PASSWORD=guardquote_redis_2024
+REDIS_PASSWORD=[see .env]
 
 JWT_SECRET=guardquote_local_dev_secret_32chars
-ML_ENGINE_SECRET=guardquote_s2s_secret_2026
+ML_ENGINE_SECRET=[see .env]
         </code></pre>
     </section>
 
@@ -235,7 +235,7 @@ Result: https://main.xxxxx.amplifyapp.com
 cd aws
 
 export KEY_NAME=guardquote-demo
-export DB_PASSWORD=WPU8bj3nbwFyZFEtHZQz
+export DB_PASSWORD=[see .env]
 export JWT_SECRET=your_secret_here
 
 ./deploy.sh demo deploy-all
@@ -283,7 +283,7 @@ export JWT_SECRET=your_secret_here
     <section>
         <h3>Admin Dashboard</h3>
         <p><code>http://localhost:5173/admin/login</code></p>
-        <p>Login: <code>admin@guardquote.com</code> / <code>admin123</code></p>
+        <p>Login: <code>admin@guardquote.com</code> / <code>[see .env]</code></p>
         <ul>
             <li>Dashboard stats</li>
             <li>User management</li>
@@ -366,9 +366,9 @@ curl -X POST http://localhost:3000/ml/quote \
     <table class="small">
         <tr><th>Resource</th><th>Value</th></tr>
         <tr><td>Pi1 Tailscale IP</td><td><code>100.66.167.62</code></td></tr>
-        <tr><td>PostgreSQL</td><td><code>guardquote:WPU8bj3nbwFyZFEtHZQz</code></td></tr>
-        <tr><td>Redis</td><td><code>guardquote_redis_2024</code></td></tr>
-        <tr><td>Admin Login</td><td><code>admin@guardquote.com / admin123</code></td></tr>
+        <tr><td>PostgreSQL</td><td><code>guardquote:[see .env]</code></td></tr>
+        <tr><td>Redis</td><td><code>[see .env]</code></td></tr>
+        <tr><td>Admin Login</td><td><code>[see .env]</code></td></tr>
         <tr><td>GitHub Repo</td><td><code>jag18729/guard-quote</code></td></tr>
         <tr><td>Tailnet</td><td><code>jag18729.github</code></td></tr>
     </table>

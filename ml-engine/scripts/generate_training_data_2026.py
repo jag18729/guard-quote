@@ -24,12 +24,12 @@ except ImportError:
     HAS_PSYCOPG2 = False
     print("Warning: psycopg2 not installed. CSV-only mode enabled.")
 
-# Configuration - Pi1 PostgreSQL (192.168.2.70)
+# Configuration - PostgreSQL (see .env for host)
 DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "192.168.2.70"),
+    "host": os.getenv("DB_HOST", "localhost"),
     "port": os.getenv("DB_PORT", "5432"),
     "user": os.getenv("DB_USER", "guardquote"),
-    "password": os.getenv("DB_PASSWORD", "WPU8bj3nbwFyZFEtHZQz"),
+    "password": os.getenv("DB_PASSWORD", ""),
     "database": os.getenv("DB_NAME", "guardquote"),
 }
 

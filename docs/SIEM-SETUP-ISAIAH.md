@@ -65,12 +65,12 @@ Generate on the Wazuh manager:
 
 # Choose (A) to add agents
 # Agent name: pi0
-# Agent IP: any (or 100.114.94.18)
+# Agent IP: any (or [tailscale-ip])
 # Extract key
 
 # Repeat for pi1
 # Agent name: pi1  
-# Agent IP: any (or 100.77.26.41)
+# Agent IP: any (or [tailscale-ip])
 ```
 
 Provide two keys:
@@ -147,7 +147,7 @@ encoding.codec = "json"
 ## Tailscale Network
 
 Both sides need Tailscale:
-- **Our side**: pi0 (100.114.94.18), pi1 (100.77.26.41)
+- **Our side**: pi0 ([tailscale-ip]), pi1 ([tailscale-ip])
 - **Isaiah's side**: His Wazuh manager
 
 Benefits:

@@ -44,7 +44,7 @@ const infrastructure: Map<string, InfraNode> = new Map([
       id: "pi-db",
       name: "Database Server (Pi)",
       type: "database",
-      host: "192.168.2.70",
+      host: "[see .env]",
       port: 5432,
       status: "unknown",
       lastCheck: new Date(0),
@@ -64,7 +64,7 @@ const infrastructure: Map<string, InfraNode> = new Map([
       id: "syslog",
       name: "Syslog Server",
       type: "syslog",
-      host: "192.168.2.101",
+      host: "[see .env]",
       port: 514,
       status: "unknown",
       lastCheck: new Date(0),
@@ -101,7 +101,7 @@ const futureInfrastructure: Omit<InfraNode, "status" | "lastCheck">[] = [
     id: "redis",
     name: "Redis Cache",
     type: "redis",
-    host: "192.168.2.70", // Can run on same Pi or separate
+    host: "[see .env]", // Can run on same Pi or separate
     port: 6379,
     services: ["redis-server"],
     metadata: { note: "Pending deployment" },
@@ -110,7 +110,7 @@ const futureInfrastructure: Omit<InfraNode, "status" | "lastCheck">[] = [
     id: "ldap",
     name: "LDAP/AD Server",
     type: "ldap",
-    host: "192.168.2.x", // TBD
+    host: "[see .env]x", // TBD
     port: 389,
     services: ["openldap", "sssd"],
     metadata: { note: "Pending deployment" },
@@ -119,7 +119,7 @@ const futureInfrastructure: Omit<InfraNode, "status" | "lastCheck">[] = [
     id: "gateway",
     name: "API Gateway",
     type: "gateway",
-    host: "192.168.2.x", // TBD
+    host: "[see .env]x", // TBD
     port: 8080,
     services: ["kong", "nginx"],
     metadata: { note: "Pending deployment" },
@@ -128,7 +128,7 @@ const futureInfrastructure: Omit<InfraNode, "status" | "lastCheck">[] = [
     id: "monitoring",
     name: "Monitoring Stack",
     type: "monitoring",
-    host: "192.168.2.101", // Could run on syslog server
+    host: "[see .env]", // Could run on syslog server
     port: 9090,
     services: ["prometheus", "grafana", "alertmanager"],
     metadata: { note: "Pending deployment" },
@@ -241,7 +241,7 @@ async function checkPostgreSQL(
       {
         env: {
           ...process.env,
-          PGPASSWORD: "WPU8bj3nbwFyZFEtHZQz",
+          PGPASSWORD: process.env.DB_PASSWORD || "",
           PGCONNECT_TIMEOUT: "5",
         },
       }
@@ -587,7 +587,7 @@ export async function scanPorts(
 /**
  * Discover services on the local network
  */
-export async function discoverNetwork(subnet: string = "192.168.2"): Promise<
+export async function discoverNetwork(subnet: string = process.env.NETWORK_SUBNET || "192.168.0"): Promise<
   {
     host: string;
     reachable: boolean;

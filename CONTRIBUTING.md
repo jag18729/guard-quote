@@ -38,7 +38,7 @@ npm run dev
 
 ### 4. Backend Setup (Deno)
 
-The backend runs on pi1 (192.168.2.70). For local development:
+The backend runs on pi1. For local development:
 
 ```bash
 cd backend  # If exists, or work directly on pi1
@@ -138,8 +138,8 @@ Contact the team lead (Rafa) for:
 
 ```bash
 # From Tailscale network
-ssh rafaeljg@100.114.94.18    # pi0
-ssh johnmarston@100.77.26.41  # pi1
+ssh rafaeljg@[tailscale-ip]    # pi0
+ssh johnmarston@[tailscale-ip]  # pi1
 ```
 
 ## 📋 Current Tasks

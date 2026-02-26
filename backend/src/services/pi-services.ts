@@ -3,9 +3,9 @@
  * Supports demo mode when Pi is unreachable
  */
 
-const PI_HOST = process.env.PI_HOST || "192.168.2.70";
+const PI_HOST = process.env.PI_HOST || "localhost";
 const PI_USER = process.env.PI_USER || "johnmarston";
-const PI_PASS = process.env.PI_PASS || "481526";
+const PI_PASS = process.env.PI_PASS; if (!PI_PASS) throw new Error("PI_PASS required");
 
 // Check if we're in demo mode (can't reach Pi or sshpass not installed)
 let demoMode: boolean | null = null;

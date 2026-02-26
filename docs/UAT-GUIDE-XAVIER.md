@@ -23,7 +23,7 @@ You're the **voice of the customer**. Your job is to use GuardQuote like a real 
 | Admin Login | https://guardquote.vandine.us/login | Login flow |
 | Admin Dashboard | https://guardquote.vandine.us/admin | Navigation, data display |
 
-**Test Credentials:** admin@guardquote.com / admin123
+**Test Credentials:** admin@guardquote.com / [see .env]
 
 ---
 

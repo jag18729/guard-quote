@@ -93,10 +93,10 @@ snmp-pa220          # Query PA-220 (SNMPv2c)
 
 | Host | Local IP | Tailscale | Services |
 |------|----------|-----------|----------|
-| pi0 | 192.168.2.101 | 100.114.94.18 | LDAP, Vector, rsyslog |
-| pi1 | 192.168.2.70 | 100.77.26.41 | API, Grafana, Prometheus, PostgreSQL |
-| UDM | 192.168.2.1 | - | Router, DHCP |
-| PA-220 | 192.168.2.14 | - | Firewall |
+| pi0 | [see .env] | [tailscale] | LDAP, Vector, rsyslog |
+| pi1 | [see .env] | [tailscale] | API, Grafana, Prometheus, PostgreSQL |
+| UDM | [see .env] | - | Router, DHCP |
+| PA-220 | [see .env] | - | Firewall |
 
 ## Technical Details
 
@@ -123,7 +123,7 @@ ssh pi0 "cd ~/nettools && docker compose restart"
 ### LDAP auth failing
 ```bash
 # Test LDAP from pi0
-docker exec nettools ldapwhoami -x -H ldap://192.168.2.101 \
+docker exec nettools ldapwhoami -x -H ldap://[see .env] \
   -D "uid=USERNAME,ou=People,dc=vandine,dc=us" -w "PASSWORD"
 ```
 

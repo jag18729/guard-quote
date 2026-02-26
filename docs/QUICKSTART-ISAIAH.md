@@ -81,10 +81,10 @@ Your Wazuh Manager
 ┌──────┴────────────────────────────────┐
 │         GuardQuote Infrastructure      │
 │                                        │
-│   pi0 (100.114.94.18)                 │
+│   pi0 ([tailscale-ip])                 │
 │   └─ Wazuh Agent → logs, FIM, etc.    │
 │                                        │
-│   pi1 (100.77.26.41)                 │
+│   pi1 ([tailscale-ip])                 │
 │   └─ Wazuh Agent → logs, FIM, etc.    │
 │                                        │
 │   PA-220, UDM (network devices)       │

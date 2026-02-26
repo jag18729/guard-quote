@@ -8,7 +8,8 @@
 import type { Context, Next } from "hono";
 
 // Environment-based secret (should be in .env)
-const ML_ENGINE_SECRET = process.env.ML_ENGINE_SECRET || "guardquote_s2s_secret_2026";
+const ML_ENGINE_SECRET = process.env.ML_ENGINE_SECRET;
+if (!ML_ENGINE_SECRET) throw new Error("ML_ENGINE_SECRET environment variable is required");
 const S2S_HEADER = "X-Internal-Secret";
 
 /**

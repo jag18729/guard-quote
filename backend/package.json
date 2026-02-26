@@ -18,12 +18,14 @@
     "typescript": "^5.7.0"
   },
   "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.8.0",
     "@hono/node-server": "^1.19.9",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
-    "hono": "^4.11.4",
+    "hono": "^4.11.9",
     "postgres": "3.3.5",
-    "resend": "^6.9.1"
+    "resend": "^6.9.2"
   },
   "engines": {
     "node": ">=22.0.0"

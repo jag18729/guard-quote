@@ -6,6 +6,21 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { sql, testConnection } from "./db/connection";
+import { checkMLHealth, getMLClientStatus } from "./services/ml-client";
+import { getAuthorizationUrl, exchangeCode, getUserInfo } from "./services/oauth";
+import { getConfiguredProviders, isProviderConfigured } from "./services/oauth-config";
+import {
+  DEMO_MODE,
+  DEMO_STATS,
+  DEMO_QUOTES,
+  DEMO_CLIENTS,
+  DEMO_ML_MODEL,
+  DEMO_ADMIN_USER,
+  DEMO_USERS,
+  DEMO_EVENT_TYPES,
+  DEMO_LOCATIONS,
+  calculateDemoQuote,
+} from "./services/demo";
 
 const app = new Hono();
 
@@ -27,9 +42,19 @@ app.get("/", (c) =>
 
 app.get("/health", async (c) => {
   const dbOk = await testConnection();
+  
+  // Clock sanity check (critical for JWT)
+  const now = new Date();
+  const year = now.getFullYear();
+  const clockOk = year >= 2026 && year <= 2030;
+  
+  const isHealthy = dbOk && clockOk;
+  
   return c.json({
-    status: dbOk ? "healthy" : "degraded",
+    status: isHealthy ? "healthy" : "degraded",
     database: dbOk ? "connected" : "disconnected",
+    clock: clockOk ? "ok" : `ERROR: year=${year}`,
+    timestamp: now.toISOString(),
   });
 });
 
@@ -44,6 +69,26 @@ app.get("/api/health", async (c) => {
 
 // Environment status with async connection checks
 app.get("/api/status", async (c) => {
+  // DEMO MODE: Show fully operational system
+  if (DEMO_MODE) {
+    return c.json({
+      mode: "demo",
+      database: { connected: true, local: false },
+      mlEngine: { connected: true, version: DEMO_ML_MODEL.version, model_loaded: true },
+      services: {
+        api: "healthy",
+        ml: "healthy",
+        websocket: "healthy",
+      },
+      demo_info: {
+        clients: DEMO_CLIENTS.length,
+        quotes: DEMO_QUOTES.length,
+        scenarios: "5 pre-configured demo scenarios",
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   const dbUrl = process.env.DATABASE_URL || "";
   const mlUrl = process.env.ML_ENGINE_URL || "http://localhost:8000";
 
@@ -292,6 +337,46 @@ app.post("/api/ml/predict", async (c) => {
   try {
     const input: PredictionInput = await c.req.json();
 
+    // DEMO MODE: Return impressive, deterministic results
+    if (DEMO_MODE) {
+      const demoResult = calculateDemoQuote({
+        event_type: input.eventTypeCode,
+        location_zip: input.zipCode,
+        num_guards: input.numGuards,
+        hours: input.hoursPerGuard,
+        crowd_size: input.crowdSize,
+        is_armed: input.isArmed,
+        requires_vehicle: input.hasVehicle,
+      });
+
+      return c.json({
+        predictedPrice: demoResult.final_price,
+        riskScore: Math.round(demoResult.risk_score * 100),
+        riskLevel: demoResult.risk_level,
+        confidenceScore: demoResult.confidence_score,
+        breakdown: {
+          baseRate: 45,
+          laborCost: demoResult.base_price,
+          eventMultiplier: 1.2,
+          locationMultiplier: 1.15,
+          timeMultiplier: 1.1,
+          riskPremium: 1 + demoResult.risk_score * 0.5,
+        },
+        recommendations: [
+          demoResult.risk_level === "high" || demoResult.risk_level === "critical"
+            ? "Armed security recommended for this risk profile"
+            : "Standard security protocols adequate",
+          "Consider adding vehicle patrol for enhanced coverage",
+          `Acceptance probability: ${Math.round(demoResult.acceptance_probability * 100)}%`,
+        ],
+        model_info: {
+          name: DEMO_ML_MODEL.model_name,
+          version: DEMO_ML_MODEL.version,
+          confidence: demoResult.confidence_score,
+        },
+      });
+    }
+
     // Get event type data
     const eventType = await sql`SELECT * FROM event_types WHERE code = ${input.eventTypeCode}`;
     if (!eventType.length) {
@@ -461,6 +546,25 @@ app.post("/api/ml/predict/batch", async (c) => {
   }
 });
 
+// ML Engine gRPC Health Check
+app.get("/api/ml/health", async (c) => {
+  const status = getMLClientStatus();
+  const health = await checkMLHealth();
+
+  return c.json({
+    ml_engine: {
+      connected: status.connected,
+      host: status.host,
+      port: status.port,
+      healthy: health.healthy,
+      version: health.version || null,
+      model_loaded: health.model_loaded || false,
+    },
+    transport: "gRPC",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Get ML model stats
 app.get("/api/ml/stats", async (c) => {
   const stats = await sql`
@@ -520,6 +624,38 @@ app.get("/ml/health", async (c) => {
 });
 
 app.get("/ml/model-info", async (c) => {
+  // DEMO MODE: Return impressive ML model stats
+  if (DEMO_MODE) {
+    return c.json({
+      model_name: DEMO_ML_MODEL.model_name,
+      model_type: DEMO_ML_MODEL.model_type,
+      version: DEMO_ML_MODEL.version,
+      status: DEMO_ML_MODEL.status,
+      features: [
+        "event_type",
+        "location_zip",
+        "num_guards",
+        "hours",
+        "crowd_size",
+        "is_armed",
+        "requires_vehicle",
+        "day_of_week",
+        "hour_of_day",
+        "month",
+        "is_weekend",
+        "is_night_shift",
+        "risk_zone",
+        "rate_modifier",
+      ],
+      training_samples: DEMO_ML_MODEL.training_info.training_samples,
+      accuracy_metrics: DEMO_ML_MODEL.accuracy_metrics,
+      feature_importance: DEMO_ML_MODEL.feature_importance,
+      intelligence_sources: DEMO_ML_MODEL.sources,
+      last_trained: DEMO_ML_MODEL.training_info.last_trained,
+      last_updated: new Date().toISOString(),
+    });
+  }
+
   const stats = await sql`SELECT COUNT(*) as samples FROM ml_training_data`;
   return c.json({
     model_name: "GuardQuote ML v2.0",
@@ -985,6 +1121,124 @@ app.post("/api/auth/register", async (c) => {
 });
 
 // ============================================
+// OAUTH AUTHENTICATION
+// ============================================
+
+// Get available OAuth providers
+app.get("/api/auth/providers", (c) => {
+  return c.json({
+    providers: getConfiguredProviders(),
+  });
+});
+
+// Start OAuth flow
+app.get("/api/auth/login/:provider", async (c) => {
+  const provider = c.req.param("provider");
+  const returnUrl = c.req.query("returnUrl") || "/";
+
+  if (!isProviderConfigured(provider)) {
+    return c.json({ error: "Provider not configured" }, 400);
+  }
+
+  const baseUrl = process.env.BASE_URL || "http://localhost:3002";
+  const redirectUri = `${baseUrl}/api/auth/callback/${provider}`;
+
+  const authUrl = await getAuthorizationUrl(provider, redirectUri, returnUrl);
+  if (!authUrl) {
+    return c.json({ error: "Failed to generate auth URL" }, 500);
+  }
+
+  return c.redirect(authUrl);
+});
+
+// OAuth callback
+app.get("/api/auth/callback/:provider", async (c) => {
+  const provider = c.req.param("provider");
+  const code = c.req.query("code");
+  const state = c.req.query("state");
+  const error = c.req.query("error");
+
+  if (error) {
+    return c.redirect(`/login?error=${encodeURIComponent(error)}`);
+  }
+
+  if (!code || !state) {
+    return c.redirect("/login?error=missing_params");
+  }
+
+  const baseUrl = process.env.BASE_URL || "http://localhost:3002";
+  const redirectUri = `${baseUrl}/api/auth/callback/${provider}`;
+
+  // Exchange code for token
+  const tokenResult = await exchangeCode(state, code, redirectUri);
+  if (!tokenResult) {
+    return c.redirect("/login?error=token_exchange_failed");
+  }
+
+  // Get user info
+  const userInfo = await getUserInfo(provider, tokenResult.accessToken);
+  if (!userInfo) {
+    return c.redirect("/login?error=user_info_failed");
+  }
+
+  // Find existing OAuth link
+  let user = await sql`
+    SELECT u.* FROM users u
+    JOIN oauth_accounts oa ON oa.user_id = u.id
+    WHERE oa.provider = ${provider} AND oa.provider_id = ${userInfo.providerId}
+  `.then((rows) => rows[0]);
+
+  if (!user) {
+    // Check if email already exists
+    const existingUser = await sql`
+      SELECT * FROM users WHERE email = ${userInfo.email.toLowerCase()}
+    `.then((rows) => rows[0]);
+
+    if (existingUser) {
+      // Link OAuth to existing account
+      await sql`
+        INSERT INTO oauth_accounts (user_id, provider, provider_id, email)
+        VALUES (${existingUser.id}, ${provider}, ${userInfo.providerId}, ${userInfo.email})
+        ON CONFLICT (provider, provider_id) DO NOTHING
+      `;
+      user = existingUser;
+    } else {
+      // Create new user
+      const nameParts = userInfo.name.split(" ");
+      const firstName = nameParts[0] || "User";
+      const lastName = nameParts.slice(1).join(" ") || "";
+
+      const newUser = await sql`
+        INSERT INTO users (email, first_name, last_name, role, password_hash)
+        VALUES (${userInfo.email.toLowerCase()}, ${firstName}, ${lastName}, 'user', 'oauth-only')
+        RETURNING *
+      `.then((rows) => rows[0]);
+
+      await sql`
+        INSERT INTO oauth_accounts (user_id, provider, provider_id, email)
+        VALUES (${newUser.id}, ${provider}, ${userInfo.providerId}, ${userInfo.email})
+      `;
+      user = newUser;
+    }
+  }
+
+  // Import createToken from auth service
+  const { createToken } = await import("./services/auth");
+
+  // Create JWT
+  const accessToken = await createToken({
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+  });
+
+  // Redirect with token (frontend will extract and store it)
+  const returnUrl = tokenResult.returnUrl || "/dashboard";
+  const separator = returnUrl.includes("?") ? "&" : "?";
+  return c.redirect(`${returnUrl}${separator}token=${accessToken}`);
+});
+
+// ============================================
 // INDIVIDUAL QUOTE REQUESTS (creates user + quote)
 // ============================================
 
@@ -1281,6 +1535,24 @@ app.get("/api/admin/stats", async (c) => {
   const auth = await requireAdmin(c);
   if (auth instanceof Response) return auth;
 
+  // DEMO MODE: Return impressive mock stats
+  if (DEMO_MODE) {
+    return c.json({
+      totalQuotes: DEMO_STATS.totalQuotes,
+      totalRevenue: DEMO_STATS.totalRevenue,
+      totalClients: DEMO_STATS.totalClients,
+      totalUsers: DEMO_STATS.totalUsers,
+      recentQuotes: DEMO_QUOTES.slice(0, 5).map((q) => ({
+        id: q.id,
+        quote_number: q.quote_number,
+        total_price: q.total_price,
+        status: q.status,
+        created_at: q.created_at,
+        company_name: q.client.company_name,
+      })),
+    });
+  }
+
   const [quotes, clients, users, recentQuotes] = await Promise.all([
     sql`SELECT COUNT(*) as total, SUM(total_price) as revenue FROM quotes`,
     sql`SELECT COUNT(*) as total FROM clients`,
@@ -1485,7 +1757,7 @@ app.get("/api/ws/stats", (c) => c.json(getWSStats()));
 const port = process.env.PORT || 3000;
 
 console.log(`GuardQuote API v2.0 running on http://localhost:${port}`);
-console.log(`Connected to PostgreSQL on Raspberry Pi (192.168.2.70)`);
+console.log(`Connected to PostgreSQL on Raspberry Pi ([configured host])`);
 console.log(`WebSocket available at ws://localhost:${port}/ws`);
 
 export default {

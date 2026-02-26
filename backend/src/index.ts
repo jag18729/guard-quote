@@ -1236,7 +1236,7 @@ app.get("/api/auth/callback/:provider", async (c) => {
   });
 
   // Redirect with token (frontend will extract and store it)
-  const returnUrl = tokenResult.returnUrl || "/dashboard";
+  const returnUrl = tokenResult.returnUrl || "/admin";
   const separator = returnUrl.includes("?") ? "&" : "?";
   return c.redirect(`${returnUrl}${separator}token=${accessToken}`);
 });

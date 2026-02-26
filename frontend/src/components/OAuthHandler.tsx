@@ -24,7 +24,7 @@ export default function OAuthHandler() {
         .then((r) => {
           if (r.ok) {
             // Token valid, reload to pick up auth state
-            window.location.href = "/dashboard";
+            window.location.href = "/admin";
           } else {
             // Token invalid
             localStorage.removeItem("token");

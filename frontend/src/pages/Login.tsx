@@ -117,7 +117,7 @@ export default function Login() {
   const handleOAuth = (provider: string) => {
     setOauthLoading(provider);
     // Redirect to backend OAuth endpoint
-    window.location.href = `${API_URL}/api/auth/login/${provider}?returnUrl=/dashboard`;
+    window.location.href = `${API_URL}/api/auth/login/${provider}?returnUrl=/admin`;
   };
 
   const getProviderIcon = (id: string) => {

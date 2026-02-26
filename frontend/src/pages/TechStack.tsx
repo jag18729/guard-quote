@@ -39,65 +39,57 @@ flowchart LR
         CF[Cloudflare<br/>CDN + WAF]
     end
 
-    subgraph Isaiah["🏠 ISAIAH'S SITE"]
+    subgraph Remote["🌐 REMOTE SITE"]
         direction TB
-        IB[🛡️ Security<br/>Bastion]
-        ITS[Tailscale<br/>Node]
+        RNode[Tailscale<br/>Node]
     end
 
-    subgraph Studio["🏠 RAFAEL'S STUDIO"]
+    subgraph DC["🏢 PRIMARY DATACENTER"]
         direction TB
         
-        subgraph Matrix["MATRIX NETWORK"]
-            UDM[UniFi<br/>Gateway]
-            TS[ThinkStation<br/>OpenClaw]
+        subgraph Core["CORE NETWORK"]
+            GW[Gateway<br/>Router]
             DB[(PostgreSQL)]
         end
 
-        subgraph Firewall["🔥 PA-220 FIREWALL"]
-            FW[PAN-OS 10.2<br/>4 Zones]
+        subgraph Firewall["🔥 NGFW"]
+            FW[Next-Gen<br/>Firewall]
         end
 
-        subgraph MGMT["DMZ-MGMT · pi0"]
+        subgraph MGMT["DMZ-MGMT"]
             direction LR
-            AdminB[🔐 Admin<br/>Bastion]
-            DNS[AdGuard<br/>DNS]
-            LDAP[OpenLDAP]
-            Vector[Vector<br/>Logs]
+            DNS[DNS<br/>Server]
+            LDAP[Identity<br/>Provider]
+            Vector[Log<br/>Shipper]
         end
 
-        subgraph Services["DMZ-MONITORING · pi1"]
-            Tunnel[cloudflared<br/>Tunnel]
+        subgraph Services["DMZ-MONITORING"]
+            Tunnel[Secure<br/>Tunnel]
             Graf[Grafana]
             Prom[Prometheus]
             Loki[Loki]
         end
 
-        subgraph Apps["DMZ-APPS · pi2"]
+        subgraph Apps["DMZ-APPS"]
             subgraph K3s["☸️ K3s Cluster"]
                 FE[📱 Frontend]
-                BE[⚡ Bun Backend]
+                BE[⚡ Backend]
                 ML[🧠 ML Engine]
             end
         end
 
-        subgraph Security["DMZ-SECURITY · rv2"]
+        subgraph Security["DMZ-SECURITY"]
             direction LR
-            subgraph RV2["🦎 Orange Pi RV2"]
-                direction TB
-                IDS[🛡️ Suricata<br/>48K Rules]
-                LLM[🤖 Qwen2<br/>LLM]
-                SN[🕵️ SentinelNet]
-            end
+            IDS[🛡️ IDS/IPS]
+            SN[🕵️ Threat<br/>Detection]
         end
     end
 
     User --> CF
     CF --> Tunnel
     
-    IB --> ITS
-    ITS <-.->|Tailscale| Tunnel
-    ITS -.-> Graf
+    RNode <-.->|VPN Mesh| Tunnel
+    RNode -.-> Graf
     
     Tunnel --> FE
     FE --> BE
@@ -116,10 +108,10 @@ flowchart LR
     classDef data fill:#b48ead,stroke:#4c566a,color:#2e3440
 
     class User,CF internet
-    class IB,ITS remote
-    class UDM,TS,Tunnel,FW,DNS,LDAP,Vector,Graf,Prom,Loki infra
+    class RNode remote
+    class GW,Tunnel,FW,DNS,LDAP,Vector,Graf,Prom,Loki infra
     class FE,BE,ML,SN app
-    class IDS,LLM security
+    class IDS security
     class DB data
 `;
 
@@ -224,7 +216,7 @@ const techStack = {
       { name: "Raspberry Pi 5", desc: "ARM64 compute (16GB)" },
       { name: "Docker", desc: "Container runtime" },
       { name: "Tailscale", desc: "Mesh VPN overlay" },
-      { name: "PA-220", desc: "Next-gen firewall" },
+      { name: "NGFW", desc: "Next-gen firewall" },
     ]
   },
   security: {
@@ -426,7 +418,7 @@ export default function TechStack() {
           </div>
           <ArchitectureDiagram />
           <p className="text-center text-zinc-500 text-sm mt-4">
-            Multi-site deployment with Tailscale mesh VPN, PA-220 zone segmentation, and K3s orchestration
+            Multi-site deployment with mesh VPN, zone-based firewall segmentation, and K3s orchestration
           </p>
         </div>
 
@@ -537,7 +529,7 @@ export default function TechStack() {
         {/* Footer */}
         <div className="mt-12 text-center text-sm text-zinc-600">
           <p>
-            Built with 🥟 Bun by the <a href="https://vandine.us" className="text-accent hover:underline">GuardQuote</a> team
+            Built with 🥟 Bun by the <span className="text-accent">GuardQuote</span> team
           </p>
           <p className="mt-1">
             California State University, Northridge · CIT 480 Senior Design · February 2026

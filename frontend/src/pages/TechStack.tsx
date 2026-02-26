@@ -325,9 +325,11 @@ export default function TechStack() {
         <div className="mb-16 p-8 bg-gradient-to-br from-emerald-900/30 via-zinc-900 to-zinc-900 border border-emerald-700/30 rounded-2xl">
           <div className="flex flex-col lg:flex-row items-center gap-8">
             <div className="flex-shrink-0">
-              <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-2xl shadow-emerald-500/25">
-                <span className="text-6xl">🥟</span>
-              </div>
+              <img 
+                src="/images/bun-logo.svg" 
+                alt="Bun" 
+                className="w-32 h-auto"
+              />
             </div>
             <div className="flex-1 text-center lg:text-left">
               <h2 className="text-3xl font-bold mb-2">Why Bun?</h2>

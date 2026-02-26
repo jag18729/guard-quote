@@ -358,10 +358,12 @@ export default function TechStack() {
                 <div className="space-y-3">
                   {benchmark.data.map((item, j) => {
                     const maxVal = Math.max(...benchmark.data.map(d => d.value));
-                    const percentage = (item.value / maxVal) * 100;
-                    // For "lower is better" metrics, invert the visual
+                    const minVal = Math.min(...benchmark.data.map(d => d.value));
+                    // For "lower is better" metrics, invert so best (lowest) = longest bar
                     const isLowerBetter = ['ms', 'MB'].some(u => benchmark.unit.includes(u));
-                    const displayPercentage = isLowerBetter ? 100 - percentage + (percentage * 0.3) : percentage;
+                    const displayPercentage = isLowerBetter 
+                      ? ((maxVal - item.value) / (maxVal - minVal)) * 85 + 15  // Inverted: lowest value = longest bar
+                      : (item.value / maxVal) * 100;  // Normal: highest value = longest bar
                     
                     return (
                       <div key={j} className={item.highlight ? "p-2 -mx-2 bg-emerald-500/10 rounded-lg" : ""}>

@@ -11,7 +11,7 @@ export default function QuoteForm() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ price: number; priceRange: { low: number; high: number } } | null>(null);
+  const [result, setResult] = useState<{ price: number; priceRange: { low: number; high: number }; quoteNumber?: string } | null>(null);
   const [step, setStep] = useState(0); // 0 = choose type, 1 = details, 2 = contact, 3 = result
   
   const [form, setForm] = useState({
@@ -32,8 +32,8 @@ export default function QuoteForm() {
       fetch("/api/event-types").then(r => r.json()),
       fetch("/api/locations").then(r => r.json()),
     ]).then(([et, loc]) => {
-      setEventTypes(et.data || []);
-      setLocations(loc.data || []);
+      setEventTypes(Array.isArray(et) ? et : et.data || []);
+      setLocations(Array.isArray(loc) ? loc : loc.data || []);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -54,11 +54,14 @@ export default function QuoteForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          event_type: form.eventType,
-          location_id: form.location,
+          event_type: parseInt(form.eventType) || 1,
+          location_id: parseInt(form.location) || 1,
           guest_count: form.guestCount,
           duration_hours: form.duration,
           guard_count: Math.ceil(form.guestCount / 50),
+          email: form.email,
+          name: form.name,
+          date: form.date,
         }),
       });
       const data = await res.json();
@@ -66,7 +69,8 @@ export default function QuoteForm() {
       
       setResult({ 
         price: basePrice,
-        priceRange: { low: Math.round(basePrice * 0.85), high: Math.round(basePrice * 1.15) }
+        priceRange: { low: Math.round(basePrice * 0.85), high: Math.round(basePrice * 1.15) },
+        quoteNumber: data.quote_number,
       });
       setStep(3);
     } catch {
@@ -163,7 +167,7 @@ export default function QuoteForm() {
                 >
                   <option value="">Select one...</option>
                   {eventTypes.map((et) => (
-                    <option key={et.id} value={et.code}>{et.name}</option>
+                    <option key={et.id} value={et.id}>{et.name}</option>
                   ))}
                 </select>
               </div>
@@ -337,6 +341,9 @@ export default function QuoteForm() {
             <p className="text-zinc-400 mb-8">Here's your estimated cost</p>
             
             <div className="p-8 bg-zinc-900 border border-zinc-800 rounded-2xl mb-8">
+              {result.quoteNumber && (
+                <div className="text-xs text-zinc-600 mb-1 font-mono">{result.quoteNumber}</div>
+              )}
               <div className="text-sm text-zinc-500 mb-2">Estimated Price</div>
               <div className="flex items-center justify-center gap-2 mb-2">
                 <DollarSign className="w-10 h-10 text-accent" />

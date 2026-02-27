@@ -4,6 +4,7 @@ import PublicLayout from "./layouts/PublicLayout";
 import AdminLayout from "./layouts/AdminLayout";
 import Landing from "./pages/Landing";
 import QuoteForm from "./pages/QuoteForm";
+import QuoteLookup from "./pages/QuoteLookup";
 import Login from "./pages/Login";
 import TechStack from "./pages/TechStack";
 import Dashboard from "./pages/admin/Dashboard";
@@ -39,6 +40,7 @@ export default function App() {
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Landing />} />
         <Route path="/quote" element={<QuoteForm />} />
+        <Route path="/quote/lookup" element={<QuoteLookup />} />
         <Route path="/quote/:type" element={<QuoteForm />} />
         <Route path="/login" element={<Login />} />
         <Route path="/tech-stack" element={<TechStack />} />

@@ -322,8 +322,7 @@ app.get("/api/quotes/lookup", async (c) => {
 
   const quote = await sql`
     SELECT q.quote_number, q.status, q.event_name, q.event_date,
-           q.num_guards, q.hours_per_guard, q.total_price,
-           q.valid_until, q.created_at,
+           q.num_guards, q.hours_per_guard, q.total_price, q.created_at,
            e.name as event_type
     FROM quotes q
     LEFT JOIN clients c ON q.client_id = c.id
@@ -336,7 +335,13 @@ app.get("/api/quotes/lookup", async (c) => {
     return c.json({ error: "Quote not found" }, 404);
   }
 
-  return c.json(quote[0]);
+  // Add a calculated valid_until (30 days from creation)
+  const result = {
+    ...quote[0],
+    valid_until: new Date(new Date(quote[0].created_at).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+  };
+
+  return c.json(result);
 });
 
 app.get("/api/quotes/:id", async (c) => {

@@ -33,7 +33,6 @@ function AdminOnlyRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  console.log("App component rendering");
   return (
     <Routes>
       {/* Public */}

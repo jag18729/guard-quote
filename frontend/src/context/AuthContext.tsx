@@ -53,17 +53,20 @@ async function authFetch(url: string, options: RequestInit = {}): Promise<Respon
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(() => {
-    const t = localStorage.getItem("token");
-    console.log("[AuthContext] Initial token from localStorage:", t ? "present" : "none");
-    return t;
-  });
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
   const [isLoading, setIsLoading] = useState(true);
 
   // Check session on mount (using cookie or localStorage token)
   useEffect(() => {
     const checkSession = async () => {
       try {
+        // Only check if we have a token (avoids unnecessary 401s)
+        const storedToken = localStorage.getItem("token");
+        if (!storedToken) {
+          setIsLoading(false);
+          return;
+        }
+
         // Try cookie-based auth first
         const res = await authFetch("/api/auth/me");
         if (res.ok) {
@@ -74,19 +77,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         
         // Fall back to localStorage token if cookie fails
-        if (token) {
-          const tokenRes = await fetch("/api/auth/me", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (tokenRes.ok) {
-            const data = await tokenRes.json();
-            setUser(data.user || data);
-            setIsLoading(false);
-            return;
-          }
+        const tokenRes = await fetch("/api/auth/me", {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        });
+        if (tokenRes.ok) {
+          const data = await tokenRes.json();
+          setUser(data.user || data);
+          setIsLoading(false);
+          return;
         }
         
-        // No valid session
+        // Token invalid - clean up silently
         setUser(null);
         setToken(null);
         localStorage.removeItem("token");

@@ -2,7 +2,7 @@
 
 **ML-powered security service pricing platform**
 
-Get instant, accurate quotes for security services — event security, executive protection, and more.
+Get instant, accurate quotes for security services: event security, executive protection, and more.
 
 [![Live Site](https://img.shields.io/badge/Live-guardquote.vandine.us-orange)](https://guardquote.vandine.us)
 [![CI](https://github.com/jag18729/guard-quote/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/jag18729/guard-quote/actions)
@@ -12,11 +12,11 @@ Get instant, accurate quotes for security services — event security, executive
 
 ## ✨ Features
 
-- **Instant Quotes** — ML-powered pricing in seconds, not days
-- **OAuth Login** — Sign in with GitHub, Google, or Microsoft
-- **Smart Risk Assessment** — AI evaluates event complexity and security needs
-- **Transparent Pricing** — No hidden fees, see exactly what you're paying for
-- **Admin Dashboard** — Manage quotes, users, and view analytics
+- **Instant Quotes**: ML-powered pricing in seconds, not days
+- **OAuth Login**: Sign in with GitHub, Google, or Microsoft
+- **Smart Risk Assessment**: AI evaluates event complexity and security needs
+- **Transparent Pricing**: No hidden fees; see exactly what you're paying for
+- **Admin Dashboard**: Manage quotes, users, and view analytics
 
 ---
 
@@ -115,7 +115,7 @@ guard-quote/
 
 ## 📄 License
 
-California State University, Northridge — CIT 480 Senior Design Project
+California State University, Northridge; CIT 480 Senior Design Project
 
 ---
 

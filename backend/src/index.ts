@@ -186,6 +186,64 @@ app.get("/api/locations/:zipCode", async (c) => {
 });
 
 // ============================================
+// FRONTEND PREDICT (simplified endpoint for QuoteForm)
+// ============================================
+
+app.post("/api/predict", async (c) => {
+  try {
+    const body = await c.req.json();
+    
+    // Get event type for pricing
+    const eventType = await sql`SELECT * FROM event_types WHERE id = ${body.event_type || 1}`;
+    const eventData = eventType.length ? eventType[0] : { base_rate: 35, risk_multiplier: 1.0, name: "Standard" };
+    
+    // Get location for pricing
+    const location = await sql`SELECT * FROM locations WHERE id = ${body.location_id || 1}`;
+    const locationData = location.length ? location[0] : { rate_modifier: 1.0, city: "Unknown", state: "CA" };
+    
+    // Calculate price
+    const guardCount = body.guard_count || Math.ceil((body.guest_count || 50) / 50);
+    const hours = body.duration_hours || 4;
+    const baseRate = parseFloat(eventData.base_rate) || 35;
+    const baseCost = guardCount * hours * baseRate;
+    
+    const eventMultiplier = parseFloat(eventData.risk_multiplier) || 1.0;
+    const locationMultiplier = parseFloat(locationData.rate_modifier) || 1.0;
+    
+    const predictedPrice = Math.round(baseCost * eventMultiplier * locationMultiplier);
+    
+    // Save quote request if not demo mode and email provided
+    let quoteId = null;
+    if (!DEMO_MODE && body.email) {
+      const result = await sql`
+        INSERT INTO quote_requests (event_type, location, guest_count, duration_hours, predicted_price, email, name)
+        VALUES (${eventData.name}, ${locationData.city + ", " + locationData.state}, ${body.guest_count}, ${hours}, ${predictedPrice}, ${body.email}, ${body.name || "Guest"})
+        RETURNING id
+      `;
+      quoteId = result[0]?.id;
+    }
+    
+    return c.json({
+      predicted_price: predictedPrice,
+      price: predictedPrice,
+      quote_id: quoteId,
+      event_type: eventData.name,
+      location: `${locationData.city}, ${locationData.state}`,
+      breakdown: {
+        guards: guardCount,
+        hours: hours,
+        base_rate: baseRate,
+        event_multiplier: eventMultiplier,
+        location_multiplier: locationMultiplier,
+      }
+    });
+  } catch (error: any) {
+    console.error("Predict error:", error);
+    return c.json({ error: "Prediction failed", message: error.message }, 500);
+  }
+});
+
+// ============================================
 // EVENT TYPES
 // ============================================
 

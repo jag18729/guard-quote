@@ -32,8 +32,8 @@ export default function QuoteForm() {
       fetch("/api/event-types").then(r => r.json()),
       fetch("/api/locations").then(r => r.json()),
     ]).then(([et, loc]) => {
-      setEventTypes(et.data || []);
-      setLocations(loc.data || []);
+      setEventTypes(Array.isArray(et) ? et : et.data || []);
+      setLocations(Array.isArray(loc) ? loc : loc.data || []);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);

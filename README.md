@@ -73,7 +73,7 @@ gantt
     
     section v2 Deployment
     K3s deployment             :done, 2026-02-24, 2d
-    Production go-live         :milestone, done, 2026-02-25, 0d
+    Production go-live         :done, crit, 2026-02-25, 1d
     
     section Documentation
     Deployment runbook         :done, 2026-02-25, 1d

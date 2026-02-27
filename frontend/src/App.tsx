@@ -40,8 +40,8 @@ export default function App() {
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Landing />} />
         <Route path="/quote" element={<QuoteForm />} />
-        <Route path="/quote/:type" element={<QuoteForm />} />
         <Route path="/quote/lookup" element={<QuoteLookup />} />
+        <Route path="/quote/:type" element={<QuoteForm />} />
         <Route path="/login" element={<Login />} />
         <Route path="/tech-stack" element={<TechStack />} />
       </Route>

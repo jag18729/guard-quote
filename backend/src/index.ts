@@ -311,6 +311,34 @@ app.post("/api/quotes", async (c) => {
   return c.json({ success: true, id: result[0].id, quoteNumber: result[0].quote_number });
 });
 
+// Public quote lookup (by quote number + email verification)
+app.get("/api/quotes/lookup", async (c) => {
+  const number = c.req.query("number")?.trim();
+  const email = c.req.query("email")?.trim().toLowerCase();
+
+  if (!number || !email) {
+    return c.json({ error: "Quote number and email are required" }, 400);
+  }
+
+  const quote = await sql`
+    SELECT q.quote_number, q.status, q.event_name, q.event_date,
+           q.num_guards, q.hours_per_guard, q.total_price,
+           q.valid_until, q.created_at,
+           e.name as event_type
+    FROM quotes q
+    LEFT JOIN clients c ON q.client_id = c.id
+    LEFT JOIN event_types e ON q.event_type_id = e.id
+    WHERE q.quote_number = ${number}
+      AND LOWER(c.email) = ${email}
+  `;
+
+  if (!quote.length) {
+    return c.json({ error: "Quote not found" }, 404);
+  }
+
+  return c.json(quote[0]);
+});
+
 app.get("/api/quotes/:id", async (c) => {
   const id = parseInt(c.req.param("id"), 10);
   const quote = await sql`

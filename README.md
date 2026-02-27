@@ -2,143 +2,44 @@
 
 **ML-powered security service pricing platform**
 
-Get instant, accurate quotes for security services — from event security to executive protection.
+Get instant, accurate quotes for security services — event security, executive protection, and more.
 
-🌐 **Live Site:** https://guardquote.vandine.us  
-📊 **Admin Dashboard:** https://guardquote.vandine.us/admin  
-📋 **Project Board:** [GitHub Projects](https://github.com/users/jag18729/projects/1)  
-📐 **Deployment Runbook:** [docs/GUARDQUOTE-V2-DEPLOYMENT.md](./docs/GUARDQUOTE-V2-DEPLOYMENT.md)
-
----
-
-## ✅ v2.0 — DEPLOYED
-
-**Production URL:** https://guardquote.vandine.us  
-**Deployed:** February 25, 2026
-
-### What's Live
-- ✅ **OAuth SSO** — GitHub, Google, Microsoft login
-- ✅ **ML Engine** — GradientBoost (R²=0.93), RandomForest (81%)
-- ✅ **Bun Backend** — Hono API with JWT auth
-- ✅ **K3s Deployment** — Pi cluster infrastructure
-- ✅ **DEMO_MODE** — Showcase mode for presentations
+[![Live Site](https://img.shields.io/badge/Live-guardquote.vandine.us-orange)](https://guardquote.vandine.us)
+[![CI](https://github.com/jag18729/guard-quote/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/jag18729/guard-quote/actions)
+[![Security](https://github.com/jag18729/guard-quote/actions/workflows/security.yml/badge.svg)](https://github.com/jag18729/guard-quote/actions)
 
 ---
 
-## 👥 Team
+## ✨ Features
 
-| Name | GitHub | Role | Responsibilities |
-|------|--------|------|------------------|
-| **Rafael Garcia** | [@jag18729](https://github.com/jag18729) | Lead Developer | App dev, CI/CD, ML, SSO/OAuth, networking & infrastructure |
-| **Milkias Kassa** | [@Malachizirgod](https://github.com/Malachizirgod) | ICAM Lead + PM | Security review (OWASP), GitHub Projects, documentation |
-| **Isaiah Bernal** | [@ibernal1815](https://github.com/ibernal1815) | Security Ops | Wazuh SIEM, Suricata IDS, log pipelines, alert tuning |
-| **Xavier Nguyen** | [@xan942](https://github.com/xan942) | UX Lead + UAT | User experience, UAT driver, presentations, slides |
-
----
-
-## 📅 Project Timeline
-
-```mermaid
-gantt
-    title GuardQuote CIT 480 Project Timeline
-    dateFormat YYYY-MM-DD
-    
-    section Foundation
-    Initial commit & schema     :done, 2026-01-14, 1d
-    ML models & API            :done, 2026-01-14, 1d
-    PostgreSQL backend         :done, 2026-01-14, 1d
-    Documentation              :done, 2026-01-15, 1d
-    
-    section Team Onboarding
-    Tailscale VPN setup        :done, 2026-01-17, 1d
-    Team quickstart docs       :done, 2026-01-17, 1d
-    Client signup system       :done, 2026-01-29, 1d
-    Admin dashboard redesign   :done, 2026-01-29, 1d
-    
-    section Infrastructure
-    Nettools bastion           :done, 2026-02-07, 1d
-    ICAM security review       :done, 2026-02-07, 1d
-    UAT Round 1                :done, 2026-02-08, 1d
-    Datadog APM                :done, 2026-02-09, 1d
-    
-    section Security Stack
-    Wazuh SIEM deployment      :done, 2026-02-08, 5d
-    Suricata IDS (rv2)         :done, 2026-02-20, 5d
-    Vector log pipeline        :done, 2026-02-24, 2d
-    Loki log aggregation       :done, 2026-02-25, 1d
-    Security dashboard         :done, 2026-02-26, 1d
-    Alert tuning               :active, 2026-02-26, 5d
-    
-    section v2 Development
-    OAuth SSO                  :done, 2026-02-19, 6d
-    ML engine training         :done, 2026-02-19, 6d
-    DEMO_MODE                  :done, 2026-02-19, 6d
-    
-    section v2 Deployment
-    K3s deployment             :done, 2026-02-24, 2d
-    Production go-live         :done, crit, 2026-02-25, 1d
-    
-    section Documentation
-    Deployment runbook         :done, 2026-02-25, 1d
-    Presentation slides        :active, 2026-02-26, 7d
-    Architecture diagrams      :active, 2026-02-26, 7d
-    SOW updates                :2026-02-26, 7d
-```
+- **Instant Quotes** — ML-powered pricing in seconds, not days
+- **OAuth Login** — Sign in with GitHub, Google, or Microsoft
+- **Smart Risk Assessment** — AI evaluates event complexity and security needs
+- **Transparent Pricing** — No hidden fees, see exactly what you're paying for
+- **Admin Dashboard** — Manage quotes, users, and view analytics
 
 ---
 
-## 🏗️ Architecture
+## 🚀 Live Demo
 
-**Zero AWS. Zero monthly cost. Full ownership.**
+**Production:** https://guardquote.vandine.us
 
-### Production Architecture (v2)
-```
-Internet
-    │
-    ▼
-Cloudflare Tunnel (vandine-tunnel)
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────┐
-│ pi1 (192.168.20.10) — Tunnel Ingress                           │
-│  cloudflared → Tailscale mesh                                   │
-└─────────────────────────────────────────────────────────────────┘
-    │
-    ▼ Tailscale
-┌─────────────────────────────────────────────────────────────────┐
-│ pi2 (192.168.22.10) — K3s Cluster                              │
-│                                                                 │
-│  ┌─────────────────────┐   ┌─────────────────────┐             │
-│  │ guardquote-frontend │   │ guardquote-backend  │             │
-│  │ nginx + React SPA   │──►│ Bun + Hono API      │             │
-│  │ :30522              │   │ :30520              │             │
-│  └─────────────────────┘   └──────────┬──────────┘             │
-│                                       │ gRPC                    │
-│                            ┌──────────▼──────────┐             │
-│                            │ guardquote-ml       │             │
-│                            │ FastAPI + sklearn   │             │
-│                            │ :30521              │             │
-│                            └─────────────────────┘             │
-└─────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-PostgreSQL (192.168.2.70:5432)
-```
+| Page | Description |
+|------|-------------|
+| [Get a Quote](https://guardquote.vandine.us/quote) | Try the quote wizard |
+| [Tech Stack](https://guardquote.vandine.us/tech-stack) | See how it's built |
+| [Quote Lookup](https://guardquote.vandine.us/quote/lookup) | Review a past quote |
 
-### Network Topology
-```
-Studio (Reveal SOHO):
-├── ThinkStation           — Dev workstation, OpenClaw gateway
-├── PA-220 reveal-fw       — Palo Alto firewall, 4 security zones
-├── UDM                    — UniFi gateway/router
-├── pi0                    — DNS, SNMP, log shipping (dmz-mgmt)
-├── pi1                    — Monitoring: Grafana/Prometheus/Loki (dmz-services)
-├── pi2                    — K3s workloads: GuardQuote, MarketPulse (dmz-security)
-└── Orange Pi RV2          — Suricata IDS, LLM alert triage (dmz-security)
+---
 
-Remote:
-└── pi3                    — Off-site monitoring, Tailscale mesh
-```
+## 🧠 ML Engine
+
+| Model | Task | Performance |
+|-------|------|-------------|
+| **GradientBoost** | Price Prediction | R² = 0.93 |
+| **RandomForest** | Risk Classification | 81% accuracy |
+
+Trained on 500+ historical quotes across 15 event types and 28 US locations.
 
 ---
 
@@ -146,77 +47,38 @@ Remote:
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | React 18, TypeScript, Vite, Tailwind, React Router 7 |
-| **Backend** | Bun 1.3 + Hono, JWT auth |
-| **Auth** | OAuth 2.0 (GitHub, Google, Microsoft) + PKCE |
-| **ML Engine** | Python FastAPI, GradientBoost, RandomForest |
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS |
+| **Backend** | Bun + Hono (TypeScript) |
+| **ML Engine** | Python, FastAPI, scikit-learn |
 | **Database** | PostgreSQL 16 |
-| **Orchestration** | K3s (ARM64) |
-| **Edge** | Cloudflare Tunnel + Tailscale mesh |
-| **Monitoring** | Grafana, Prometheus, Loki, Vector |
-| **Security** | PA-220 firewall, Suricata IDS, Wazuh SIEM |
-
-**Operational Cost: $0/month** ✨
+| **Auth** | OAuth 2.0 + PKCE, JWT sessions |
+| **Infrastructure** | K3s, Cloudflare Tunnel |
+| **Monitoring** | Grafana, Prometheus, Loki |
 
 ---
 
-## 🧠 ML Engine
-
-### Model Performance
-
-| Model | Metric | Score |
-|-------|--------|-------|
-| **GradientBoost** | Price R² | 0.93 |
-| **RandomForest** | Risk Accuracy | 81% |
-
-### Training Data
-- 500+ historical quotes
-- 15 event types
-- 28 locations across US
-
----
-
-## 🔐 Authentication
-
-### OAuth SSO Providers
-
-| Provider | Status | Scopes |
-|----------|--------|--------|
-| **GitHub** | ✅ Live | `read:user`, `user:email` |
-| **Google** | ✅ Live | `openid`, `email`, `profile` |
-| **Microsoft** | ✅ Live | `openid`, `email`, `profile` |
-
-- PKCE flow for security
-- JWT session tokens
-- Account linking by verified email
-
----
-
-## 🚀 Quick Start
-
-### Development
+## 🛠️ Quick Start
 
 ```bash
+# Clone
 git clone https://github.com/jag18729/guard-quote.git
 cd guard-quote
 
-# Frontend
+# Frontend (localhost:5173)
 cd frontend && npm install && npm run dev
-# → http://localhost:5173
 
-# Backend
+# Backend (localhost:3000)
 cd backend && bun install && bun run dev
-# → http://localhost:3000
 
-# ML Engine
+# ML Engine (localhost:8000)
 cd ml-engine && pip install -e . && uvicorn src.server:app
-# → http://localhost:8000
 ```
 
 ### Demo Mode
+
+Run without external dependencies:
 ```bash
 DEMO_MODE=true bun run src/index.ts
-# Mock data, no external dependencies
 ```
 
 ---
@@ -225,44 +87,36 @@ DEMO_MODE=true bun run src/index.ts
 
 ```
 guard-quote/
-├── frontend/           # React 18 + Vite + Tailwind
-│   ├── src/
-│   │   ├── pages/      # Landing, QuoteForm, Login, admin/
-│   │   └── components/
-│   └── nginx.conf      # Production reverse proxy
-├── backend/            # Bun + Hono API
-│   ├── src/
-│   │   ├── index.ts    # Main entry
-│   │   └── services/   # auth, oauth, quote-calculator
-│   └── Dockerfile
-├── ml-engine/          # Python FastAPI + sklearn
-│   ├── src/
-│   │   ├── server.py   # REST + gRPC server
-│   │   └── models/     # Trained models
-│   └── Dockerfile
-├── docs/
-│   ├── GUARDQUOTE-V2-DEPLOYMENT.md  # Production runbook
-│   └── plans/
-└── README.md
+├── frontend/        # React SPA
+├── backend/         # Bun + Hono API
+├── ml-engine/       # Python ML service
+└── docs/            # Documentation
 ```
 
 ---
 
-## 🔗 Links
+## 👥 Team
 
-| Resource | URL |
-|----------|-----|
-| **Live Site** | https://guardquote.vandine.us |
-| **Project Board** | https://github.com/users/jag18729/projects/1 |
-| **Deployment Runbook** | [docs/GUARDQUOTE-V2-DEPLOYMENT.md](./docs/GUARDQUOTE-V2-DEPLOYMENT.md) |
-| **Grafana** | https://grafana.vandine.us |
+| Name | Role |
+|------|------|
+| **Rafael Garcia** ([@jag18729](https://github.com/jag18729)) | Lead Developer |
+| **Milkias Kassa** ([@Malachizirgod](https://github.com/Malachizirgod)) | ICAM Lead |
+| **Isaiah Bernal** ([@ibernal1815](https://github.com/ibernal1815)) | Security Ops |
+| **Xavier Nguyen** ([@xan942](https://github.com/xan942)) | UX Lead |
+
+---
+
+## 📋 Links
+
+- [Project Board](https://github.com/users/jag18729/projects/1)
+- [Deployment Guide](./docs/GUARDQUOTE-V2-DEPLOYMENT.md)
 
 ---
 
 ## 📄 License
 
-Private — California State University, Northridge — CIT 480 Senior Design Project
+California State University, Northridge — CIT 480 Senior Design Project
 
 ---
 
-*Last updated: 2026-02-25*
+*Built with ☕ and too many late nights.*

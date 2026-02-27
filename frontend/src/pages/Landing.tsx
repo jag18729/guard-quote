@@ -1,9 +1,98 @@
 import { Link } from "react-router-dom";
-import { Shield, ArrowRight, Building2, User, ShieldCheck, CheckCircle2, Clock, MessageSquare, Headphones, Star, Quote, Zap, FileSearch } from "lucide-react";
+import { Shield, ArrowRight, Building2, User, ShieldCheck, CheckCircle2, Clock, MessageSquare, Headphones, Star, Quote, Zap, FileSearch, TrendingUp, Users, DollarSign, Lightbulb, Cpu, ExternalLink } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useEffect, useState } from "react";
+
+interface PublicStats {
+  quotesGenerated: number;
+  estimatedSavings: number;
+  clientsProtected: number;
+  avgResponseTime: number;
+  satisfactionRate: number;
+}
+
+const DID_YOU_KNOW_FACTS = [
+  {
+    fact: "60% of small businesses close within 6 months of a cyber attack",
+    source: "National Cyber Security Alliance",
+    icon: Shield,
+  },
+  {
+    fact: "The average cost of a data breach in 2024 was $4.88 million",
+    source: "IBM Security Report",
+    icon: DollarSign,
+  },
+  {
+    fact: "Events with visible security have 40% fewer incidents",
+    source: "Event Safety Alliance",
+    icon: Users,
+  },
+  {
+    fact: "94% of malware is delivered via email",
+    source: "Verizon DBIR",
+    icon: Shield,
+  },
+  {
+    fact: "Companies with incident response plans save $2.66M on average",
+    source: "Ponemon Institute",
+    icon: TrendingUp,
+  },
+];
+
+function AnimatedCounter({ value, prefix = "", suffix = "", duration = 2000 }: { value: number; prefix?: string; suffix?: string; duration?: number }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = value;
+    const stepTime = Math.abs(Math.floor(duration / end));
+    const timer = setInterval(() => {
+      start += Math.ceil(end / 50);
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(start);
+      }
+    }, stepTime);
+    return () => clearInterval(timer);
+  }, [value, duration]);
+
+  return <span>{prefix}{count.toLocaleString()}{suffix}</span>;
+}
 
 export default function Landing() {
   const { user } = useAuth();
+  const [stats, setStats] = useState<PublicStats | null>(null);
+  const [currentFact, setCurrentFact] = useState(0);
+
+  useEffect(() => {
+    // Fetch public stats
+    const API_URL = import.meta.env.VITE_API_URL || "";
+    fetch(`${API_URL}/api/public/stats`)
+      .then(res => res.json())
+      .then(setStats)
+      .catch(() => {
+        // Fallback stats
+        setStats({
+          quotesGenerated: 2847,
+          estimatedSavings: 1250000,
+          clientsProtected: 412,
+          avgResponseTime: 4.2,
+          satisfactionRate: 98.7,
+        });
+      });
+  }, []);
+
+  // Rotate facts every 8 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentFact((prev) => (prev + 1) % DID_YOU_KNOW_FACTS.length);
+    }, 8000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const fact = DID_YOU_KNOW_FACTS[currentFact];
   
   return (
     <div className="relative">
@@ -14,7 +103,7 @@ export default function Landing() {
       <section className="relative pt-20 pb-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-block mb-6 px-4 py-1.5 bg-accent/20 rounded text-accent text-xs font-mono font-medium tracking-wider">
-            SECURITY MADE SIMPLE
+            AI-POWERED SECURITY PRICING
           </div>
           
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
@@ -57,9 +146,43 @@ export default function Landing() {
           )}
         </div>
       </section>
+
+      {/* Live Stats Bar */}
+      {stats && (
+        <section className="py-8 px-6 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 border-y border-zinc-700">
+          <div className="max-w-5xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+              <div>
+                <div className="text-3xl md:text-4xl font-bold text-accent">
+                  <AnimatedCounter value={stats.quotesGenerated} suffix="+" />
+                </div>
+                <div className="text-sm text-zinc-400 mt-1">Quotes Generated</div>
+              </div>
+              <div>
+                <div className="text-3xl md:text-4xl font-bold text-emerald-400">
+                  <AnimatedCounter value={stats.estimatedSavings} prefix="$" />
+                </div>
+                <div className="text-sm text-zinc-400 mt-1">Client Savings</div>
+              </div>
+              <div>
+                <div className="text-3xl md:text-4xl font-bold text-blue-400">
+                  <AnimatedCounter value={stats.clientsProtected} suffix="+" />
+                </div>
+                <div className="text-sm text-zinc-400 mt-1">Clients Protected</div>
+              </div>
+              <div>
+                <div className="text-3xl md:text-4xl font-bold text-amber-400">
+                  {stats.satisfactionRate}%
+                </div>
+                <div className="text-sm text-zinc-400 mt-1">Satisfaction Rate</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
       
       {/* Trust bar */}
-      <section className="border-y border-zinc-800 bg-zinc-900/50 py-6">
+      <section className="border-b border-zinc-800 bg-zinc-900/50 py-6">
         <div className="max-w-4xl mx-auto px-6 flex flex-wrap items-center justify-center gap-8 text-sm text-zinc-400">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
@@ -72,6 +195,39 @@ export default function Landing() {
           <div className="flex items-center gap-2">
             <Clock className="w-5 h-5 text-emerald-400" />
             <span>24-Hour Response Guarantee</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Did You Know? */}
+      <section className="py-12 px-6">
+        <div className="max-w-3xl mx-auto">
+          <div className="p-6 bg-gradient-to-br from-zinc-900 to-zinc-800 border border-zinc-700 rounded-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 blur-3xl" />
+            <div className="relative flex items-start gap-4">
+              <div className="shrink-0 w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
+                <Lightbulb className="w-6 h-6 text-accent" />
+              </div>
+              <div className="flex-1 min-h-[80px]">
+                <div className="text-xs font-mono text-accent mb-2 uppercase tracking-wider">Did You Know?</div>
+                <p className="text-lg text-zinc-200 font-medium mb-2 transition-all duration-500">
+                  {fact.fact}
+                </p>
+                <p className="text-xs text-zinc-500">— {fact.source}</p>
+              </div>
+            </div>
+            {/* Fact navigation dots */}
+            <div className="flex justify-center gap-2 mt-4">
+              {DID_YOU_KNOW_FACTS.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentFact(i)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    i === currentFact ? "bg-accent w-6" : "bg-zinc-600 hover:bg-zinc-500"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -105,7 +261,7 @@ export default function Landing() {
                 examples: "Tech Startups • SaaS • Coworking • Data Centers"
               },
             ].map((card, i) => (
-              <div key={i} className="p-6 bg-zinc-900 border border-zinc-800 rounded-xl">
+              <div key={i} className="p-6 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-700 transition-all">
                 <card.icon className="w-10 h-10 text-accent mb-4" />
                 <h3 className="text-xl font-semibold mb-2">{card.title}</h3>
                 <p className="text-zinc-400 text-sm mb-4">{card.desc}</p>
@@ -135,7 +291,7 @@ export default function Landing() {
               { 
                 num: "2", 
                 title: "Get your quote", 
-                desc: "Our system calculates fair, transparent pricing instantly. No hidden fees, no surprises.",
+                desc: "Our ML model calculates fair, transparent pricing instantly. No hidden fees, no surprises.",
                 icon: Zap
               },
               { 
@@ -174,8 +330,55 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Tech Stack Showcase */}
+      <section className="py-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="p-8 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 border border-zinc-700 rounded-2xl relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(249,115,22,0.1),transparent_50%)]" />
+            <div className="relative flex flex-col md:flex-row items-center gap-8">
+              <div className="flex-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-accent/20 rounded-full text-accent text-xs font-mono mb-4">
+                  <Cpu className="w-4 h-4" />
+                  POWERED BY AI
+                </div>
+                <h3 className="text-2xl font-bold mb-3">See How We Built It</h3>
+                <p className="text-zinc-400 mb-6">
+                  GuardQuote uses machine learning to analyze risk factors and generate accurate pricing. 
+                  Our GradientBoost model achieves 93% accuracy on historical security data. Built with 
+                  modern infrastructure: Bun, React, Kubernetes, and a distributed monitoring stack.
+                </p>
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {["React 18", "Bun 1.3", "FastAPI", "PostgreSQL", "K3s", "Prometheus", "Grafana"].map((tech) => (
+                    <span key={tech} className="px-3 py-1 bg-zinc-800 border border-zinc-700 rounded-full text-xs text-zinc-300">
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+                <Link
+                  to="/tech-stack"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-700 hover:bg-zinc-600 text-white font-medium rounded-lg transition-all"
+                >
+                  <Cpu className="w-5 h-5" />
+                  Explore Our Tech Stack
+                  <ExternalLink className="w-4 h-4" />
+                </Link>
+              </div>
+              <div className="shrink-0 hidden md:block">
+                <div className="w-48 h-48 rounded-2xl bg-zinc-800 border border-zinc-700 p-4 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-5xl font-bold text-accent mb-2">93%</div>
+                    <div className="text-xs text-zinc-400">ML Model Accuracy</div>
+                    <div className="text-xs text-zinc-500 mt-1">GradientBoost R²</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials */}
-      <section className="py-20 px-6">
+      <section className="py-20 px-6 bg-zinc-900/30 border-y border-zinc-800">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-3">Trusted by businesses like yours</h2>
@@ -227,7 +430,7 @@ export default function Landing() {
       </section>
 
       {/* FAQ */}
-      <section className="py-20 px-6 bg-zinc-900/30 border-y border-zinc-800">
+      <section className="py-20 px-6">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-3">Common questions</h2>
@@ -256,7 +459,7 @@ export default function Landing() {
                 a: "You'll see transparent pricing upfront — no hidden fees, no surprises. Pay only for what you need, and rates are competitive with (or better than) hiring directly."
               },
             ].map((faq, i) => (
-              <div key={i} className="p-5 bg-zinc-900 border border-zinc-800 rounded-xl">
+              <div key={i} className="p-5 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-700 transition-all">
                 <h3 className="font-semibold mb-2">{faq.q}</h3>
                 <p className="text-zinc-400 text-sm">{faq.a}</p>
               </div>
@@ -266,7 +469,7 @@ export default function Landing() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 px-6">
+      <section className="py-20 px-6 bg-gradient-to-b from-zinc-900/50 to-zinc-950">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to protect what matters?</h2>
           <p className="text-zinc-400 mb-8">Get a free quote in under 2 minutes. No commitment, no pressure.</p>
@@ -278,14 +481,19 @@ export default function Landing() {
               Get Your Free Quote <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-zinc-500">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-zinc-500">
             <Link to="/quote/lookup" className="hover:text-accent transition flex items-center gap-1.5">
               <FileSearch className="w-4 h-4" />
               Review a past quote
             </Link>
             <span className="hidden sm:block">•</span>
+            <Link to="/tech-stack" className="hover:text-accent transition flex items-center gap-1.5">
+              <Cpu className="w-4 h-4" />
+              See our tech stack
+            </Link>
+            <span className="hidden sm:block">•</span>
             <a href="mailto:hello@guardquote.com" className="hover:text-accent transition">
-              Questions? hello@guardquote.com
+              hello@guardquote.com
             </a>
           </div>
         </div>

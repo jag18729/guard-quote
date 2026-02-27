@@ -9,6 +9,7 @@ import { sql, testConnection } from "./db/connection";
 import { checkMLHealth, getMLClientStatus } from "./services/ml-client";
 import { getAuthorizationUrl, exchangeCode, getUserInfo } from "./services/oauth";
 import { getConfiguredProviders, isProviderConfigured } from "./services/oauth-config";
+import { sendQuoteEmail } from "./services/email";
 import {
   DEMO_MODE,
   DEMO_STATS,
@@ -224,6 +225,22 @@ app.post("/api/predict", async (c) => {
       `;
       quoteId = result[0]?.id;
       quoteNumber = result[0]?.quote_number;
+      
+      // Send email if provided
+      if (body.email && quoteId) {
+        sendQuoteEmail({
+          to: body.email,
+          customerName: body.name || "Valued Customer",
+          quoteId,
+          price: predictedPrice,
+          priceRange: { low: Math.round(predictedPrice * 0.85), high: Math.round(predictedPrice * 1.15) },
+          eventType: eventData.name,
+          location: `${locationData.city}, ${locationData.state}`,
+          guestCount: body.guest_count || 50,
+          duration: hours,
+          date: body.date,
+        }).catch(err => console.error("[Email] Failed:", err));
+      }
     }
     
     return c.json({

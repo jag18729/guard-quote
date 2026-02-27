@@ -24,7 +24,7 @@
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
     "hono": "^4.12.2",
-    "postgres": "3.3.5",
+    "postgres": "3.4.8",
     "resend": "^6.9.2"
   },
   "engines": {

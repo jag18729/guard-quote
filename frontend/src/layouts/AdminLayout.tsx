@@ -7,6 +7,7 @@ export default function AdminLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [systemStatus, setSystemStatus] = useState<"online" | "degraded" | "offline">("online");
+  const [systemMode, setSystemMode] = useState<"live" | "demo">("live");
   const [currentTime, setCurrentTime] = useState(new Date());
   
   useEffect(() => {
@@ -17,7 +18,10 @@ export default function AdminLayout() {
   useEffect(() => {
     fetch("/api/status")
       .then(r => r.json())
-      .then(d => setSystemStatus(d.database?.connected === true || d.services?.api === "healthy" ? "online" : "degraded"))
+      .then(d => {
+        setSystemStatus(d.database?.connected === true || d.services?.api === "healthy" ? "online" : "degraded");
+        setSystemMode(d.mode === "demo" ? "demo" : "live");
+      })
       .catch(() => setSystemStatus("offline"));
   }, []);
   
@@ -49,9 +53,15 @@ export default function AdminLayout() {
         {/* Status bar */}
         <div className="px-4 py-3 border-b border-border bg-elevated/50">
           <div className="flex items-center justify-between text-[10px] font-mono text-text-muted">
-            <div className="flex items-center gap-1.5">
-              <span className={`w-1.5 h-1.5 rounded-full status-pulse ${systemStatus === "online" ? "bg-success" : systemStatus === "degraded" ? "bg-warning" : "bg-critical"}`} />
-              <span className="uppercase">{systemStatus}</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className={`w-1.5 h-1.5 rounded-full status-pulse ${systemStatus === "online" ? "bg-success" : systemStatus === "degraded" ? "bg-warning" : "bg-critical"}`} />
+                <span className="uppercase">{systemStatus}</span>
+              </div>
+              <div className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded ${systemMode === "live" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${systemMode === "live" ? "bg-emerald-400" : "bg-amber-400 animate-pulse"}`} />
+                <span className="uppercase font-bold">{systemMode}</span>
+              </div>
             </div>
             <span>{currentTime.toLocaleTimeString("en-US", { hour12: false })}</span>
           </div>

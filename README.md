@@ -10,7 +10,7 @@ Get instant, accurate quotes for security services: event security, executive pr
 
 ---
 
-## ✨ Features
+## Features
 
 - **Instant Quotes**: ML-powered pricing in seconds, not days
 - **OAuth Login**: Sign in with GitHub, Google, or Microsoft
@@ -20,7 +20,7 @@ Get instant, accurate quotes for security services: event security, executive pr
 
 ---
 
-## 🚀 Live Demo
+## Live Demo
 
 **Production:** https://guardquote.vandine.us
 
@@ -32,32 +32,32 @@ Get instant, accurate quotes for security services: event security, executive pr
 
 ---
 
-## 🧠 ML Engine
+## ML Engine
 
 | Model | Task | Performance |
 |-------|------|-------------|
-| **GradientBoost** | Price Prediction | R² = 0.93 |
-| **RandomForest** | Risk Classification | 81% accuracy |
+| GradientBoost | Price Prediction | R² = 0.93 |
+| RandomForest | Risk Classification | 81% accuracy |
 
 Trained on 500+ historical quotes across 15 event types and 28 US locations.
 
 ---
 
-## 💻 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS |
-| **Backend** | Bun + Hono (TypeScript) |
-| **ML Engine** | Python, FastAPI, scikit-learn |
-| **Database** | PostgreSQL 16 |
-| **Auth** | OAuth 2.0 + PKCE, JWT sessions |
-| **Infrastructure** | K3s, Cloudflare Tunnel |
-| **Monitoring** | Grafana, Prometheus, Loki |
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS |
+| Backend | Bun + Hono (TypeScript) |
+| ML Engine | Python, FastAPI, scikit-learn |
+| Database | PostgreSQL 16 |
+| Auth | OAuth 2.0 + PKCE, JWT sessions |
+| Infrastructure | K3s, Cloudflare Tunnel |
+| Monitoring | Grafana, Prometheus, Loki |
 
 ---
 
-## 🛠️ Quick Start
+## Quick Start
 
 ```bash
 # Clone
@@ -83,7 +83,7 @@ DEMO_MODE=true bun run src/index.ts
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 guard-quote/
@@ -95,28 +95,24 @@ guard-quote/
 
 ---
 
-## 👥 Team
+## Team
 
 | Name | Role |
 |------|------|
-| **Rafael Garcia** ([@jag18729](https://github.com/jag18729)) | Lead Developer |
-| **Milkias Kassa** ([@Malachizirgod](https://github.com/Malachizirgod)) | ICAM Lead |
-| **Isaiah Bernal** ([@ibernal1815](https://github.com/ibernal1815)) | Security Ops |
-| **Xavier Nguyen** ([@xan942](https://github.com/xan942)) | UX Lead |
+| Rafael Garcia ([@jag18729](https://github.com/jag18729)) | Lead Developer |
+| Milkias Kassa ([@Malachizirgod](https://github.com/Malachizirgod)) | ICAM Lead |
+| Isaiah Bernal ([@ibernal1815](https://github.com/ibernal1815)) | Security Ops |
+| Xavier Nguyen ([@xan942](https://github.com/xan942)) | UX Lead |
 
 ---
 
-## 📋 Links
+## Links
 
 - [Project Board](https://github.com/users/jag18729/projects/1)
 - [Deployment Guide](./docs/GUARDQUOTE-V2-DEPLOYMENT.md)
 
 ---
 
-## 📄 License
+## License
 
 California State University, Northridge; CIT 480 Senior Design Project
-
----
-
-*Built with ☕ and too many late nights.*

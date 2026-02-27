@@ -212,21 +212,25 @@ app.post("/api/predict", async (c) => {
     
     const predictedPrice = Math.round(baseCost * eventMultiplier * locationMultiplier);
     
-    // Save quote request if not demo mode and email provided
+    // Save quote if not demo mode
     let quoteId = null;
-    if (!DEMO_MODE && body.email) {
+    let quoteNumber = null;
+    if (!DEMO_MODE) {
+      quoteNumber = `GQ-${Date.now()}`;
       const result = await sql`
-        INSERT INTO quote_requests (event_type, location, guest_count, duration_hours, predicted_price, email, name)
-        VALUES (${eventData.name}, ${locationData.city + ", " + locationData.state}, ${body.guest_count}, ${hours}, ${predictedPrice}, ${body.email}, ${body.name || "Guest"})
-        RETURNING id
+        INSERT INTO quotes (quote_number, event_type_id, location_id, num_guards, hours_per_guard, crowd_size, total_price, status)
+        VALUES (${quoteNumber}, ${body.event_type || 1}, ${body.location_id || 1}, ${guardCount}, ${hours}, ${body.guest_count || 50}, ${predictedPrice}, 'draft')
+        RETURNING id, quote_number
       `;
       quoteId = result[0]?.id;
+      quoteNumber = result[0]?.quote_number;
     }
     
     return c.json({
       predicted_price: predictedPrice,
       price: predictedPrice,
       quote_id: quoteId,
+      quote_number: quoteNumber,
       event_type: eventData.name,
       location: `${locationData.city}, ${locationData.state}`,
       breakdown: {

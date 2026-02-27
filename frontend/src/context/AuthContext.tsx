@@ -53,7 +53,11 @@ async function authFetch(url: string, options: RequestInit = {}): Promise<Respon
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+  const [token, setToken] = useState<string | null>(() => {
+    const t = localStorage.getItem("token");
+    console.log("[AuthContext] Initial token from localStorage:", t ? "present" : "none");
+    return t;
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   // Check session on mount (using cookie or localStorage token)

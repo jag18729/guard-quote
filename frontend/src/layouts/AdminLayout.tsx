@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { Shield, LayoutDashboard, Users, Server, ScrollText, FileText, LogOut, ExternalLink, Brain, Network, Lightbulb, UserCircle } from "lucide-react";
+import { Shield, LayoutDashboard, Users, Server, ScrollText, FileText, LogOut, ExternalLink, Brain, Network, Lightbulb, UserCircle, ShieldAlert } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 
@@ -17,24 +17,24 @@ export default function AdminLayout() {
   useEffect(() => {
     fetch("/api/status")
       .then(r => r.json())
-      .then(d => setSystemStatus(d.database === "connected" || d.api === "healthy" ? "online" : "degraded"))
+      .then(d => setSystemStatus(d.database?.connected === true || d.services?.api === "healthy" ? "online" : "degraded"))
       .catch(() => setSystemStatus("offline"));
   }, []);
   
   const handleLogout = async () => { await logout(); navigate("/login"); };
 
-  const navItems = [
+  const allNavItems = [
     { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
     { to: "/admin/quotes", icon: FileText, label: "Quotes" },
     { to: "/admin/ml", icon: Brain, label: "ML Engine" },
-    { to: "/admin/users", icon: Users, label: "Users" },
+    { to: "/admin/users", icon: Users, label: "Users", adminOnly: true },
     { to: "/admin/services", icon: Server, label: "Services" },
     { to: "/admin/network", icon: Network, label: "Network" },
-    { to: "/admin/blog", icon: FileText, label: "Blog" },
-    { to: "/admin/features", icon: Lightbulb, label: "Features" },
-    { to: "/admin/logs", icon: ScrollText, label: "Logs" },
+    { to: "/admin/security", icon: ShieldAlert, label: "Security" },
     { to: "/admin/profile", icon: UserCircle, label: "My Profile" },
   ];
+  
+  const navItems = allNavItems.filter(item => !item.adminOnly || user?.role === "admin");
   
   return (
     <div className="min-h-screen bg-void flex">
@@ -76,15 +76,31 @@ export default function AdminLayout() {
           ))}
         </nav>
         
+        {/* Role indicator */}
+        <div className="px-3 pb-2">
+          <div className={`px-2 py-1 rounded text-[10px] font-medium text-center uppercase tracking-wider ${
+            user?.role === "admin" ? "bg-red-500/20 text-red-400 border border-red-500/30" :
+            user?.role === "sec-ops" ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" :
+            user?.role === "developer" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" :
+            "bg-zinc-500/20 text-zinc-400 border border-zinc-500/30"
+          }`}>
+            {user?.role || "user"}
+          </div>
+        </div>
+        
         {/* External links */}
         <div className="px-2 pb-2 space-y-1">
           <a href="/" target="_blank" className="flex items-center gap-3 px-3 py-2 text-xs text-text-muted hover:text-text-secondary transition">
             <ExternalLink className="w-3.5 h-3.5" />
             Public Site
           </a>
-          <a href="https://vandine.us" target="_blank" className="flex items-center gap-3 px-3 py-2 text-xs text-text-muted hover:text-text-secondary transition">
+          <a href="https://bastion.vandine.us" target="_blank" className="flex items-center gap-3 px-3 py-2 text-xs text-text-muted hover:text-text-secondary transition">
             <ExternalLink className="w-3.5 h-3.5" />
-            NOC Dashboard
+            Bastion CLI
+          </a>
+          <a href="https://grafana.vandine.us" target="_blank" className="flex items-center gap-3 px-3 py-2 text-xs text-text-muted hover:text-text-secondary transition">
+            <ExternalLink className="w-3.5 h-3.5" />
+            Grafana
           </a>
         </div>
         

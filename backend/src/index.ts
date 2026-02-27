@@ -1172,13 +1172,16 @@ app.get("/api/auth/callback/:provider", async (c) => {
   // Exchange code for token
   const tokenResult = await exchangeCode(state, code, redirectUri);
   if (!tokenResult) {
-    return c.redirect("/login?error=token_exchange_failed");
+    const errorMsg = provider === "microsoft" 
+      ? "Microsoft login temporarily unavailable. Please use GitHub or Google."
+      : "Failed to complete login. Please try again.";
+    return c.redirect(`/login?error=${encodeURIComponent(errorMsg)}`);
   }
 
   // Get user info
   const userInfo = await getUserInfo(provider, tokenResult.accessToken);
   if (!userInfo) {
-    return c.redirect("/login?error=user_info_failed");
+    return c.redirect("/login?error=Could not retrieve your profile. Please try again.");
   }
 
   // Find existing OAuth link
@@ -1233,9 +1236,11 @@ app.get("/api/auth/callback/:provider", async (c) => {
   });
 
   // Redirect with token (frontend will extract and store it)
-  const returnUrl = tokenResult.returnUrl || "/dashboard";
+  const returnUrl = tokenResult.returnUrl || "/admin";
   const separator = returnUrl.includes("?") ? "&" : "?";
-  return c.redirect(`${returnUrl}${separator}token=${accessToken}`);
+  const redirectUrl = `${returnUrl}${separator}token=${accessToken}`;
+  console.log(`[OAuth] Redirecting to: ${redirectUrl.substring(0, 50)}...`);
+  return c.redirect(redirectUrl);
 });
 
 // ============================================

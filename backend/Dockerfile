@@ -2,8 +2,8 @@ FROM oven/bun:latest
 WORKDIR /app
 
 # Install dependencies
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --production
+COPY package.json ./
+RUN bun install --production
 
 # Copy source
 COPY src ./src

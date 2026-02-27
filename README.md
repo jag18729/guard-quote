@@ -31,7 +31,7 @@ Get instant, accurate quotes for security services — from event security to ex
 |------|--------|------|------------------|
 | **Rafael Garcia** | [@jag18729](https://github.com/jag18729) | Lead Developer | App dev, CI/CD, ML, SSO/OAuth, networking & infrastructure |
 | **Milkias Kassa** | [@Malachizirgod](https://github.com/Malachizirgod) | ICAM Lead + PM | Security review (OWASP), GitHub Projects, documentation |
-| **Isaiah Bernal** | [@ibernal1815](https://github.com/ibernal1815) | Security Ops | SIEM, IDS/IPS, detection rules, Elastic Stack |
+| **Isaiah Bernal** | [@ibernal1815](https://github.com/ibernal1815) | Security Ops | Wazuh SIEM, Suricata IDS, log pipelines, alert tuning |
 | **Xavier Nguyen** | [@xan942](https://github.com/xan942) | UX Lead + UAT | User experience, UAT driver, presentations, slides |
 
 ---
@@ -62,9 +62,12 @@ gantt
     Datadog APM                :done, 2026-02-09, 1d
     
     section Security Stack
-    Elastic Stack setup        :done, 2026-02-08, 12d
-    AdGuard DNS HA             :done, 2026-02-09, 9d
-    GitHub Security            :done, 2026-02-09, 9d
+    Wazuh SIEM deployment      :done, 2026-02-08, 5d
+    Suricata IDS (rv2)         :done, 2026-02-20, 5d
+    Vector log pipeline        :done, 2026-02-24, 2d
+    Loki log aggregation       :done, 2026-02-25, 1d
+    Security dashboard         :done, 2026-02-26, 1d
+    Alert tuning               :active, 2026-02-26, 5d
     
     section v2 Development
     OAuth SSO                  :done, 2026-02-19, 6d
@@ -73,7 +76,7 @@ gantt
     
     section v2 Deployment
     K3s deployment             :done, 2026-02-24, 2d
-    Production go-live         :milestone, done, 2026-02-25, 0d
+    Production go-live         :done, crit, 2026-02-25, 1d
     
     section Documentation
     Deployment runbook         :done, 2026-02-25, 1d

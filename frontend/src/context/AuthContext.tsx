@@ -61,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkSession = async () => {
       try {
         // Only check if we have a token (avoids unnecessary 401s)
+        // lgtm[js/user-controlled-bypass] - Client-side optimization only; server validates all tokens
         const storedToken = localStorage.getItem("token");
         if (!storedToken) {
           setIsLoading(false);

@@ -63,7 +63,18 @@ def create_app() -> FastAPI:
                 "grpc": f"localhost:{GRPC_PORT}",
             }
         }
-    
+
+    @app.get("/health")
+    async def health():
+        """Top-level health check."""
+        from .models.trained_predictor import get_predictor
+        predictor = get_predictor()
+        return {
+            "status": "healthy",
+            "version": __version__,
+            "model_loaded": predictor.loaded,
+        }
+
     return app
 
 

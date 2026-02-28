@@ -93,9 +93,9 @@ def preprocess_features(df):
         'is_weekend', 'is_night_shift', 'is_armed', 'has_vehicle'
     ]
 
-    # Feature columns for risk prediction
+    # Feature columns for risk prediction (no zip_region — matches trained model)
     risk_features = [
-        'event_type_encoded', 'state_encoded', 'zip_region',
+        'event_type_encoded', 'state_encoded',
         'num_guards', 'hours_per_guard', 'crowd_size',
         'day_of_week', 'hour_of_day', 'month',
         'is_weekend', 'is_night_shift', 'is_armed'

@@ -25,7 +25,7 @@
 **Solution**: An intelligent quoting platform that:
 - Generates instant, accurate quotes using machine learning
 - Enriches pricing with weather, demographics, and local event data
-- Provides OAuth SSO (GitHub + Google) for secure access
+- Provides OAuth SSO (GitHub, Google, Microsoft) for secure access
 - Runs entirely on self-hosted infrastructure — $0/month operational cost
 
 **Business value**: Faster quotes → more clients → better pricing accuracy → higher margins.
@@ -83,19 +83,24 @@
 Internet → Cloudflare Tunnel (free)
                 │
         Pi1 — cloudflared (ingress)
+        Grafana + Prometheus + Loki
                 │
          PA-220 Firewall
          (4 security zones)
                 │
     ┌───────────┼───────────┐
     │           │           │
-  Pi0         Pi2        Orange Pi
-  DNS/Logs   App+ML      Database
-  SNMP       K3s         PostgreSQL
-  (2GB)      (16GB)      (8GB, RISC-V)
-                           500GB NVMe
+  Pi0         Pi2        Database Host
+  DNS/Logs   K3s Cluster   PostgreSQL 16
+  LDAP       ┌─────────┐   192.168.20.10
+  Bastion    │Frontend  │
+  SNMP       │Backend   │
+  (2GB)      │ML Engine │
+             └─────────┘
+             CI/CD Runner
+             (16GB ARM64)
                 │
-            WireGuard VPN
+            Tailscale VPN
                 │
               Pi3 (remote)
               Health probe
@@ -118,6 +123,8 @@ Internet → Cloudflare Tunnel (free)
 | **Formula → Real XGBoost ML** | Actual predictions with confidence scores | Simplicity, need training data pipeline |
 | **Docker → K3s** | Orchestration, rolling updates, self-healing | Simplicity, Docker Compose "just works" |
 | **Single server → 4-node cluster** | Fault isolation, security zones, scalability | Complexity, networking challenges |
+| **Manual deploy → CI/CD** | Push to main auto-deploys via GitHub Actions | Self-hosted runner maintenance |
+| **Admin-only → RBAC + IAM** | Granular roles (admin, iam, sec-ops, developer) | More complex permission logic |
 
 ### The Hard Lesson
 
@@ -182,6 +189,8 @@ Pi1 (10.x.x.x)          ←  dmz-services zone
 - No passport.js, no auth libraries — just raw HTTP calls
 - GitHub: 4 fetch calls (authorize URL → code → token → profile)
 - Google: same pattern + JWT id_token with all user data
+- Microsoft: Azure AD with PKCE — same flow, different endpoint
+- **All 3 providers validated by team** — Xavier (GitHub), Milkias (Google), Isaiah (Microsoft)
 - **Lesson**: OAuth is just HTTP redirects and JSON. Frameworks add complexity without adding security.
 
 ---
@@ -222,10 +231,11 @@ Pi1 (10.x.x.x)          ←  dmz-services zone
 | dmz-services | 10.x.x.x/24 | Application services | Pi1 (monitoring, ingress) |
 | dmz-security | 10.x.x.x/24 | Workloads + security | Pi2 (K3s, Suricata) |
 
-### Auth Security
-- OAuth 2.0 with PKCE (prevents code interception)
-- httpOnly cookies (prevents XSS token theft)
-- argon2id password hashing (GPU-resistant)
+### Auth & Identity Security
+- OAuth 2.0 SSO with PKCE — GitHub, Google, Microsoft (all validated ✅)
+- IAM role tier — granular RBAC (admin, iam, sec-ops, developer, user)
+- LDAP directory on pi0 — centralized identity for Bastion CLI
+- argon2id password hashing (GPU-resistant, built into Bun)
 - Auto-lockout (5 failures → 15 min lock)
 - Session tracking with token hashes (never store raw tokens)
 
@@ -246,17 +256,18 @@ Pi1 (10.x.x.x)          ←  dmz-services zone
 | API response time | <50ms (quote calculation) |
 | K3s pods running | 12 across 3 namespaces |
 | Prometheus targets | 34 (all UP) |
+| Backend endpoints | 40+ (21 added in latest sprint) |
+| OAuth providers | 3 (GitHub, Google, Microsoft) |
 | Uptime | 99.5%+ (limited by home internet) |
 
 ### Codebase
 | Component | Lines | Status |
 |-----------|-------|--------|
-| Backend (v1) | 6,650 | Production |
-| Backend (v2 target) | ~4,000 | In development |
-| Frontend | 5,620 | Production |
-| ML Engine | TBD | Planned |
-| Infrastructure code removed | -2,350 | Replaced by monitoring stack |
-| v2 Schema migration | 500+ | Ready |
+| Backend | 2,000+ | ✅ Production (Bun 1.3 + Hono) |
+| Frontend | 5,600+ | ✅ Production (React + Vite) |
+| ML Engine | 1,200+ | ✅ Production (FastAPI + XGBoost) |
+| DB Schema | 290+ | ✅ 15 tables, 3NF normalized |
+| CI/CD Pipeline | GitHub Actions | ✅ Auto-deploy on push to main |
 
 ### Cost Comparison
 | | AWS (projected) | Self-Hosted (actual) |
@@ -268,31 +279,38 @@ Pi1 (10.x.x.x)          ←  dmz-services zone
 
 ---
 
-## SLIDE 12: What's Next
+## SLIDE 12: What's Done & What's Next
 
-### For SDPS Demo (March 3)
-- [ ] Complete Bun 1.3 backend port
-- [ ] OAuth SSO working end-to-end
-- [ ] Real XGBoost ML predictions with confidence scores
-- [ ] DEMO_MODE for offline showcase
-- [ ] 3-node distributed demo story
+### Completed for SDPS Demo ✅
+- [x] Bun 1.3 backend with Hono — deployed on K3s
+- [x] OAuth SSO — GitHub, Google, Microsoft (all 3 validated by team)
+- [x] Real XGBoost ML engine — FastAPI + gRPC on K3s
+- [x] DEMO_MODE for offline showcase
+- [x] CI/CD auto-deploy — push to main → live in ~3 minutes
+- [x] IAM role system — granular RBAC across all endpoints
+- [x] LDAP directory + Bastion CLI — centralized identity management
+- [x] Mobile responsive admin panel
+- [x] 40+ API endpoints (services, ML, blog, features, security)
 
 ### Beyond SDPS
 - Orange Pi RV2 (RISC-V) as dedicated database server
 - Pi3 off-site monitoring node at remote location
 - Full enrichment pipeline (weather + demographics + events)
 - Email workflows (quote delivery, ML reports)
+- Rate limiting with Redis
 
 ---
 
 ## SLIDE 13: Demo
 
 *Live walkthrough of:*
-1. Landing page → Quote request
-2. OAuth login (GitHub)
-3. ML-powered quote with confidence score and enrichment data
-4. Admin dashboard → Grafana link to real monitoring
-5. Network diagram → 4 physical nodes, 4 security zones
+1. Landing page → Quote request flow
+2. OAuth login (GitHub / Google / Microsoft)
+3. ML-powered quote with confidence score and risk assessment
+4. Admin dashboard → Services, ML Engine, Blog, Features pages
+5. User management → IAM role demo (admin vs iam permissions)
+6. Grafana dashboards → real-time monitoring (34 targets)
+7. CI/CD → push a change, watch auto-deploy to K3s
 
 ---
 
@@ -312,25 +330,27 @@ Pi1 (10.x.x.x)          ←  dmz-services zone
 ```
 Semester Start (Sep 2025)        →        Now (Feb 2026)
 ─────────────────────────────────────────────────────────
-AWS EC2                          →  Raspberry Pi cluster
-AWS RDS                          →  PostgreSQL on Orange Pi (RISC-V)
+AWS EC2                          →  Raspberry Pi cluster (4 nodes)
+AWS RDS                          →  PostgreSQL 16 (self-hosted)
 Elastic Stack (ELK)              →  Prometheus + Grafana + Loki
-Deno + Hono framework            →  Bun 1.3 native Bun.serve()
-bcrypt + JWT                     →  OAuth SSO (GitHub+Google) + argon2id
-Rule-based formula               →  XGBoost + API enrichment + rules
-Docker Compose                   →  K3s (Kubernetes)
+Deno + Hono framework            →  Bun 1.3 + Hono on K3s
+bcrypt + JWT                     →  OAuth SSO (GitHub+Google+Microsoft) + argon2id
+Rule-based formula               →  XGBoost ML + FastAPI + gRPC
+Docker Compose                   →  K3s (Kubernetes) + CI/CD auto-deploy
 Single server                    →  4-node distributed cluster
 No firewall                      →  PA-220 with 4 security zones
 No monitoring                    →  34 Prometheus targets + 3 dashboards
 No SIEM                          →  35 auth event types + auto-lockout
+No identity mgmt                 →  LDAP + Bastion + IAM roles
+Manual deploys                   →  GitHub Actions → K3s in ~3 min
 $50-100/month                    →  $0/month
 ```
 
 ## Appendix B: Team Contributions
 
-| Member | Key Contributions |
-|--------|-------------------|
-| **Rafael** | Full-stack dev, ML engine, infrastructure (Pi fleet, PA-220, K3s), OAuth SSO, monitoring stack, CI/CD |
-| **Milkias** | ICAM security review (OWASP), project management, GitHub Projects, documentation |
-| **Isaiah** | SIEM research, IDS/IPS concepts, security monitoring planning |
-| **Xavier** | UX design, UAT testing, mobile responsiveness, presentation materials |
+| Member | Role | Key Contributions |
+|--------|------|-------------------|
+| **Rafael Garcia** | Lead — CI/CD, ML, Data | Full-stack dev, ML engine (XGBoost + FastAPI), infrastructure (Pi fleet, PA-220, K3s), OAuth SSO (3 providers), monitoring stack, CI/CD auto-deploy, IAM role system, LDAP/Bastion setup, 21 backend endpoints |
+| **Milkias Kassa** | IAM Lead | ICAM security review (OWASP), Google OAuth validation, IAM role testing, project management, GitHub Projects, documentation |
+| **Isaiah Bernal** | SecOps | SIEM research, Microsoft OAuth validation, IDS/IPS concepts, Wazuh integration, security monitoring, Suricata rules |
+| **Xavier Nguyen** | UX/Frontend | GitHub OAuth validation, UAT testing (Blog, Features, API), mobile UX testing, presentation materials, documentation |

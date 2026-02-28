@@ -7,6 +7,7 @@ RUN bun install --production
 
 # Copy source
 COPY src ./src
+COPY proto ./proto
 COPY tsconfig.json ./
 
 # Create non-root user (Debian-based image)

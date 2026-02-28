@@ -7,6 +7,7 @@ on:
       - 'backend/**'
       - 'frontend/**'
       - 'ml-engine/**'
+  workflow_dispatch:
 
 concurrency:
   group: deploy-production
@@ -20,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Detect changed components
         id: changes
@@ -27,11 +30,15 @@ jobs:
           BACKEND=false
           FRONTEND=false
           ML=false
-          # Compare against the previous commit on main
-          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "backend/ frontend/ ml-engine/")
-          echo "$CHANGED" | grep -q '^backend/' && BACKEND=true
-          echo "$CHANGED" | grep -q '^frontend/' && FRONTEND=true
-          echo "$CHANGED" | grep -q '^ml-engine/' && ML=true
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual trigger — deploying all components"
+            BACKEND=true; FRONTEND=true; ML=true
+          else
+            CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+            echo "$CHANGED" | grep -q '^backend/' && BACKEND=true
+            echo "$CHANGED" | grep -q '^frontend/' && FRONTEND=true
+            echo "$CHANGED" | grep -q '^ml-engine/' && ML=true
+          fi
           echo "backend=$BACKEND" >> $GITHUB_OUTPUT
           echo "frontend=$FRONTEND" >> $GITHUB_OUTPUT
           echo "ml=$ML" >> $GITHUB_OUTPUT

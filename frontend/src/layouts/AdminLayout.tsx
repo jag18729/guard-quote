@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { Shield, LayoutDashboard, Users, Server, ScrollText, FileText, LogOut, ExternalLink, Brain, Network, Lightbulb, UserCircle, ShieldAlert } from "lucide-react";
+import { Shield, LayoutDashboard, Users, Server, FileText, LogOut, ExternalLink, Brain, UserCircle, ShieldAlert } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 
@@ -33,7 +33,6 @@ export default function AdminLayout() {
     { to: "/admin/ml", icon: Brain, label: "ML Engine" },
     { to: "/admin/users", icon: Users, label: "Users", adminOnly: true },
     { to: "/admin/services", icon: Server, label: "Services" },
-    { to: "/admin/network", icon: Network, label: "Network" },
     { to: "/admin/security", icon: ShieldAlert, label: "Security" },
     { to: "/admin/profile", icon: UserCircle, label: "My Profile" },
   ];

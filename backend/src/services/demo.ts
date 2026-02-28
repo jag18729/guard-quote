@@ -498,7 +498,124 @@ export const DEMO_USERS = [
   { id: 9999, email: "demo@guardquote.com", firstName: "Demo", lastName: "Admin", role: "admin", is_active: true },
   { id: 9998, email: "manager@guardquote.com", firstName: "Sarah", lastName: "Manager", role: "manager", is_active: true },
   { id: 9997, email: "user@guardquote.com", firstName: "John", lastName: "User", role: "user", is_active: true },
+  { id: 9996, email: "iam@guardquote.com", firstName: "Milkias", lastName: "Kassa", role: "iam", is_active: true },
 ];
+
+// =============================================================================
+// Demo Mode Middleware Helper
+// =============================================================================
+
+// =============================================================================
+// Demo Services (infrastructure monitoring)
+// =============================================================================
+
+export const DEMO_SERVICES = [
+  { name: "guardquote-backend", displayName: "GuardQuote API", description: "Bun + Hono REST API", status: "running", port: 3000, uptime: "14d 6h", memory: "128 MB" },
+  { name: "guardquote-ml", displayName: "ML Engine", description: "FastAPI + gRPC prediction engine", status: "running", port: 8000, uptime: "14d 6h", memory: "512 MB" },
+  { name: "postgresql", displayName: "PostgreSQL 16", description: "Primary database", status: "running", port: 5432, uptime: "21d 3h", memory: "256 MB" },
+  { name: "guardquote-frontend", displayName: "Nginx Frontend", description: "React SPA + reverse proxy", status: "running", port: 80, uptime: "14d 6h", memory: "32 MB" },
+];
+
+export const DEMO_SYSTEM_INFO = {
+  hostname: "pi2-k3s",
+  uptime: "21d 3h 42m",
+  loadAvg: "0.42, 0.38, 0.35",
+  memoryUsed: "2.1 GB",
+  memoryTotal: "8 GB",
+  diskUsed: "18.3 GB",
+  diskTotal: "128 GB",
+  cpuTemp: "48°C",
+};
+
+// =============================================================================
+// Demo ML Training Data
+// =============================================================================
+
+export const DEMO_TRAINING_DATA = [
+  { id: 1, event_type_code: "concert", state: "CA", risk_zone: "high", num_guards: 12, crowd_size: 5000, final_price: "8547.60", risk_score: "0.720", was_accepted: true, created_at: daysAgo(30) },
+  { id: 2, event_type_code: "corporate", state: "CA", risk_zone: "medium", num_guards: 4, crowd_size: 500, final_price: "1108.80", risk_score: "0.180", was_accepted: true, created_at: daysAgo(28) },
+  { id: 3, event_type_code: "sports", state: "IL", risk_zone: "high", num_guards: 15, crowd_size: 20000, final_price: "8316.00", risk_score: "0.680", was_accepted: true, created_at: daysAgo(25) },
+  { id: 4, event_type_code: "vip_protection", state: "CA", risk_zone: "low", num_guards: 6, crowd_size: 200, final_price: "4207.50", risk_score: "0.420", was_accepted: true, created_at: daysAgo(20) },
+  { id: 5, event_type_code: "music_festival", state: "FL", risk_zone: "medium", num_guards: 20, crowd_size: 15000, final_price: "24840.00", risk_score: "0.850", was_accepted: false, created_at: daysAgo(15) },
+  { id: 6, event_type_code: "retail", state: "NY", risk_zone: "high", num_guards: 2, crowd_size: 0, final_price: "672.00", risk_score: "0.350", was_accepted: true, created_at: daysAgo(10) },
+  { id: 7, event_type_code: "residential", state: "TX", risk_zone: "low", num_guards: 1, crowd_size: 0, final_price: "200.00", risk_score: "0.150", was_accepted: true, created_at: daysAgo(5) },
+  { id: 8, event_type_code: "concert", state: "NY", risk_zone: "high", num_guards: 10, crowd_size: 8000, final_price: "7200.00", risk_score: "0.750", was_accepted: true, created_at: daysAgo(3) },
+];
+
+export const DEMO_TRAINING_STATS = {
+  byEventType: [
+    { event_type_code: "concert", count: "42", avg_price: "6850.00" },
+    { event_type_code: "corporate", count: "38", avg_price: "1520.00" },
+    { event_type_code: "sports", count: "25", avg_price: "7100.00" },
+    { event_type_code: "vip_protection", count: "18", avg_price: "4100.00" },
+    { event_type_code: "music_festival", count: "12", avg_price: "18500.00" },
+    { event_type_code: "retail", count: "8", avg_price: "580.00" },
+    { event_type_code: "residential", count: "4", avg_price: "220.00" },
+  ],
+  byState: [
+    { state: "CA", count: "48" },
+    { state: "NY", count: "32" },
+    { state: "FL", count: "22" },
+    { state: "IL", count: "18" },
+    { state: "TX", count: "15" },
+  ],
+  acceptance: { accepted: "118", rejected: "29", rate: "0.80" },
+};
+
+// =============================================================================
+// Demo Blog Posts
+// =============================================================================
+
+export const DEMO_BLOG_POSTS = [
+  {
+    id: 1, title: "Welcome to GuardQuote v2", content: "We've launched the new ML-powered quoting engine! This version includes XGBoost predictions, gRPC communication, and a fully redesigned admin dashboard.",
+    author_name: "Rafael Garcia", author_id: 9999, comment_count: 2, created_at: daysAgo(7),
+    comments: [
+      { id: 1, content: "Great work on the ML integration!", author_name: "Milkias Kassa", created_at: daysAgo(6) },
+      { id: 2, content: "The dashboard looks amazing.", author_name: "Xavier Nguyen", created_at: daysAgo(5) },
+    ],
+  },
+  {
+    id: 2, title: "Security Audit Complete", content: "Isaiah completed the initial security audit. All OWASP Top 10 items have been addressed. OAuth 2.0 with PKCE is now the primary auth method.",
+    author_name: "Isaiah Bernal", author_id: 9998, comment_count: 1, created_at: daysAgo(3),
+    comments: [
+      { id: 3, content: "Should we schedule a follow-up audit for next sprint?", author_name: "Rafael Garcia", created_at: daysAgo(2) },
+    ],
+  },
+  {
+    id: 3, title: "IAM Role System Update", content: "We're adding a new IAM role for identity and access management. This lets team members manage users without full admin access.",
+    author_name: "Milkias Kassa", author_id: 9996, comment_count: 0, created_at: daysAgo(1),
+    comments: [],
+  },
+];
+
+// =============================================================================
+// Demo Feature Requests
+// =============================================================================
+
+export const DEMO_FEATURES = [
+  { id: 1, title: "Monday.com Integration", description: "Sync feature requests with Monday.com boards for project tracking.", priority: "high" as const, status: "in_progress" as const, category: "Integration", requester_name: "Rafael Garcia", assignee_name: "Xavier Nguyen", monday_item_id: null, votes: 4, created_at: daysAgo(14), updated_at: daysAgo(2) },
+  { id: 2, title: "Email Quote PDFs", description: "Generate and email PDF quotes directly to clients from the admin panel.", priority: "critical" as const, status: "pending" as const, category: "Feature", requester_name: "Sarah Manager", assignee_name: null, monday_item_id: null, votes: 6, created_at: daysAgo(10), updated_at: daysAgo(10) },
+  { id: 3, title: "Dark/Light Theme Toggle", description: "Allow users to switch between dark and light themes.", priority: "low" as const, status: "pending" as const, category: "UI", requester_name: "Xavier Nguyen", assignee_name: null, monday_item_id: null, votes: 2, created_at: daysAgo(7), updated_at: daysAgo(7) },
+  { id: 4, title: "Two-Factor Authentication", description: "Add TOTP-based 2FA for admin accounts.", priority: "high" as const, status: "completed" as const, category: "Security", requester_name: "Isaiah Bernal", assignee_name: "Milkias Kassa", monday_item_id: null, votes: 5, created_at: daysAgo(21), updated_at: daysAgo(3) },
+  { id: 5, title: "Bulk Quote Import", description: "Import historical quotes from CSV for ML training data.", priority: "medium" as const, status: "pending" as const, category: "Data", requester_name: "Rafael Garcia", assignee_name: null, monday_item_id: null, votes: 3, created_at: daysAgo(5), updated_at: daysAgo(5) },
+];
+
+export const DEMO_FEATURE_STATS = {
+  total: 5,
+  byStatus: [
+    { status: "pending", count: "3" },
+    { status: "in_progress", count: "1" },
+    { status: "completed", count: "1" },
+    { status: "rejected", count: "0" },
+  ],
+  byPriority: [
+    { priority: "critical", count: "1" },
+    { priority: "high", count: "2" },
+    { priority: "medium", count: "1" },
+    { priority: "low", count: "1" },
+  ],
+};
 
 // =============================================================================
 // Demo Mode Middleware Helper

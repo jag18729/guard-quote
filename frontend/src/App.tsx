@@ -26,7 +26,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AdminOnlyRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  if (user?.role !== "admin") return <Navigate to="/admin" replace />;
+  if (user?.role !== "admin" && user?.role !== "iam") return <Navigate to="/admin" replace />;
   return <>{children}</>;
 }
 

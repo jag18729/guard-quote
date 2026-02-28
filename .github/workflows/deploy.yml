@@ -1,0 +1,77 @@
+name: Deploy to Pi2 K3s
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'ml-engine/**'
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, pi2, deploy]
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changed components
+        id: changes
+        run: |
+          BACKEND=false
+          FRONTEND=false
+          ML=false
+          # Compare against the previous commit on main
+          CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "backend/ frontend/ ml-engine/")
+          echo "$CHANGED" | grep -q '^backend/' && BACKEND=true
+          echo "$CHANGED" | grep -q '^frontend/' && FRONTEND=true
+          echo "$CHANGED" | grep -q '^ml-engine/' && ML=true
+          echo "backend=$BACKEND" >> $GITHUB_OUTPUT
+          echo "frontend=$FRONTEND" >> $GITHUB_OUTPUT
+          echo "ml=$ML" >> $GITHUB_OUTPUT
+          echo "Detected changes — backend:$BACKEND frontend:$FRONTEND ml:$ML"
+
+      - name: Build & deploy backend
+        if: steps.changes.outputs.backend == 'true'
+        run: |
+          TAG="guardquote-backend:${GITHUB_SHA::8}"
+          echo "Building $TAG..."
+          docker build -t "$TAG" ./backend
+          kubectl set image deployment/guardquote-backend backend="$TAG" -n guardquote
+          kubectl rollout status deployment/guardquote-backend -n guardquote --timeout=120s
+          echo "Backend deployed: $TAG"
+
+      - name: Build & deploy frontend
+        if: steps.changes.outputs.frontend == 'true'
+        run: |
+          TAG="guardquote-frontend:${GITHUB_SHA::8}"
+          echo "Building $TAG..."
+          docker build -t "$TAG" ./frontend
+          kubectl set image deployment/guardquote-frontend frontend="$TAG" -n guardquote
+          kubectl rollout status deployment/guardquote-frontend -n guardquote --timeout=120s
+          echo "Frontend deployed: $TAG"
+
+      - name: Build & deploy ML engine
+        if: steps.changes.outputs.ml == 'true'
+        run: |
+          TAG="guardquote-ml:${GITHUB_SHA::8}"
+          echo "Building $TAG..."
+          docker build -t "$TAG" ./ml-engine
+          kubectl set image deployment/guardquote-ml ml-engine="$TAG" -n guardquote
+          kubectl rollout status deployment/guardquote-ml -n guardquote --timeout=180s
+          echo "ML engine deployed: $TAG"
+
+      - name: Verify deployment
+        run: |
+          echo "=== Pod Status ==="
+          kubectl get pods -n guardquote
+          echo ""
+          echo "=== Health Check ==="
+          sleep 5
+          curl -sf http://localhost:30520/api/status | head -c 200 || echo "Health check pending..."

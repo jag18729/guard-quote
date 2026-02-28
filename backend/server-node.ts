@@ -9,9 +9,6 @@ import { logger } from 'hono/logger';
 import bcrypt from "bcrypt";
 import { sql, testConnection } from './src/db/connection';
 
-// In-memory request logs (last 200 entries)
-const requestLogs: Array<{ timestamp: string; level: string; method: string; path: string; status: number; duration: number; message: string; }> = [];
-
 const app = new Hono();
 // Initialize Resend for email (lazy - gets key at runtime)
 let resend: Resend | null = null;
@@ -21,24 +18,6 @@ function getResend() {
   }
   return resend;
 }
-// Custom logging middleware
-app.use('*', async (c, next) => {
-  const start = Date.now();
-  await next();
-  const duration = Date.now() - start;
-  if (!c.req.path.includes('/health')) {
-    requestLogs.unshift({
-      timestamp: new Date().toISOString(),
-      level: c.res.status >= 400 ? 'error' : 'info',
-      method: c.req.method,
-      path: c.req.path,
-      status: c.res.status,
-      duration,
-      message: `${c.req.method} ${c.req.path} - ${c.res.status} (${duration}ms)`
-    });
-    if (requestLogs.length > 200) requestLogs.pop();
-  }
-});
 app.use('*', logger());
 app.use('*', cors());
 
@@ -590,63 +569,6 @@ app.patch("/api/admin/users/:id", async (c) => {
     console.error("Update user error:", e);
     return c.json({ error: "Failed to update user", details: e.message }, 500);
   }
-});
-
-// Admin Logs endpoint
-app.get("/api/admin/logs", async (c) => {
-  const limit = parseInt(c.req.query("limit") || "50");
-  const level = c.req.query("level"); // filter by level
-  
-  let logs = requestLogs.slice(0, Math.min(limit, 200));
-  if (level) {
-    logs = logs.filter(l => l.level === level);
-  }
-  
-  return c.json({ 
-    logs,
-    total: requestLogs.length
-  });
-});
-
-// Service-specific logs endpoint (journalctl wrapper)
-app.get("/api/admin/services/:name/logs", async (c) => {
-  const serviceName = c.req.param("name");
-  const lines = parseInt(c.req.query("lines") || "50");
-  
-  // Map service names to systemd unit names
-  const unitMap: Record<string, string> = {
-    guardquote: "guardquote.service",
-    nginx: "nginx.service",
-    docker: "docker.service",
-    postgresql: "postgresql.service",
-    redis: "redis.service",
-    cloudflared: "cloudflared.service",
-    pihole: "pihole-FTL.service",
-    prometheus: "docker", // Docker container
-    grafana: "docker",
-    loki: "docker"
-  };
-  
-  const unit = unitMap[serviceName];
-  if (!unit) {
-    return c.json({ error: "Unknown service", logs: "Service not found" }, 404);
-  }
-  
-  // Return demo logs for safety (actual journalctl would need sudo)
-  const demoLogs = `=== ${serviceName} logs (last ${lines} lines) ===
-This is a demo view. Full journalctl access requires elevated permissions.
-  
-To view real logs on the server:
-  sudo journalctl -u ${unit} -n ${lines} --no-pager
-
-Recent activity logged in request log endpoint at /api/admin/logs`;
-  
-  return c.json({ 
-    logs: demoLogs,
-    demoMode: true,
-    service: serviceName,
-    unit
-  });
 });
 
 // ============= ML ADMIN ENDPOINTS =============

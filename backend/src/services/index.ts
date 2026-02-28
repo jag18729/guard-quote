@@ -42,58 +42,6 @@ export {
   invalidateSession,
   set as cacheSet,
 } from "./cache";
-// Infrastructure Service
-export {
-  addNode,
-  checkAllNodes,
-  discoverNetwork,
-  futureInfrastructure,
-  getInfrastructureOverview,
-  getNodeStatus,
-  type InfraNode,
-  infrastructure,
-  type NodeStatus,
-  type NodeType,
-  removeNode,
-  scanPorts,
-  startMonitoring as startInfraMonitoring,
-  stopMonitoring as stopInfraMonitoring,
-  updateNode,
-} from "./infrastructure";
-// Logging Service
-export {
-  apiLogger,
-  backupLogger,
-  clearLogs,
-  dbLogger,
-  getLogStats,
-  getRecentLogs,
-  type LogEntry,
-  type LogLevel,
-  logger,
-  loggingConfig,
-  mlLogger,
-  requestLogger,
-  wsLogger,
-} from "./logging";
-// Monitoring Service
-export {
-  disableService,
-  enableService,
-  getAllServicesHealth,
-  getEnabledServicesHealth,
-  getOverallStatus,
-  getServiceHealth,
-  getSystemMetrics,
-  registerService,
-  type ServiceHealth,
-  type ServiceStatus,
-  type ServiceType,
-  type SystemMetrics,
-  startHealthBroadcast,
-  stopHealthBroadcast,
-  trackRequest,
-} from "./monitor";
 // WebSocket Service
 export {
   broadcastToAdmins,
@@ -120,16 +68,12 @@ export {
 export async function initializeServices(
   options: {
     cache?: boolean;
-    healthBroadcast?: boolean;
     scheduledBackups?: boolean;
-    infraMonitoring?: boolean;
   } = {}
 ) {
   const {
     cache = true,
-    healthBroadcast = true,
     scheduledBackups = false,
-    infraMonitoring = true,
   } = options;
 
   console.log("[Services] Initializing...");
@@ -140,22 +84,10 @@ export async function initializeServices(
     await initCache();
   }
 
-  // Start health broadcasts
-  if (healthBroadcast) {
-    const { startHealthBroadcast } = await import("./monitor");
-    startHealthBroadcast(5000); // Every 5 seconds
-  }
-
   // Start scheduled backups
   if (scheduledBackups) {
     const { startScheduledBackups } = await import("./backup");
     startScheduledBackups();
-  }
-
-  // Start infrastructure monitoring
-  if (infraMonitoring) {
-    const { startMonitoring } = await import("./infrastructure");
-    startMonitoring(30000); // Every 30 seconds
   }
 
   console.log("[Services] Initialization complete");
@@ -167,13 +99,8 @@ export async function initializeServices(
 export async function shutdownServices() {
   console.log("[Services] Shutting down...");
 
-  const { stopHealthBroadcast } = await import("./monitor");
   const { stopScheduledBackups } = await import("./backup");
-  const { stopMonitoring } = await import("./infrastructure");
-
-  stopHealthBroadcast();
   stopScheduledBackups();
-  stopMonitoring();
 
   console.log("[Services] Shutdown complete");
 }

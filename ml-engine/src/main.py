@@ -32,6 +32,18 @@ async def root():
     }
 
 
+@app.get("/health")
+async def health():
+    """Top-level health check (alias for /api/v1/health)."""
+    from .models.trained_predictor import get_predictor
+    predictor = get_predictor()
+    return {
+        "status": "healthy",
+        "version": __version__,
+        "model_loaded": predictor.loaded,
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
 

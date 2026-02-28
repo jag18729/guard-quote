@@ -134,11 +134,10 @@ class TrainedPredictor:
         if not self.loaded:
             return self._fallback_risk(event_type, crowd_size, event_date)
 
-        # Prepare features
+        # Prepare features (must match trained model: 11 features, no zip_region)
         features = np.array([[
             self._encode_event_type(event_type),
             self._encode_state(state),
-            int(zip_code[:3]) if zip_code else 900,
             num_guards,
             hours,
             crowd_size,

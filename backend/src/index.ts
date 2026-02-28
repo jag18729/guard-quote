@@ -2004,10 +2004,10 @@ app.get("/api/features", async (c) => {
   let query = `
     SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at,
       COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name,
-      CASE WHEN fr.assignee_id IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name
+      CASE WHEN fr.assigned_to IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name
     FROM feature_requests fr
     LEFT JOIN users u1 ON fr.requested_by = u1.id
-    LEFT JOIN users u2 ON fr.assignee_id = u2.id
+    LEFT JOIN users u2 ON fr.assigned_to = u2.id
     WHERE 1=1
   `;
   const params: any[] = [];
@@ -2017,12 +2017,12 @@ app.get("/api/features", async (c) => {
 
   // Use raw query with params for dynamic filters
   const features = params.length === 0
-    ? await sql`SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at, COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name, CASE WHEN fr.assignee_id IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name FROM feature_requests fr LEFT JOIN users u1 ON fr.requested_by = u1.id LEFT JOIN users u2 ON fr.assignee_id = u2.id ORDER BY fr.votes DESC, fr.created_at DESC`
+    ? await sql`SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at, COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name, CASE WHEN fr.assigned_to IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name FROM feature_requests fr LEFT JOIN users u1 ON fr.requested_by = u1.id LEFT JOIN users u2 ON fr.assigned_to = u2.id ORDER BY fr.votes DESC, fr.created_at DESC`
     : status && priority
-      ? await sql`SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at, COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name, CASE WHEN fr.assignee_id IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name FROM feature_requests fr LEFT JOIN users u1 ON fr.requested_by = u1.id LEFT JOIN users u2 ON fr.assignee_id = u2.id WHERE fr.status = ${status} AND fr.priority = ${priority} ORDER BY fr.votes DESC, fr.created_at DESC`
+      ? await sql`SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at, COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name, CASE WHEN fr.assigned_to IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name FROM feature_requests fr LEFT JOIN users u1 ON fr.requested_by = u1.id LEFT JOIN users u2 ON fr.assigned_to = u2.id WHERE fr.status = ${status} AND fr.priority = ${priority} ORDER BY fr.votes DESC, fr.created_at DESC`
       : status
-        ? await sql`SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at, COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name, CASE WHEN fr.assignee_id IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name FROM feature_requests fr LEFT JOIN users u1 ON fr.requested_by = u1.id LEFT JOIN users u2 ON fr.assignee_id = u2.id WHERE fr.status = ${status} ORDER BY fr.votes DESC, fr.created_at DESC`
-        : await sql`SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at, COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name, CASE WHEN fr.assignee_id IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name FROM feature_requests fr LEFT JOIN users u1 ON fr.requested_by = u1.id LEFT JOIN users u2 ON fr.assignee_id = u2.id WHERE fr.priority = ${priority} ORDER BY fr.votes DESC, fr.created_at DESC`;
+        ? await sql`SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at, COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name, CASE WHEN fr.assigned_to IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name FROM feature_requests fr LEFT JOIN users u1 ON fr.requested_by = u1.id LEFT JOIN users u2 ON fr.assigned_to = u2.id WHERE fr.status = ${status} ORDER BY fr.votes DESC, fr.created_at DESC`
+        : await sql`SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at, COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name, CASE WHEN fr.assigned_to IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name FROM feature_requests fr LEFT JOIN users u1 ON fr.requested_by = u1.id LEFT JOIN users u2 ON fr.assigned_to = u2.id WHERE fr.priority = ${priority} ORDER BY fr.votes DESC, fr.created_at DESC`;
 
   return c.json(features);
 });
@@ -2069,7 +2069,7 @@ app.patch("/api/features/:id", async (c) => {
       status = COALESCE(${body.status ?? null}, status),
       priority = COALESCE(${body.priority ?? null}, priority),
       category = COALESCE(${body.category ?? null}, category),
-      assignee_id = COALESCE(${body.assignee_id ?? null}, assignee_id),
+      assigned_to = COALESCE(${body.assignee_id ?? null}, assigned_to),
       updated_at = NOW()
     WHERE id = ${id}
   `;

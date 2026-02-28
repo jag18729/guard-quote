@@ -233,7 +233,7 @@ CREATE TABLE feature_requests (
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'rejected')),
     category VARCHAR(100),
     requested_by INT REFERENCES users(id),
-    assignee_id INT REFERENCES users(id),
+    assigned_to INT REFERENCES users(id),
     monday_item_id VARCHAR(100),
     votes INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

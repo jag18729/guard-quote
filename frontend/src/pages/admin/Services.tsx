@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getAuthHeaders } from "../../context/AuthContext";
 import { Server, Activity, Cpu, HardDrive, Thermometer, Clock, ExternalLink, RefreshCw, AlertCircle } from "lucide-react";
 
 interface Service {
@@ -33,8 +34,8 @@ export default function Services() {
     setError(null);
     try {
       const [svcRes, sysRes] = await Promise.all([
-        fetch("/api/admin/services"),
-        fetch("/api/admin/services/system"),
+        fetch("/api/admin/services", { headers: getAuthHeaders() }),
+        fetch("/api/admin/services/system", { headers: getAuthHeaders() }),
       ]);
 
       if (svcRes.ok) setServices(await svcRes.json());

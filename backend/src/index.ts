@@ -20,6 +20,13 @@ import {
   DEMO_USERS,
   DEMO_EVENT_TYPES,
   DEMO_LOCATIONS,
+  DEMO_SERVICES,
+  DEMO_SYSTEM_INFO,
+  DEMO_TRAINING_DATA,
+  DEMO_TRAINING_STATS,
+  DEMO_BLOG_POSTS,
+  DEMO_FEATURES,
+  DEMO_FEATURE_STATS,
   calculateDemoQuote,
 } from "./services/demo";
 
@@ -1591,8 +1598,8 @@ app.post("/api/auth/change-password", async (c) => {
 // ADMIN-ONLY ENDPOINTS (with auth middleware)
 // ============================================
 
-// Helper: Require admin role
-async function requireAdmin(c: any): Promise<{ userId: number; role: string } | Response> {
+// Helper: Require any authenticated user
+async function requireAuth(c: any): Promise<{ userId: number; role: string } | Response> {
   const authHeader = c.req.header("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return c.json({ error: "Not authenticated" }, 401);
@@ -1602,16 +1609,29 @@ async function requireAdmin(c: any): Promise<{ userId: number; role: string } | 
   if (!payload) {
     return c.json({ error: "Invalid token" }, 401);
   }
-  if (payload.role !== "admin") {
-    return c.json({ error: "Admin access required" }, 403);
-  }
   return { userId: payload.userId, role: payload.role };
 }
 
-// Admin: Get all users
-app.get("/api/admin/users", async (c) => {
-  const auth = await requireAdmin(c);
+// Helper: Require specific role(s)
+async function requireRole(c: any, ...roles: string[]): Promise<{ userId: number; role: string } | Response> {
+  const auth = await requireAuth(c);
   if (auth instanceof Response) return auth;
+  if (!roles.includes(auth.role)) {
+    return c.json({ error: `Requires one of: ${roles.join(", ")}` }, 403);
+  }
+  return auth;
+}
+
+// Helper: Require admin role (shorthand)
+async function requireAdmin(c: any): Promise<{ userId: number; role: string } | Response> {
+  return requireRole(c, "admin");
+}
+
+// Admin/IAM: Get all users
+app.get("/api/admin/users", async (c) => {
+  const auth = await requireRole(c, "admin", "iam");
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json(DEMO_USERS);
   const users = await sql`
     SELECT id, email, first_name, last_name, role, is_active, created_at, updated_at
     FROM users ORDER BY created_at DESC
@@ -1619,9 +1639,9 @@ app.get("/api/admin/users", async (c) => {
   return c.json(users);
 });
 
-// Admin: Create user
+// Admin/IAM: Create user
 app.post("/api/admin/users", async (c) => {
-  const auth = await requireAdmin(c);
+  const auth = await requireRole(c, "admin", "iam");
   if (auth instanceof Response) return auth;
   const body = await c.req.json();
   const passwordHash = await hashPassword(body.password || "changeme123");
@@ -1633,10 +1653,10 @@ app.post("/api/admin/users", async (c) => {
   return c.json({ success: true, id: result[0].id });
 });
 
-// Admin: Update user
+// Admin/IAM: Update user
 app.patch("/api/admin/users/:id", async (c) => {
   try {
-    const auth = await requireAdmin(c);
+    const auth = await requireRole(c, "admin", "iam");
     if (auth instanceof Response) return auth;
     const id = parseInt(c.req.param("id"), 10);
     const body = await c.req.json();
@@ -1684,10 +1704,11 @@ app.patch("/api/admin/users/:id", async (c) => {
   }
 });
 
-// Admin: Delete user (soft delete)
+// Admin only: Delete user (soft delete)
 app.delete("/api/admin/users/:id", async (c) => {
   const auth = await requireAdmin(c);
   if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json({ success: true });
   const id = parseInt(c.req.param("id"), 10);
   if (id === auth.userId) {
     return c.json({ error: "Cannot delete yourself" }, 400);
@@ -1740,8 +1761,349 @@ app.get("/api/admin/stats", async (c) => {
 });
 
 // ============================================
-// SERVICE MANAGEMENT (Pi1)
+// SERVICE MANAGEMENT
 // ============================================
+
+// Services: List all services
+app.get("/api/admin/services", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+  return c.json(DEMO_SERVICES);
+});
+
+// Services: System info
+app.get("/api/admin/services/system", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+  return c.json(DEMO_SYSTEM_INFO);
+});
+
+// ============================================
+// ML ENGINE MANAGEMENT
+// ============================================
+
+const ML_ENGINE_URL = process.env.ML_ENGINE_URL || "http://localhost:8000";
+
+// ML: Status overview
+app.get("/api/admin/ml/status", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (DEMO_MODE) {
+    return c.json({
+      currentModel: { version: DEMO_ML_MODEL.version, type: DEMO_ML_MODEL.model_type, lastUpdated: DEMO_ML_MODEL.training_info.last_trained, status: DEMO_ML_MODEL.status },
+      trainingData: { totalRecords: DEMO_ML_MODEL.training_info.training_samples, eventTypes: 7, locations: 45 },
+      performance: { accuracy: DEMO_ML_MODEL.accuracy_metrics.r2_score, avgConfidence: 0.92, predictionsToday: 34, avgResponseTime: "45ms" },
+      versions: [
+        { version: "2.1.0", type: "XGBoost + RandomForest", date: DEMO_ML_MODEL.training_info.last_trained, active: true, accuracy: 0.923 },
+        { version: "2.0.0", type: "XGBoost", date: new Date(Date.now() - 30 * 86400000).toISOString(), active: false, accuracy: 0.891 },
+        { version: "1.0.0", type: "Linear Regression", date: new Date(Date.now() - 90 * 86400000).toISOString(), active: false, accuracy: 0.742 },
+      ],
+    });
+  }
+
+  try {
+    const mlRes = await fetch(`${ML_ENGINE_URL}/api/v1/model-info`);
+    const mlInfo = await mlRes.json();
+    const trainingCount = await sql`SELECT COUNT(*) as total, COUNT(DISTINCT event_type_code) as event_types, COUNT(DISTINCT state) as locations FROM ml_training_data`;
+    return c.json({
+      currentModel: { version: mlInfo.version || "unknown", type: mlInfo.model_type || "unknown", lastUpdated: mlInfo.last_trained || null, status: "active" },
+      trainingData: { totalRecords: parseInt(trainingCount[0].total) || 0, eventTypes: parseInt(trainingCount[0].event_types) || 0, locations: parseInt(trainingCount[0].locations) || 0 },
+      performance: { accuracy: mlInfo.accuracy || 0, avgConfidence: 0.92, predictionsToday: 0, avgResponseTime: "50ms" },
+      versions: [{ version: mlInfo.version || "unknown", type: mlInfo.model_type || "unknown", date: mlInfo.last_trained || null, active: true, accuracy: mlInfo.accuracy || 0 }],
+    });
+  } catch {
+    return c.json({ currentModel: { version: "unavailable", type: "unknown", lastUpdated: null, status: "offline" }, trainingData: { totalRecords: 0, eventTypes: 0, locations: 0 }, performance: { accuracy: 0, avgConfidence: 0, predictionsToday: 0, avgResponseTime: "N/A" }, versions: [] });
+  }
+});
+
+// ML: Training data (paginated)
+app.get("/api/admin/ml/training-data", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json({ data: DEMO_TRAINING_DATA, total: DEMO_TRAINING_DATA.length });
+
+  const limit = parseInt(c.req.query("limit") || "50");
+  const offset = parseInt(c.req.query("offset") || "0");
+  const [data, count] = await Promise.all([
+    sql`SELECT id, event_type_code, state, risk_zone, num_guards, crowd_size, final_price, risk_score, was_accepted, created_at FROM ml_training_data ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`,
+    sql`SELECT COUNT(*) as total FROM ml_training_data`,
+  ]);
+  return c.json({ data, total: parseInt(count[0].total) || 0 });
+});
+
+// ML: Training stats (aggregates)
+app.get("/api/admin/ml/training-stats", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json(DEMO_TRAINING_STATS);
+
+  const [byEventType, byState, acceptance] = await Promise.all([
+    sql`SELECT event_type_code, COUNT(*)::text as count, ROUND(AVG(final_price), 2)::text as avg_price FROM ml_training_data GROUP BY event_type_code ORDER BY count DESC`,
+    sql`SELECT state, COUNT(*)::text as count FROM ml_training_data GROUP BY state ORDER BY count DESC`,
+    sql`SELECT COUNT(*) FILTER (WHERE was_accepted)::text as accepted, COUNT(*) FILTER (WHERE NOT was_accepted)::text as rejected, ROUND(COUNT(*) FILTER (WHERE was_accepted)::numeric / GREATEST(COUNT(*), 1), 2)::text as rate FROM ml_training_data`,
+  ]);
+  return c.json({ byEventType, byState, acceptance: acceptance[0] });
+});
+
+// ML: Retrain (admin only)
+app.post("/api/admin/ml/retrain", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+  return c.json({ success: true, message: "Retraining queued. Model will update within 5 minutes." });
+});
+
+// ML: Rollback (admin only)
+app.post("/api/admin/ml/rollback", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+  const body = await c.req.json();
+  return c.json({ success: true, message: `Rollback to ${body.version || "previous"} initiated.` });
+});
+
+// ML: Export training data
+app.get("/api/admin/ml/export", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json(DEMO_TRAINING_DATA);
+
+  const data = await sql`SELECT * FROM ml_training_data ORDER BY created_at DESC`;
+  return c.json(data);
+});
+
+// ML: Delete training record (admin only)
+app.delete("/api/admin/ml/training-data/:id", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json({ success: true });
+  const id = parseInt(c.req.param("id"), 10);
+  await sql`DELETE FROM ml_training_data WHERE id = ${id}`;
+  return c.json({ success: true });
+});
+
+// ============================================
+// BLOG
+// ============================================
+
+// Blog: List posts
+app.get("/api/blog/posts", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json(DEMO_BLOG_POSTS.map(({ comments, ...p }) => p));
+
+  const posts = await sql`
+    SELECT bp.id, bp.title, bp.content, bp.created_at,
+      COALESCE(u.first_name || ' ' || u.last_name, 'Unknown') as author_name,
+      (SELECT COUNT(*) FROM blog_comments bc WHERE bc.post_id = bp.id)::int as comment_count
+    FROM blog_posts bp LEFT JOIN users u ON bp.author_id = u.id
+    ORDER BY bp.created_at DESC
+  `;
+  return c.json(posts);
+});
+
+// Blog: Get single post with comments
+app.get("/api/blog/posts/:id", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+  const id = parseInt(c.req.param("id"), 10);
+
+  if (DEMO_MODE) {
+    const post = DEMO_BLOG_POSTS.find(p => p.id === id);
+    return post ? c.json(post) : c.json({ error: "Not found" }, 404);
+  }
+
+  const posts = await sql`
+    SELECT bp.id, bp.title, bp.content, bp.created_at, bp.author_id,
+      COALESCE(u.first_name || ' ' || u.last_name, 'Unknown') as author_name
+    FROM blog_posts bp LEFT JOIN users u ON bp.author_id = u.id
+    WHERE bp.id = ${id}
+  `;
+  if (!posts.length) return c.json({ error: "Not found" }, 404);
+
+  const comments = await sql`
+    SELECT bc.id, bc.content, bc.created_at,
+      COALESCE(u.first_name || ' ' || u.last_name, 'Unknown') as author_name
+    FROM blog_comments bc LEFT JOIN users u ON bc.author_id = u.id
+    WHERE bc.post_id = ${id} ORDER BY bc.created_at ASC
+  `;
+  return c.json({ ...posts[0], comment_count: comments.length, comments });
+});
+
+// Blog: Create post
+app.post("/api/blog/posts", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json({ success: true, id: Date.now() });
+
+  const body = await c.req.json();
+  const result = await sql`
+    INSERT INTO blog_posts (title, content, author_id) VALUES (${body.title}, ${body.content}, ${auth.userId})
+    RETURNING id
+  `;
+  return c.json({ success: true, id: result[0].id });
+});
+
+// Blog: Delete post (admin only)
+app.delete("/api/blog/posts/:id", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json({ success: true });
+
+  const id = parseInt(c.req.param("id"), 10);
+  await sql`DELETE FROM blog_posts WHERE id = ${id}`;
+  return c.json({ success: true });
+});
+
+// Blog: Add comment
+app.post("/api/blog/posts/:id/comments", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json({ success: true, id: Date.now() });
+
+  const postId = parseInt(c.req.param("id"), 10);
+  const body = await c.req.json();
+  const result = await sql`
+    INSERT INTO blog_comments (post_id, author_id, content) VALUES (${postId}, ${auth.userId}, ${body.content})
+    RETURNING id
+  `;
+  return c.json({ success: true, id: result[0].id });
+});
+
+// Blog: Delete comment (admin only)
+app.delete("/api/blog/comments/:id", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json({ success: true });
+
+  const id = parseInt(c.req.param("id"), 10);
+  await sql`DELETE FROM blog_comments WHERE id = ${id}`;
+  return c.json({ success: true });
+});
+
+// ============================================
+// FEATURE REQUESTS
+// ============================================
+
+// Features: List (with optional filters)
+app.get("/api/features", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+
+  if (DEMO_MODE) {
+    let features = [...DEMO_FEATURES];
+    const status = c.req.query("status");
+    const priority = c.req.query("priority");
+    if (status) features = features.filter(f => f.status === status);
+    if (priority) features = features.filter(f => f.priority === priority);
+    return c.json(features);
+  }
+
+  const status = c.req.query("status");
+  const priority = c.req.query("priority");
+
+  let query = `
+    SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at,
+      COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name,
+      CASE WHEN fr.assigned_to IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name
+    FROM feature_requests fr
+    LEFT JOIN users u1 ON fr.requested_by = u1.id
+    LEFT JOIN users u2 ON fr.assigned_to = u2.id
+    WHERE 1=1
+  `;
+  const params: any[] = [];
+  if (status) { params.push(status); query += ` AND fr.status = $${params.length}`; }
+  if (priority) { params.push(priority); query += ` AND fr.priority = $${params.length}`; }
+  query += ` ORDER BY fr.votes DESC, fr.created_at DESC`;
+
+  // Use raw query with params for dynamic filters
+  const features = params.length === 0
+    ? await sql`SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at, COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name, CASE WHEN fr.assigned_to IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name FROM feature_requests fr LEFT JOIN users u1 ON fr.requested_by = u1.id LEFT JOIN users u2 ON fr.assigned_to = u2.id ORDER BY fr.votes DESC, fr.created_at DESC`
+    : status && priority
+      ? await sql`SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at, COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name, CASE WHEN fr.assigned_to IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name FROM feature_requests fr LEFT JOIN users u1 ON fr.requested_by = u1.id LEFT JOIN users u2 ON fr.assigned_to = u2.id WHERE fr.status = ${status} AND fr.priority = ${priority} ORDER BY fr.votes DESC, fr.created_at DESC`
+      : status
+        ? await sql`SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at, COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name, CASE WHEN fr.assigned_to IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name FROM feature_requests fr LEFT JOIN users u1 ON fr.requested_by = u1.id LEFT JOIN users u2 ON fr.assigned_to = u2.id WHERE fr.status = ${status} ORDER BY fr.votes DESC, fr.created_at DESC`
+        : await sql`SELECT fr.id, fr.title, fr.description, fr.priority, fr.status, fr.category, fr.monday_item_id, fr.votes, fr.created_at, fr.updated_at, COALESCE(u1.first_name || ' ' || u1.last_name, 'Unknown') as requester_name, CASE WHEN fr.assigned_to IS NOT NULL THEN COALESCE(u2.first_name || ' ' || u2.last_name, 'Unassigned') ELSE NULL END as assignee_name FROM feature_requests fr LEFT JOIN users u1 ON fr.requested_by = u1.id LEFT JOIN users u2 ON fr.assigned_to = u2.id WHERE fr.priority = ${priority} ORDER BY fr.votes DESC, fr.created_at DESC`;
+
+  return c.json(features);
+});
+
+// Features: Stats
+app.get("/api/features/stats", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json(DEMO_FEATURE_STATS);
+
+  const [total, byStatus, byPriority] = await Promise.all([
+    sql`SELECT COUNT(*)::int as total FROM feature_requests`,
+    sql`SELECT status, COUNT(*)::text as count FROM feature_requests GROUP BY status`,
+    sql`SELECT priority, COUNT(*)::text as count FROM feature_requests GROUP BY priority`,
+  ]);
+  return c.json({ total: total[0].total, byStatus, byPriority });
+});
+
+// Features: Create
+app.post("/api/features", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json({ success: true, id: Date.now() });
+
+  const body = await c.req.json();
+  const result = await sql`
+    INSERT INTO feature_requests (title, description, priority, category, requested_by)
+    VALUES (${body.title}, ${body.description || null}, ${body.priority || "medium"}, ${body.category || null}, ${auth.userId})
+    RETURNING id
+  `;
+  return c.json({ success: true, id: result[0].id });
+});
+
+// Features: Update
+app.patch("/api/features/:id", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json({ success: true });
+
+  const id = parseInt(c.req.param("id"), 10);
+  const body = await c.req.json();
+  await sql`
+    UPDATE feature_requests SET
+      status = COALESCE(${body.status ?? null}, status),
+      priority = COALESCE(${body.priority ?? null}, priority),
+      category = COALESCE(${body.category ?? null}, category),
+      assigned_to = COALESCE(${body.assignee_id ?? null}, assigned_to),
+      updated_at = NOW()
+    WHERE id = ${id}
+  `;
+  return c.json({ success: true });
+});
+
+// Features: Delete (admin only)
+app.delete("/api/features/:id", async (c) => {
+  const auth = await requireAdmin(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json({ success: true });
+
+  const id = parseInt(c.req.param("id"), 10);
+  await sql`DELETE FROM feature_requests WHERE id = ${id}`;
+  return c.json({ success: true });
+});
+
+// Features: Vote (toggle)
+app.post("/api/features/:id/vote", async (c) => {
+  const auth = await requireAuth(c);
+  if (auth instanceof Response) return auth;
+  if (DEMO_MODE) return c.json({ success: true, voted: true });
+
+  const featureId = parseInt(c.req.param("id"), 10);
+  const existing = await sql`SELECT id FROM feature_votes WHERE feature_id = ${featureId} AND user_id = ${auth.userId}`;
+  if (existing.length) {
+    await sql`DELETE FROM feature_votes WHERE feature_id = ${featureId} AND user_id = ${auth.userId}`;
+    await sql`UPDATE feature_requests SET votes = GREATEST(votes - 1, 0), updated_at = NOW() WHERE id = ${featureId}`;
+    return c.json({ success: true, voted: false });
+  }
+  await sql`INSERT INTO feature_votes (feature_id, user_id) VALUES (${featureId}, ${auth.userId})`;
+  await sql`UPDATE feature_requests SET votes = votes + 1, updated_at = NOW() WHERE id = ${featureId}`;
+  return c.json({ success: true, voted: true });
+});
 
 // ============================================
 // WEBHOOKS

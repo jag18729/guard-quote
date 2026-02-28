@@ -37,7 +37,7 @@ export default function AdminLayout() {
     { to: "/admin/profile", icon: UserCircle, label: "My Profile" },
   ];
   
-  const navItems = allNavItems.filter(item => !item.adminOnly || user?.role === "admin");
+  const navItems = allNavItems.filter(item => !item.adminOnly || user?.role === "admin" || user?.role === "iam");
   
   return (
     <div className="min-h-screen bg-void flex">
@@ -89,6 +89,7 @@ export default function AdminLayout() {
         <div className="px-3 pb-2">
           <div className={`px-2 py-1 rounded text-[10px] font-medium text-center uppercase tracking-wider ${
             user?.role === "admin" ? "bg-red-500/20 text-red-400 border border-red-500/30" :
+            user?.role === "iam" ? "bg-violet-500/20 text-violet-400 border border-violet-500/30" :
             user?.role === "sec-ops" ? "bg-blue-500/20 text-blue-400 border border-blue-500/30" :
             user?.role === "developer" ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" :
             "bg-zinc-500/20 text-zinc-400 border border-zinc-500/30"

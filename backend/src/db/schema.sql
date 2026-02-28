@@ -23,7 +23,7 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('admin', 'manager', 'user')),
+    role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('admin', 'iam', 'manager', 'user')),
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -204,6 +204,49 @@ CREATE TABLE webhook_logs (
     error_message TEXT,
     attempt_count INT DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. BLOG_POSTS - Team blog/updates
+CREATE TABLE blog_posts (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    author_id INT REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 13. BLOG_COMMENTS - Blog post comments
+CREATE TABLE blog_comments (
+    id SERIAL PRIMARY KEY,
+    post_id INT NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+    author_id INT REFERENCES users(id),
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 14. FEATURE_REQUESTS - Feature tracking
+CREATE TABLE feature_requests (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    priority VARCHAR(20) DEFAULT 'medium' CHECK (priority IN ('critical', 'high', 'medium', 'low')),
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'rejected')),
+    category VARCHAR(100),
+    requested_by INT REFERENCES users(id),
+    assigned_to INT REFERENCES users(id),
+    monday_item_id VARCHAR(100),
+    votes INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 15. FEATURE_VOTES - Unique vote tracking
+CREATE TABLE feature_votes (
+    id SERIAL PRIMARY KEY,
+    feature_id INT NOT NULL REFERENCES feature_requests(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(feature_id, user_id)
 );
 
 -- Indexes for performance

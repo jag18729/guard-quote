@@ -7,6 +7,8 @@ on:
       - 'backend/**'
       - 'frontend/**'
       - 'ml-engine/**'
+      - 'soc/**'
+      - 'k8s/**'
   workflow_dispatch:
 
 concurrency:
@@ -30,19 +32,22 @@ jobs:
           BACKEND=false
           FRONTEND=false
           ML=false
+          SOC=false
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "Manual trigger — deploying all components"
-            BACKEND=true; FRONTEND=true; ML=true
+            BACKEND=true; FRONTEND=true; ML=true; SOC=true
           else
             CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
             echo "$CHANGED" | grep -q '^backend/' && BACKEND=true
             echo "$CHANGED" | grep -q '^frontend/' && FRONTEND=true
             echo "$CHANGED" | grep -q '^ml-engine/' && ML=true
+            echo "$CHANGED" | grep -qE '^(soc|k8s)/' && SOC=true
           fi
           echo "backend=$BACKEND" >> $GITHUB_OUTPUT
           echo "frontend=$FRONTEND" >> $GITHUB_OUTPUT
           echo "ml=$ML" >> $GITHUB_OUTPUT
-          echo "Detected changes — backend:$BACKEND frontend:$FRONTEND ml:$ML"
+          echo "soc=$SOC" >> $GITHUB_OUTPUT
+          echo "Detected changes — backend:$BACKEND frontend:$FRONTEND ml:$ML soc:$SOC"
 
       - name: Build & deploy backend
         if: steps.changes.outputs.backend == 'true'
@@ -74,6 +79,18 @@ jobs:
           kubectl rollout status deployment/guardquote-ml -n guardquote --timeout=180s
           echo "ML engine deployed: $TAG"
 
+      - name: Build & deploy SOC dashboard
+        if: steps.changes.outputs.soc == 'true'
+        run: |
+          TAG="soc-dashboard:${GITHUB_SHA::8}"
+          echo "Building $TAG..."
+          docker build -t "$TAG" ./soc
+          # Apply K3s manifest on first deploy (idempotent)
+          kubectl apply -f ./k8s/soc-dashboard.yaml
+          kubectl set image deployment/soc-dashboard soc-dashboard="$TAG" -n guardquote
+          kubectl rollout status deployment/soc-dashboard -n guardquote --timeout=120s
+          echo "SOC dashboard deployed: $TAG"
+
       - name: Verify deployment
         run: |
           echo "=== Pod Status ==="
@@ -82,3 +99,4 @@ jobs:
           echo "=== Health Check ==="
           sleep 5
           curl -sf http://localhost:30520/api/status | head -c 200 || echo "Health check pending..."
+          curl -sf http://localhost:30523/health | head -c 200 || echo "SOC health check pending..."

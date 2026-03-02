@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
-import { Shield, LayoutDashboard, Users, Server, FileText, LogOut, ExternalLink, Brain, UserCircle, ShieldAlert, Menu, X } from "lucide-react";
+import { Shield, LayoutDashboard, Users, Server, FileText, LogOut, ExternalLink, Brain, UserCircle, ShieldAlert, Monitor, Menu, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 
@@ -121,6 +121,10 @@ export default function AdminLayout() {
         <a href="https://grafana.vandine.us" target="_blank" className="flex items-center gap-3 px-3 py-2 text-xs text-text-muted hover:text-text-secondary transition">
           <ExternalLink className="w-3.5 h-3.5" />
           Grafana
+        </a>
+        <a href="https://soc.vandine.us" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2 text-xs text-text-muted hover:text-text-secondary transition">
+          <Monitor className="w-3.5 h-3.5" />
+          SOC Console
         </a>
       </div>
 

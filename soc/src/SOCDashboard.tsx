@@ -178,7 +178,7 @@ const ANON_PHRASES = ["WE ARE ANONYMOUS","WE ARE LEGION","WE DO NOT FORGIVE","WE
 const PHRASE = "We are Anonymous. We are Legion. We do not forgive. We do not forget. Expect us. ";
 const BOOT_LINES = [
   { text:"INITIALIZING WAZUH SOC COMMAND CENTER v4.7.1...", beep:880 },
-  { text:"Loading kernel modules: [suricata] [wazuh-agent] [elastic] [grafana]", beep:660 },
+  { text:"Loading kernel modules: [suricata] [wazuh-agent] [wazuh-indexer] [grafana]", beep:660 },
   { text:"Establishing Tailscale mesh VPN... CONNECTED (47 nodes)", beep:770 },
   { text:"K3s cluster health check... 3/3 nodes READY", beep:550 },
   { text:"Mounting encrypted volumes... OK", beep:440 },
@@ -186,7 +186,7 @@ const BOOT_LINES = [
   { text:"OpenLDAP bind: isaiah@soc.local... AUTHENTICATED", beep:880 },
   { text:"Cloudflare WAF sync... RULES UPDATED (rule_set: 2024-Q4)", beep:550 },
   { text:"Suricata IDS ruleset v7.0.5... 47,291 rules loaded", beep:440 },
-  { text:"ElasticSearch cluster: GREEN (3 shards, 0 unassigned)", beep:660 },
+  { text:"Wazuh Indexer cluster: GREEN (3 shards, 0 unassigned)", beep:660 },
   { text:"Wazuh Manager: 47 agents reporting...", beep:770 },
   { text:"gRPC FastAPI ML engine: ONLINE (port 50051)", beep:880 },
   { text:"Zone segmentation: 4 firewall zones ACTIVE", beep:550 },
@@ -839,6 +839,73 @@ function MLRiskCard({ host, risk, score, reason }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   DONUT CHART — pure SVG, reused by ML + Threats tabs
+═══════════════════════════════════════════════════════════════ */
+function DonutChart({ segments, size=160, strokeWidth=24, label="" }) {
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    let s=null, raf;
+    const step = ts => {
+      if(!s) s=ts;
+      const p = Math.min((ts-s)/900,1);
+      setProgress(p);
+      if(p<1) raf=requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  },[]);
+  const total = segments.reduce((a,s)=>a+s.value,0);
+  const r = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * r;
+  let offset = 0;
+  const hovered = hoveredIndex !== null ? segments[hoveredIndex] : null;
+  return (
+    <div style={{ display:"flex",flexDirection:"column",alignItems:"center",gap:8 }}>
+      <svg width={size} height={size} style={{ transform:"rotate(-90deg)" }}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={strokeWidth}/>
+        {segments.map((seg,i) => {
+          const pct = seg.value / total;
+          const dashLen = circumference * pct * progress;
+          const dashOffset = circumference - dashLen;
+          const rotation = (offset / total) * 360;
+          const el = (
+            <circle key={i}
+              className="donut-segment"
+              cx={size/2} cy={size/2} r={r}
+              fill="none" stroke={seg.color} strokeWidth={strokeWidth}
+              strokeDasharray={circumference}
+              strokeDashoffset={dashOffset}
+              style={{
+                transform:`rotate(${rotation}deg)`,
+                transformOrigin:"50% 50%",
+                opacity: hoveredIndex===null||hoveredIndex===i?1:0.3,
+                filter: hoveredIndex===i?`drop-shadow(0 0 6px ${seg.color})`:"none",
+                cursor:"pointer",
+              }}
+              onMouseEnter={()=>setHoveredIndex(i)}
+              onMouseLeave={()=>setHoveredIndex(null)}
+            />
+          );
+          offset += seg.value;
+          return el;
+        })}
+        <text x={size/2} y={size/2-6} textAnchor="middle" dominantBaseline="middle"
+          fill={hovered?hovered.color:"#888"} fontSize={hovered?13:10} fontFamily="'JetBrains Mono',monospace"
+          style={{ transform:"rotate(90deg)",transformOrigin:"50% 50%" }}>
+          {hovered?hovered.label:label}
+        </text>
+        <text x={size/2} y={size/2+10} textAnchor="middle" dominantBaseline="middle"
+          fill={hovered?hovered.color:"#555"} fontSize={hovered?16:18} fontWeight={700} fontFamily="'JetBrains Mono',monospace"
+          style={{ transform:"rotate(90deg)",transformOrigin:"50% 50%" }}>
+          {hovered?`${((hovered.value/total)*100).toFixed(0)}%`:total}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
    CLOCK
 ═══════════════════════════════════════════════════════════════ */
 function Clock() {
@@ -857,7 +924,7 @@ function Clock() {
 ═══════════════════════════════════════════════════════════════ */
 const STACK=[
   {n:"Wazuh SIEM",s:true,v:"4.7.1"},{n:"Suricata IDS",s:true,v:"7.0.5"},
-  {n:"ElasticSearch",s:true,v:"8.12"},{n:"Grafana",s:true,v:"10.3"},
+  {n:"Wazuh Indexer",s:true,v:"4.7.1"},{n:"Grafana",s:true,v:"10.3"},
   {n:"K3s Cluster",s:true,v:"1.28"},{n:"Tailscale VPN",s:true,v:"1.58"},
   {n:"ML FastAPI",s:true,v:"0.4.1"},{n:"OpenLDAP",s:true,v:"2.6"},
   {n:"Cloudflare WAF",s:true,v:"CF-2024"},
@@ -904,7 +971,7 @@ const AGENTS=[
   {name:"kali-red.soc",ip:"10.0.0.50",status:"ACTIVE",os:"Kali Linux 2024.1",last:"5s"},
   {name:"ngfw-opnsense.soc",ip:"10.0.0.1",status:"ACTIVE",os:"OPNsense 24.1",last:"3s"},
   {name:"rpi-sensor-edge.soc",ip:"10.0.0.99",status:"WARN",os:"Raspbian 12 Bookworm",last:"47s"},
-  {name:"elastic-node-02.soc",ip:"10.0.0.12",status:"ACTIVE",os:"Ubuntu 22.04 LTS",last:"1s"},
+  {name:"wazuh-indexer.soc",ip:"10.0.0.12",status:"ACTIVE",os:"Ubuntu 22.04 LTS",last:"1s"},
   {name:"grafana-loki.soc",ip:"10.0.0.15",status:"ACTIVE",os:"Docker / Alpine 3.19",last:"4s"},
 ];
 const THREATS=[
@@ -922,6 +989,79 @@ const ML_RISKS=[
   {host:"10.0.0.99",risk:"MEDIUM",score:0.61,reason:"Abnormal DNS query frequency + timing anomaly"},
   {host:"94.102.61.7",risk:"HIGH",score:0.78,reason:"C2 beacon correlation (GradientBoost R²=0.93)"},
 ];
+const ML_DETECTION_TYPES=[
+  {label:"Random Forest",value:42,color:"#dd44ff"},
+  {label:"Gradient Boost",value:31,color:"#3399ff"},
+  {label:"Anomaly Detection",value:18,color:"#ff8833"},
+  {label:"Ensemble",value:9,color:"#00ff9d"},
+];
+const ML_METRICS=[
+  {label:"PRECISION",value:"94.2",unit:"%",color:"#00ff9d"},
+  {label:"RECALL",value:"89.7",unit:"%",color:"#3399ff"},
+  {label:"F1-SCORE",value:"91.9",unit:"%",color:"#dd44ff"},
+  {label:"FALSE POS RATE",value:"3.1",unit:"%",color:"#ff4466"},
+];
+const ML_FEATURES=[
+  {label:"Packet Size Distribution",importance:0.94},
+  {label:"Connection Frequency",importance:0.87},
+  {label:"DNS Query Entropy",importance:0.79},
+  {label:"Geo-IP Anomaly Score",importance:0.72},
+  {label:"Time-of-Day Deviation",importance:0.65},
+];
+const ML_DETECTIONS=[
+  {time:"14:23:11",host:"web-prod-03.soc",model:"Random Forest",score:0.94,type:"Priv Escalation"},
+  {time:"14:18:44",host:"ngfw-opnsense.soc",model:"Gradient Boost",score:0.87,type:"Brute Force"},
+  {time:"14:15:02",host:"ws-finance-04.soc",model:"Anomaly Detection",score:0.91,type:"C2 Beacon"},
+  {time:"14:05:18",host:"ws-finance-04.soc",model:"Ensemble",score:0.81,type:"Data Exfil"},
+  {time:"13:48:22",host:"ws-exec-01.soc",model:"Random Forest",score:0.96,type:"Credential Access"},
+];
+const THREAT_FEEDS=[
+  {name:"AlienVault OTX",status:"SYNCED",iocs:12847,lastSync:"2m ago",color:"#00ff9d"},
+  {name:"Abuse.ch",status:"SYNCED",iocs:8432,lastSync:"5m ago",color:"#00ff9d"},
+  {name:"EmergingThreats",status:"SYNCED",iocs:47291,lastSync:"12m ago",color:"#00ff9d"},
+  {name:"Tor Exit List",status:"UPDATING",iocs:1247,lastSync:"31m ago",color:"#ff8833"},
+];
+const THREAT_POLICIES=[
+  {name:"GeoIP Block CN/RU",scope:"WAN Inbound",hits:1293,status:"ACTIVE",color:"#00ff9d"},
+  {name:"Rate Limit SSH",scope:"All Zones",hits:412,status:"ACTIVE",color:"#00ff9d"},
+  {name:"WAF OWASP Core",scope:"DMZ HTTP/S",hits:847,status:"ACTIVE",color:"#00ff9d"},
+  {name:"DNS Sinkhole",scope:"Internal DNS",hits:89,status:"ACTIVE",color:"#00ff9d"},
+  {name:"IDS Strict Mode",scope:"Critical Assets",hits:2341,status:"ENFORCING",color:"#3399ff"},
+];
+const SOC_ROLES=[
+  {role:"L1 Analyst",user:"j.martinez",perms:"Monitor, Triage, Escalate",active:true},
+  {role:"L2 Analyst",user:"s.chen",perms:"Investigate, Contain, Hunt",active:true},
+  {role:"IR Lead",user:"a.thompson",perms:"Full IR, Forensics, Playbooks",active:true},
+  {role:"CISO",user:"d.williams",perms:"All Access, Policy, Audit",active:false},
+];
+const ENHANCED_IPS=[
+  {ip:"185.220.101.47",country:"DE",zone:"WAN",policy:"GeoIP Block",asn:"AS205100",firstSeen:"2026-03-02 12:41",lastSeen:"2026-03-02 14:18",hits:349,color:"#ff4466"},
+  {ip:"94.102.61.7",country:"NL",zone:"WAN",policy:"DNS Sinkhole",asn:"AS47541",firstSeen:"2026-03-02 10:12",lastSeen:"2026-03-02 14:15",hits:201,color:"#ff8833"},
+  {ip:"34.102.88.1",country:"US",zone:"DMZ",policy:"WAF OWASP",asn:"AS396982",firstSeen:"2026-03-02 13:44",lastSeen:"2026-03-02 14:08",hits:156,color:"#ff8833"},
+  {ip:"103.41.220.5",country:"CN",zone:"WAN",policy:"GeoIP Block",asn:"AS4134",firstSeen:"2026-03-02 13:22",lastSeen:"2026-03-02 13:48",hits:891,color:"#ff4466"},
+  {ip:"45.33.32.156",country:"US",zone:"WAN",policy:"Rate Limit",asn:"AS63949",firstSeen:"2026-03-02 11:30",lastSeen:"2026-03-02 13:55",hits:47,color:"#ffdd44"},
+];
+const DOC_TOOLS=[
+  {name:"Wazuh",version:"4.7.1",commands:["wazuh-manager status","wazuh-control restart","agent_control -l"],docs:"https://documentation.wazuh.com"},
+  {name:"Suricata",version:"7.0.5",commands:["suricatasc -c reload-rules","suricata --build-info","suricata -T -c /etc/suricata/suricata.yaml"],docs:"https://docs.suricata.io"},
+  {name:"OPNsense",version:"24.1",commands:["configctl firmware status","pluginctl -s suricata restart","opnsense-update -c"],docs:"https://docs.opnsense.org"},
+  {name:"Cloudflare WAF",version:"CF-2024",commands:["wrangler tail","cf-api /zones/:id/firewall/rules","cf-waf-rules --export"],docs:"https://developers.cloudflare.com/waf"},
+];
+const ESCALATION_MATRIX=[
+  {level:"L1 → L2",trigger:"Risk Score ≥ 60 or CRITICAL sev",sla:"15 min",action:"Escalate with triage notes"},
+  {level:"L2 → IR Lead",trigger:"Confirmed compromise or data breach",sla:"30 min",action:"Activate IR playbook"},
+  {level:"IR Lead → CISO",trigger:"Ransomware, APT, or regulatory impact",sla:"1 hour",action:"Executive briefing + legal notify"},
+  {level:"CISO → External",trigger:"Law enforcement or disclosure required",sla:"4 hours",action:"Engage legal counsel + PR"},
+];
+const IR_CHECKLIST=[
+  "Identify & validate the incident (confirm IOCs)",
+  "Contain — isolate affected hosts from network",
+  "Preserve evidence — memory dump + disk image",
+  "Eradicate — remove malware, patch vulnerability",
+  "Recover — restore from clean backups, verify",
+  "Post-incident review — lessons learned, update playbooks",
+  "Report — document timeline, notify stakeholders",
+];
 
 
 /* ═══════════════════════════════════════════════════════════════
@@ -933,6 +1073,7 @@ export default function SOCDashboard() {
   const [phraseIdx,setPhraseIdx]=useState(0);
   const [selectedEventId,setSelectedEventId]=useState(null);
   const [rawLogExpanded,setRawLogExpanded]=useState(false);
+  const [irChecklistOpen,setIrChecklistOpen]=useState(false);
   const alertListRef=useRef(null);
 
   useEffect(()=>{const iv=setInterval(()=>setPhraseIdx(i=>(i+1)%ANON_PHRASES.length),3800);return()=>clearInterval(iv);},[]);
@@ -1032,6 +1173,7 @@ export default function SOCDashboard() {
                 {id:"threats",label:"// THREAT INTEL"},
                 {id:"ml",label:"// ML ENGINE"},
                 {id:"zones",label:"// ZONES / FW"},
+                {id:"docs",label:"// DOCS"},
               ].map(item=><NavItem key={item.id} {...item} active={tab===item.id} onClick={setTab}/>)}
             </div>
             <div style={{ padding:"14px 16px",borderTop:"1px solid rgba(255,255,255,0.03)",marginTop:"auto" }}>
@@ -1285,27 +1427,89 @@ export default function SOCDashboard() {
 
             {tab==="threats" && (
               <div style={{ animation:"fadeSlideIn 0.4s ease both" }}>
-                <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
+                {/* Row 1: Threat Distribution + Donut */}
+                <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12 }}>
                   <div style={{ padding:20,border:"1px solid rgba(255,60,80,0.1)",background:"rgba(255,60,80,0.02)" }}>
                     <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:16 }}>THREAT DISTRIBUTION</div>
                     {THREATS.map((t,i)=><ThreatBar key={i} {...t}/>)}
                   </div>
-                  <div style={{ padding:20,border:"1px solid rgba(255,255,255,0.05)",background:"rgba(4,8,5,0.97)" }}>
-                    <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:16 }}>TOP SOURCE IPs</div>
-                    {[
-                      {ip:"185.220.101.47",country:"RU",hits:349,color:"#ff4466"},
-                      {ip:"94.102.61.7",country:"NL",hits:201,color:"#ff8833"},
-                      {ip:"34.102.88.1",country:"US",hits:156,color:"#ff8833"},
-                      {ip:"192.168.1.99",country:"LAN",hits:89,color:"#ffdd44"},
-                      {ip:"10.0.0.47",country:"INT",hits:47,color:"#ffdd44"},
-                    ].map((item,i)=>(
-                      <div key={i} onMouseEnter={()=>SFX.hover()} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid rgba(255,255,255,0.03)",fontFamily:"'JetBrains Mono',monospace",fontSize:11 }}>
-                        <div style={{ display:"flex",gap:10,alignItems:"center" }}>
-                          <div style={{ width:4,height:4,borderRadius:"50%",background:item.color,boxShadow:`0 0 6px ${item.color}` }}/>
-                          <span style={{ color:"#ccc" }}>{item.ip}</span>
-                          <span style={{ color:"#555",fontSize:10,padding:"1px 5px",border:"1px solid rgba(255,255,255,0.1)" }}>{item.country}</span>
+                  <div style={{ padding:20,border:"1px solid rgba(255,255,255,0.05)",background:"rgba(4,8,5,0.97)",display:"flex",alignItems:"center",justifyContent:"center",gap:24 }}>
+                    <DonutChart segments={THREATS.map(t=>({label:t.label,value:t.value,color:t.color}))} size={160} strokeWidth={22} label="THREATS"/>
+                    <div>
+                      <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:12 }}>THREAT BREAKDOWN</div>
+                      {THREATS.map((t,i)=>(
+                        <div key={i} style={{ display:"flex",alignItems:"center",gap:6,marginBottom:6,fontFamily:"'JetBrains Mono',monospace",fontSize:10 }}>
+                          <div style={{ width:6,height:6,borderRadius:"50%",background:t.color,flexShrink:0 }}/>
+                          <span style={{ color:"#777" }}>{t.label}</span>
                         </div>
-                        <span style={{ color:item.color,fontWeight:"bold" }}>{item.hits} hits</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {/* Row 2: Enhanced Source IPs table */}
+                <div style={{ padding:20,border:"1px solid rgba(255,255,255,0.05)",background:"rgba(4,8,5,0.97)",marginBottom:12,overflowX:"auto" }}>
+                  <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:14 }}>ENHANCED SOURCE IPs</div>
+                  <div style={{ display:"grid",gridTemplateColumns:"130px 50px 60px 110px 90px 130px 130px 70px",gap:0,fontFamily:"'JetBrains Mono',monospace",fontSize:11,minWidth:770 }}>
+                    {["IP","GEO","ZONE","POLICY","ASN","FIRST SEEN","LAST SEEN","HITS"].map(h=>(
+                      <div key={h} style={{ padding:"6px 6px",color:"#555",letterSpacing:1.5,fontSize:9,borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</div>
+                    ))}
+                    {ENHANCED_IPS.map((item,i)=>[
+                      <div key={`${i}ip`} style={{ padding:"7px 6px",color:"#ccc",borderBottom:"1px solid rgba(255,255,255,0.03)" }}>{item.ip}</div>,
+                      <div key={`${i}geo`} style={{ padding:"7px 6px",color:"#777",borderBottom:"1px solid rgba(255,255,255,0.03)" }}>{item.country}</div>,
+                      <div key={`${i}zone`} style={{ padding:"7px 6px",color:"#3399ff",borderBottom:"1px solid rgba(255,255,255,0.03)" }}>{item.zone}</div>,
+                      <div key={`${i}pol`} style={{ padding:"7px 6px",color:"#aaa",borderBottom:"1px solid rgba(255,255,255,0.03)" }}>{item.policy}</div>,
+                      <div key={`${i}asn`} style={{ padding:"7px 6px",color:"#555",borderBottom:"1px solid rgba(255,255,255,0.03)" }}>{item.asn}</div>,
+                      <div key={`${i}first`} style={{ padding:"7px 6px",color:"#666",borderBottom:"1px solid rgba(255,255,255,0.03)" }}>{item.firstSeen}</div>,
+                      <div key={`${i}last`} style={{ padding:"7px 6px",color:"#666",borderBottom:"1px solid rgba(255,255,255,0.03)" }}>{item.lastSeen}</div>,
+                      <div key={`${i}hits`} style={{ padding:"7px 6px",color:item.color,fontWeight:700,borderBottom:"1px solid rgba(255,255,255,0.03)" }}>{item.hits}</div>,
+                    ])}
+                  </div>
+                </div>
+                {/* Row 3: Threat Intel Feeds + Active Policies */}
+                <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12 }}>
+                  <div style={{ padding:20,border:"1px solid rgba(255,255,255,0.05)",background:"rgba(4,8,5,0.97)" }}>
+                    <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:14 }}>THREAT INTEL FEEDS</div>
+                    {THREAT_FEEDS.map((f,i)=>(
+                      <div key={i} onMouseEnter={()=>SFX.hover()} className="agent-row" style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.03)",fontFamily:"'JetBrains Mono',monospace",fontSize:11,cursor:"default" }}>
+                        <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                          <div style={{ width:6,height:6,borderRadius:"50%",background:f.color,boxShadow:`0 0 5px ${f.color}` }}/>
+                          <div>
+                            <div style={{ color:"#ccc" }}>{f.name}</div>
+                            <div style={{ fontSize:10,color:"#555",marginTop:2 }}>{f.iocs.toLocaleString()} IOCs · {f.lastSync}</div>
+                          </div>
+                        </div>
+                        <span style={{ fontSize:10,color:f.color,letterSpacing:1 }}>{f.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ padding:20,border:"1px solid rgba(255,255,255,0.05)",background:"rgba(4,8,5,0.97)" }}>
+                    <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:14 }}>ACTIVE POLICIES</div>
+                    {THREAT_POLICIES.map((p,i)=>(
+                      <div key={i} onMouseEnter={()=>SFX.hover()} className="agent-row" style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.03)",fontFamily:"'JetBrains Mono',monospace",fontSize:11,cursor:"default" }}>
+                        <div>
+                          <div style={{ color:"#ccc" }}>{p.name}</div>
+                          <div style={{ fontSize:10,color:"#555",marginTop:2 }}>Scope: {p.scope}</div>
+                        </div>
+                        <div style={{ textAlign:"right" }}>
+                          <div style={{ color:p.color,fontSize:10,letterSpacing:1 }}>{p.status}</div>
+                          <div style={{ fontSize:10,color:"#777",marginTop:2 }}>{p.hits.toLocaleString()} hits</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {/* Row 4: RBAC — SOC Analyst Roles */}
+                <div style={{ padding:20,border:"1px solid rgba(255,255,255,0.05)",background:"rgba(4,8,5,0.97)" }}>
+                  <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:14 }}>RBAC — SOC ANALYST ROLES</div>
+                  <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12 }}>
+                    {SOC_ROLES.map((r,i)=>(
+                      <div key={i} style={{ padding:14,border:`1px solid ${r.active?"rgba(0,255,157,0.12)":"rgba(255,255,255,0.06)"}`,background:r.active?"rgba(0,255,157,0.02)":"rgba(255,255,255,0.01)" }}>
+                        <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8 }}>
+                          <div style={{ width:6,height:6,borderRadius:"50%",background:r.active?"#00ff9d":"#555",boxShadow:r.active?"0 0 6px #00ff9d":"none" }}/>
+                          <span style={{ fontSize:12,color:r.active?"#00ff9d":"#666",fontWeight:700,letterSpacing:1,fontFamily:"'JetBrains Mono',monospace" }}>{r.role}</span>
+                        </div>
+                        <div style={{ fontSize:11,color:"#aaa",marginBottom:4,fontFamily:"'JetBrains Mono',monospace" }}>{r.user}</div>
+                        <div style={{ fontSize:10,color:"#555",lineHeight:1.5 }}>{r.perms}</div>
                       </div>
                     ))}
                   </div>
@@ -1315,6 +1519,7 @@ export default function SOCDashboard() {
 
             {tab==="ml" && (
               <div style={{ animation:"fadeSlideIn 0.4s ease both" }}>
+                {/* Row 1: Status bar */}
                 <div style={{ marginBottom:12,padding:16,border:"1px solid rgba(221,68,255,0.12)",background:"rgba(221,68,255,0.015)",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
                   <div>
                     <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:4 }}>ML ENGINE STATUS</div>
@@ -1322,10 +1527,56 @@ export default function SOCDashboard() {
                   </div>
                   <span style={{ padding:"4px 12px",border:"1px solid rgba(0,255,157,0.25)",color:"#00ff9d",fontSize:11,letterSpacing:2,background:"rgba(0,255,157,0.04)" }}>ONLINE</span>
                 </div>
+                {/* Row 2: Donut + Metrics */}
+                <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12 }}>
+                  <div style={{ padding:20,border:"1px solid rgba(221,68,255,0.1)",background:"rgba(4,8,5,0.97)",display:"flex",alignItems:"center",gap:24 }}>
+                    <DonutChart segments={ML_DETECTION_TYPES} size={150} strokeWidth={22} label="MODELS"/>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:12 }}>DETECTION TYPE BREAKDOWN</div>
+                      {ML_DETECTION_TYPES.map((d,i)=>(
+                        <div key={i} style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8,fontFamily:"'JetBrains Mono',monospace",fontSize:11 }}>
+                          <div style={{ width:8,height:8,borderRadius:"50%",background:d.color,boxShadow:`0 0 4px ${d.color}`,flexShrink:0 }}/>
+                          <span style={{ color:"#999",flex:1 }}>{d.label}</span>
+                          <span style={{ color:d.color,fontWeight:700 }}>{d.value}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
+                    {ML_METRICS.map((m,i)=>(
+                      <StatCard key={i} label={m.label} value={m.value+m.unit} color={m.color}/>
+                    ))}
+                  </div>
+                </div>
+                {/* Row 3: Charts */}
                 <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,marginBottom:12 }}>
                   <ChartCard title="ML ANOMALY SCORE / HR" value="13" badge="ACTIVE" badgeColor="#dd44ff" color="#dd44ff" data={mlData}/>
                   <ChartCard title="MODEL CONFIDENCE" value="93" unit="%" badge="GB-BOOST" badgeColor="#3399ff" color="#3399ff" data={netData.map(v=>Math.min(v,100))}/>
                 </div>
+                {/* Row 4: Feature Importance */}
+                <div style={{ padding:20,border:"1px solid rgba(255,255,255,0.05)",background:"rgba(4,8,5,0.97)",marginBottom:12 }}>
+                  <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:16 }}>TOP MODEL FEATURES — IMPORTANCE</div>
+                  {ML_FEATURES.map((f,i)=>(
+                    <ThreatBar key={i} label={f.label} value={Math.round(f.importance*100)} max={100} color="#dd44ff"/>
+                  ))}
+                </div>
+                {/* Row 5: Recent ML Detections table */}
+                <div style={{ padding:20,border:"1px solid rgba(255,255,255,0.05)",background:"rgba(4,8,5,0.97)",marginBottom:12 }}>
+                  <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:14 }}>RECENT ML DETECTIONS</div>
+                  <div style={{ display:"grid",gridTemplateColumns:"70px 1fr 1fr 70px 1fr",gap:0,fontFamily:"'JetBrains Mono',monospace",fontSize:11 }}>
+                    {["TIME","HOST","MODEL","SCORE","TYPE"].map(h=>(
+                      <div key={h} style={{ padding:"6px 8px",color:"#555",letterSpacing:2,fontSize:10,borderBottom:"1px solid rgba(255,255,255,0.06)" }}>{h}</div>
+                    ))}
+                    {ML_DETECTIONS.map((d,i)=>[
+                        <div key={`${i}a`} style={{ padding:"8px 8px",color:"#777",borderBottom:"1px solid rgba(255,255,255,0.03)" }}>{d.time}</div>,
+                        <div key={`${i}b`} style={{ padding:"8px 8px",color:"#aaa",borderBottom:"1px solid rgba(255,255,255,0.03)" }}>{d.host}</div>,
+                        <div key={`${i}c`} style={{ padding:"8px 8px",color:"#aa66cc",borderBottom:"1px solid rgba(255,255,255,0.03)" }}>{d.model}</div>,
+                        <div key={`${i}d`} style={{ padding:"8px 8px",color:d.score>=0.9?"#ff4466":d.score>=0.8?"#ff8833":"#ffdd44",fontWeight:700,borderBottom:"1px solid rgba(255,255,255,0.03)" }}>{(d.score*100).toFixed(0)}%</div>,
+                        <div key={`${i}e`} style={{ padding:"8px 8px",color:"#999",borderBottom:"1px solid rgba(255,255,255,0.03)" }}>{d.type}</div>,
+                      ])}
+                  </div>
+                </div>
+                {/* Row 6: ML Risk Cards */}
                 <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12 }}>
                   {ML_RISKS.map((r,i)=><MLRiskCard key={i} {...r}/>)}
                 </div>
@@ -1385,6 +1636,98 @@ export default function SOCDashboard() {
                   <StatCard label="BLOCKED TODAY" value="1847" color="#ff4466" sub="↑ 23% vs avg"/>
                   <StatCard label="RATE LIMITED" value="412" color="#ff8833" sub="brute force mitigation"/>
                   <StatCard label="DNS SINKHOLED" value="89" color="#dd44ff" sub="C2 domain intercepts"/>
+                </div>
+              </div>
+            )}
+
+            {tab==="docs" && (
+              <div style={{ animation:"fadeSlideIn 0.4s ease both" }}>
+                <div style={{ fontSize:13,letterSpacing:"4px",color:"#00ff9d",marginBottom:16,fontWeight:700,textShadow:"0 0 10px rgba(0,255,157,0.3)",fontFamily:"'JetBrains Mono',monospace" }}>DOCUMENTATION — SOC REFERENCE</div>
+
+                {/* Tool Reference Cards 2x2 */}
+                <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12 }}>
+                  {DOC_TOOLS.map((tool,i)=>(
+                    <div key={i} className="doc-card" style={{ padding:16,border:"1px solid rgba(0,255,157,0.08)",background:"rgba(4,8,5,0.97)",transition:"border-color 0.2s" }}>
+                      <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:10 }}>
+                        <span style={{ fontSize:13,color:"#ccc",fontWeight:700,fontFamily:"'JetBrains Mono',monospace" }}>{tool.name}</span>
+                        <span style={{ fontSize:9,padding:"2px 7px",color:"#00ff9d",border:"1px solid rgba(0,255,157,0.25)",background:"rgba(0,255,157,0.04)",letterSpacing:1 }}>{tool.version}</span>
+                      </div>
+                      <div style={{ marginBottom:10 }}>
+                        {tool.commands.map((cmd,j)=>(
+                          <div key={j} style={{ fontSize:10,color:"#777",fontFamily:"'JetBrains Mono',monospace",padding:"3px 8px",marginBottom:3,background:"rgba(0,0,0,0.3)",border:"1px solid rgba(255,255,255,0.03)" }}>$ {cmd}</div>
+                        ))}
+                      </div>
+                      <a href={tool.docs} target="_blank" rel="noopener noreferrer" style={{ fontSize:10,color:"#3399ff",textDecoration:"none",letterSpacing:1,fontFamily:"'JetBrains Mono',monospace" }}>{tool.docs}</a>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Network Topology ASCII */}
+                <div style={{ padding:20,border:"1px solid rgba(255,255,255,0.05)",background:"rgba(0,0,0,0.4)",marginBottom:12 }}>
+                  <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:14 }}>NETWORK TOPOLOGY — ZONE MAP</div>
+                  <pre style={{ fontSize:10,color:"#00ff9d",fontFamily:"'JetBrains Mono',monospace",lineHeight:1.6,margin:0,opacity:0.8,overflow:"auto" }}>{`
+  INTERNET
+     │
+     ▼
+┌─────────────┐
+│ CLOUDFLARE  │  WAF · DDoS · GeoIP Block
+│   WAF/CDN   │  CF-2024 Rule Set
+└──────┬──────┘
+       │ HTTPS/443
+       ▼
+┌─────────────┐
+│  OPNsense   │  NGFW · Suricata IDS · 332 Rules
+│  NGFW 24.1  │  10.0.0.1
+└──┬───┬───┬──┘
+   │   │   │
+   ▼   ▼   ▼
+┌────┐┌────┐┌────────────┐┌───────────┐
+│DMZ ││INT ││ MANAGEMENT ││ IoT/EDGE  │
+│ 8h ││23h ││    6h      ││   10h     │
+│142r││89r ││   67r      ││   34r     │
+└────┘└────┘└────────────┘└───────────┘
+  │     │         │             │
+  ▼     ▼         ▼             ▼
+ Web   Corp    Wazuh Mgr     Sensors
+ Prod  Users   K3s Cluster   RPi Edge
+                              Nodes
+`}</pre>
+                </div>
+
+                {/* IR Checklist + Escalation Matrix */}
+                <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12 }}>
+                  {/* IR Checklist — collapsible */}
+                  <div style={{ padding:16,border:"1px solid rgba(255,255,255,0.05)",background:"rgba(4,8,5,0.97)" }}>
+                    <div onClick={()=>{setIrChecklistOpen(!irChecklistOpen);SFX.click();}} style={{ display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",userSelect:"none" }}>
+                      <div style={{ fontSize:11,letterSpacing:"3px",color:"#666" }}>INCIDENT RESPONSE CHECKLIST</div>
+                      <span style={{ color:"#444",fontSize:12,transition:"transform 0.2s",display:"inline-block",transform:irChecklistOpen?"rotate(90deg)":"rotate(0deg)" }}>▶</span>
+                    </div>
+                    {irChecklistOpen && (
+                      <div style={{ marginTop:14,animation:"fadeSlideIn 0.3s ease both" }}>
+                        {IR_CHECKLIST.map((step,i)=>(
+                          <div key={i} style={{ display:"flex",gap:10,padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,0.03)",fontFamily:"'JetBrains Mono',monospace" }}>
+                            <span style={{ fontSize:10,color:"#00ff9d",fontWeight:700,flexShrink:0,width:18,textAlign:"right" }}>{i+1}.</span>
+                            <span style={{ fontSize:11,color:"#999",lineHeight:1.5 }}>{step}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Escalation Matrix */}
+                  <div style={{ padding:16,border:"1px solid rgba(255,255,255,0.05)",background:"rgba(4,8,5,0.97)" }}>
+                    <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:14 }}>ESCALATION MATRIX</div>
+                    {ESCALATION_MATRIX.map((esc,i)=>(
+                      <div key={i} onMouseEnter={()=>SFX.hover()} style={{ padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,0.03)",fontFamily:"'JetBrains Mono',monospace",cursor:"default" }}>
+                        <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4 }}>
+                          <span style={{ fontSize:12,color:"#ff8833",fontWeight:700 }}>{esc.level}</span>
+                          <span style={{ fontSize:10,color:"#dd44ff",padding:"1px 6px",border:"1px solid rgba(221,68,255,0.25)",background:"rgba(221,68,255,0.04)" }}>SLA: {esc.sla}</span>
+                        </div>
+                        <div style={{ fontSize:10,color:"#777",marginBottom:2 }}>Trigger: {esc.trigger}</div>
+                        <div style={{ fontSize:10,color:"#555" }}>Action: {esc.action}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -1465,6 +1808,12 @@ export default function SOCDashboard() {
         .source-suricata{color:#ff8833 !important;}
         .source-cloudflare-waf{color:#ff9933 !important;}
         .source-ml-engine{color:#dd44ff !important;}
+
+        /* DONUT SEGMENT */
+        .donut-segment{transition:opacity 0.2s ease,filter 0.2s ease;cursor:pointer;}
+
+        /* DOC CARD hover */
+        .doc-card:hover{border-color:rgba(0,255,157,0.3) !important;}
 
         /* SCROLLBAR */
         *{box-sizing:border-box;margin:0;padding:0;}

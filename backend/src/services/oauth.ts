@@ -3,6 +3,27 @@
  */
 import { getProvider } from "./oauth-config";
 
+const OAUTH_PROXY_URL = process.env.OAUTH_PROXY_URL || "";
+
+/**
+ * Fetch with automatic fallback through proxy.
+ * Pi2 (dmz-security) can't reach login.microsoftonline.com due to PA-220 rules.
+ * Falls back to OAUTH_PROXY_URL (runs on ThinkStation, reachable via Tailscale).
+ */
+async function proxyFetch(url: string, options: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, options);
+  } catch (err) {
+    if (!OAUTH_PROXY_URL) throw err;
+    console.warn(`[OAuth] Direct fetch failed for ${new URL(url).hostname}, using proxy`);
+    return fetch(OAUTH_PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, method: options.method || "GET", headers: options.headers, body: options.body }),
+    });
+  }
+}
+
 // In-memory state store (use Redis in production for horizontal scaling)
 const stateStore = new Map<
   string,
@@ -119,7 +140,7 @@ export async function exchangeCode(
   }
 
   try {
-    const response = await fetch(provider.tokenUrl, {
+    const response = await proxyFetch(provider.tokenUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -157,7 +178,8 @@ export async function getUserInfo(
   if (!provider) return null;
 
   try {
-    const response = await fetch(provider.userInfoUrl, {
+    const response = await proxyFetch(provider.userInfoUrl, {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
         Accept: "application/json",

@@ -17,6 +17,8 @@ Get instant, accurate quotes for security services: event security, executive pr
 - **Smart Risk Assessment**: AI evaluates event complexity and security needs
 - **Transparent Pricing**: No hidden fees; see exactly what you're paying for
 - **Admin Dashboard**: Manage quotes, users, and view analytics
+- **SOC Dashboard**: Real-time security command center with MITRE ATT&CK mapping, ML anomaly detection, and threat intelligence
+- **SIEM Integration**: Wazuh Manager with 5 agents, Suricata IDS with 47,291 rules
 
 ---
 
@@ -29,6 +31,7 @@ Get instant, accurate quotes for security services: event security, executive pr
 | [Get a Quote](https://guardquote.vandine.us/quote) | Try the quote wizard |
 | [Tech Stack](https://guardquote.vandine.us/tech-stack) | See how it's built |
 | [Quote Lookup](https://guardquote.vandine.us/quote/lookup) | Review a past quote |
+| [SOC Dashboard](https://soc.vandine.us) | Security operations command center (Cloudflare Zero Trust) |
 
 ---
 
@@ -54,6 +57,9 @@ Trained on 500+ historical quotes across 15 event types and 28 US locations.
 | Auth | OAuth 2.0 + PKCE, JWT sessions |
 | Infrastructure | K3s, Cloudflare Tunnel |
 | Monitoring | Grafana, Prometheus, Loki |
+| SIEM | Wazuh Manager 4.14.3, Wazuh Indexer 4.7.1 |
+| IDS | Suricata 7.0.5 (47,291 rules) |
+| SOC Dashboard | React + Vite (soc.vandine.us) |
 
 ---
 
@@ -90,6 +96,8 @@ guard-quote/
 ├── frontend/        # React SPA
 ├── backend/         # Bun + Hono API
 ├── ml-engine/       # Python ML service
+├── soc/             # SOC Dashboard (soc.vandine.us)
+├── k8s/             # Kubernetes manifests
 └── docs/            # Documentation
 ```
 

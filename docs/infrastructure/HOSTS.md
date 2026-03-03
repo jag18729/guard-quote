@@ -22,7 +22,7 @@ All hosts sync to `time.cloudflare.com` (primary) with Debian/Ubuntu pools and p
 | Host | NTP Service | Synced |
 |------|-------------|--------|
 | pi0 | systemd-timesyncd | Yes |
-| pi1 | systemd-timesyncd | Pending (host down) |
+| pi1 | chrony | Yes |
 | pi2 | systemd-timesyncd | Yes |
 | rv2 | chrony | Yes |
 | WSL | systemd-timesyncd | Yes |

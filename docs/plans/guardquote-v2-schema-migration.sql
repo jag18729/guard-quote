@@ -83,10 +83,12 @@ CREATE INDEX idx_user_emails_user ON user_emails(user_id);
 
 -- ============================================================================
 -- 3. AUTH SESSIONS — Track active sessions for security
+-- NOTE: gen_random_uuid() (v4) as DB fallback; app layer should supply UUIDv7
+--       for time-ordered index locality. Python: uuid.uuid7(), JS: uuidv7 pkg
 -- ============================================================================
 
 CREATE TABLE auth_sessions (
-    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),  -- app layer sends UUIDv7 for index locality
     user_id         INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     
     -- Session identity

@@ -10,6 +10,7 @@ Usage:
     python ingest_ai_spec.py --input spec.txt --apply  # Also apply to DB
     cat spec.txt | python ingest_ai_spec.py --stdin
 """
+from __future__ import annotations
 
 import argparse
 import json
@@ -18,7 +19,6 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 from decimal import Decimal
 
 try:
@@ -152,7 +152,7 @@ def parse_sql_inserts(content: str) -> dict:
 
             # Create record dict
             record = {}
-            for col, val in zip(columns, values):
+            for col, val in zip(columns, values, strict=True):
                 # Convert numeric values
                 try:
                     if '.' in val:
@@ -211,7 +211,7 @@ def parse_markdown_table(content: str) -> dict:
             else:
                 # This is a data row
                 record = {}
-                for header, value in zip(headers, cells):
+                for header, value in zip(headers, cells, strict=True):
                     try:
                         if '.' in value:
                             record[header] = float(value)

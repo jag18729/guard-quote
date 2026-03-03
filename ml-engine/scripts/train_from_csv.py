@@ -92,7 +92,7 @@ def main():
     
     # Feature importance
     print("\n  Top Features:")
-    importance = sorted(zip(price_features, price_model.feature_importances_), key=lambda x: -x[1])
+    importance = sorted(zip(price_features, price_model.feature_importances_, strict=True), key=lambda x: -x[1])
     for feat, imp in importance[:5]:
         print(f"    {feat}: {imp:.3f}")
     
@@ -189,7 +189,7 @@ def main():
     
     model_path = os.path.join(MODEL_DIR, 'guardquote_models.pkl')
     with open(model_path, 'wb') as f:
-        pickle.dump(artifacts, f)
+        pickle.dump(artifacts, f, protocol=4)  # Pin protocol for 3.12/3.14 compat
     
     size_kb = os.path.getsize(model_path) / 1024
     print(f"  ✓ Saved to: {model_path}")

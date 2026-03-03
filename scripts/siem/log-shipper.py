@@ -25,6 +25,8 @@ from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from pathlib import Path
 
+from compression import zstd
+
 import requests
 import yaml
 
@@ -71,6 +73,7 @@ class LogShipper:
         config.setdefault('batch_timeout_seconds', 30)
         config.setdefault('retry_count', 3)
         config.setdefault('retry_delay_seconds', 5)
+        config.setdefault('compress', True)
         
         return config
     
@@ -91,27 +94,33 @@ class LogShipper:
             'count': len(logs),
             'logs': [asdict(log) for log in logs]
         })
-        
+
         signature = self._sign_payload(payload)
-        
+
         headers = {
             'Content-Type': 'application/json',
             'X-Signature': signature,
             'X-Source': self.config.get('source_name', 'vandine-homelab'),
             'User-Agent': 'VandineLogShipper/1.0'
         }
-        
+
         # Add API key if configured
         if api_key := self.config.get('api_key'):
             headers['X-API-Key'] = api_key
-        
+
+        # Compress payload with zstd if enabled
+        body = payload.encode()
+        if self.config['compress']:
+            body = zstd.compress(body)
+            headers['Content-Encoding'] = 'zstd'
+
         webhook_url = self.config['webhook_url']
-        
+
         for attempt in range(self.config['retry_count']):
             try:
                 response = requests.post(
                     webhook_url,
-                    data=payload,
+                    data=body,
                     headers=headers,
                     timeout=30
                 )
@@ -265,7 +274,10 @@ class LogShipper:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Ship logs to SIEM webhook')
+    parser = argparse.ArgumentParser(
+        description='Ship logs to SIEM webhook',
+        suggest_on_error=True,
+    )
     parser.add_argument(
         '--config', '-c',
         default='/etc/log-shipper/config.yaml',

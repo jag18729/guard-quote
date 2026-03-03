@@ -309,7 +309,7 @@ def save_models(price_model, price_scaler, price_name,
 
     model_path = os.path.join(MODEL_DIR, 'guardquote_models.pkl')
     with open(model_path, 'wb') as f:
-        pickle.dump(artifacts, f)
+        pickle.dump(artifacts, f, protocol=4)  # Pin protocol for 3.12/3.14 compat
 
     print(f"  ✓ Models saved to: {model_path}")
     print(f"  ✓ File size: {os.path.getsize(model_path) / 1024:.1f} KB")

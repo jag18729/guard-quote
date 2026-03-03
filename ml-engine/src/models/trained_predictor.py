@@ -5,7 +5,6 @@ Uses trained models for price and risk predictions.
 import os
 import pickle
 from datetime import datetime
-from typing import Optional
 import numpy as np
 
 MODEL_PATH = os.path.join(
@@ -260,7 +259,7 @@ class TrainedPredictor:
 
 
 # Singleton instance
-_predictor: Optional[TrainedPredictor] = None
+_predictor: TrainedPredictor | None = None
 
 
 def get_predictor() -> TrainedPredictor:

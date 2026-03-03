@@ -7,6 +7,7 @@ Designed to run through NordVPN for IP allowlisting.
 Usage:
     python3 log-shipper.py --config /etc/log-shipper/config.yaml
 """
+from __future__ import annotations
 
 import argparse
 import hashlib
@@ -21,9 +22,8 @@ import sys
 import threading
 import time
 from dataclasses import dataclass, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
 
 import requests
 import yaml
@@ -79,14 +79,14 @@ class LogShipper:
         secret = self.config.get('webhook_secret', '').encode()
         return hmac.new(secret, payload.encode(), hashlib.sha256).hexdigest()
     
-    def _send_batch(self, logs: List[LogEntry]) -> bool:
+    def _send_batch(self, logs: list[LogEntry]) -> bool:
         """Send a batch of logs to the webhook endpoint"""
         if not logs:
             return True
             
         payload = json.dumps({
             'source': self.config.get('source_name', 'vandine-homelab'),
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'host': os.uname().nodename,
             'count': len(logs),
             'logs': [asdict(log) for log in logs]
@@ -159,7 +159,7 @@ class LogShipper:
                     continue
                 
                 entry = LogEntry(
-                    timestamp=datetime.utcnow().isoformat() + 'Z',
+                    timestamp=datetime.now(timezone.utc).isoformat(),
                     host=host,
                     source=source_name,
                     severity=self._parse_severity(message),

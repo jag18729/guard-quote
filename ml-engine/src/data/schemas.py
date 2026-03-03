@@ -1,8 +1,9 @@
 """Data schemas for ML training and inference."""
+from __future__ import annotations
+
 from pydantic import BaseModel, Field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 
 class EventType(str, Enum):
@@ -32,23 +33,23 @@ class QuoteStatus(str, Enum):
 
 class ClientData(BaseModel):
     """Client data model."""
-    id: Optional[int] = None
+    id: int | None = None
     company_name: str
-    contact_name: Optional[str] = None
+    contact_name: str | None = None
     email: str
-    phone: Optional[str] = None
-    address: Optional[str] = None
-    city: Optional[str] = None
-    state: Optional[str] = None
-    zip_code: Optional[str] = None
-    created_at: Optional[datetime] = None
+    phone: str | None = None
+    address: str | None = None
+    city: str | None = None
+    state: str | None = None
+    zip_code: str | None = None
+    created_at: datetime | None = None
 
 
 class QuoteData(BaseModel):
     """Quote data model for ML training."""
-    id: Optional[int] = None
-    client_id: Optional[int] = None
-    created_by: Optional[int] = None
+    id: int | None = None
+    client_id: int | None = None
+    created_by: int | None = None
 
     # Input features
     event_type: EventType
@@ -61,15 +62,15 @@ class QuoteData(BaseModel):
     crowd_size: int = Field(default=0, ge=0)
 
     # Output/Target variables
-    base_price: Optional[float] = None
-    final_price: Optional[float] = None
-    risk_level: Optional[RiskLevel] = None
+    base_price: float | None = None
+    final_price: float | None = None
+    risk_level: RiskLevel | None = None
     status: QuoteStatus = QuoteStatus.DRAFT
 
     # Metadata
-    notes: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    notes: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 class TrainingRecord(BaseModel):

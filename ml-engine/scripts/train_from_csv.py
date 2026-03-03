@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.ensemble import GradientBoostingRegressor, HistGradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import mean_absolute_error, r2_score, accuracy_score
 
@@ -100,36 +100,35 @@ def main():
     # Train Risk Model
     # ============================================================
     print("\n" + "=" * 60)
-    print("Training Risk Model (Random Forest Classifier)")
+    print("Training Risk Model (Hist Gradient Boosting)")
     print("=" * 60)
-    
+
     # Convert risk_score to levels
     def risk_to_level(score):
         if score < 0.25: return 0  # low
         elif score < 0.5: return 1  # medium
         elif score < 0.75: return 2  # high
         return 3  # critical
-    
+
     X_risk = df[risk_features]
     y_risk = df['risk_score'].apply(risk_to_level)
-    
+
     X_train, X_test, y_train, y_test = train_test_split(X_risk, y_risk, test_size=0.2, random_state=42)
-    
+
     risk_scaler = StandardScaler()
     X_train_scaled = risk_scaler.fit_transform(X_train)
-    
-    risk_model = RandomForestClassifier(
-        n_estimators=100,
-        max_depth=10,
+
+    risk_model = HistGradientBoostingClassifier(
+        max_depth=6,
+        learning_rate=0.1,
         random_state=42,
-        n_jobs=-1
     )
     risk_model.fit(X_train, y_train)
-    
+
     y_pred = risk_model.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    
-    print(f"  Accuracy: {accuracy:.4f}")
+    risk_accuracy = accuracy_score(y_test, y_pred)
+
+    print(f"  Accuracy: {risk_accuracy:.4f}")
     
     # ============================================================
     # Train Acceptance Model
@@ -152,9 +151,9 @@ def main():
     accept_model.fit(X_train_scaled, y_train)
     
     y_pred = accept_model.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    
-    print(f"  Accuracy: {accuracy:.4f}")
+    accept_accuracy = accuracy_score(y_test, y_pred)
+
+    print(f"  Accuracy: {accept_accuracy:.4f}")
     
     # ============================================================
     # Save Models
@@ -182,9 +181,11 @@ def main():
             'state': state_encoder,
             'risk_zone': risk_zone_encoder,
         },
+        'risk_model_name': 'HistGradientBoostingClassifier',
+        'risk_metrics': {'accuracy': risk_accuracy},
         'trained_at': datetime.now().isoformat(),
         'training_samples': len(df),
-        'version': '2.1.0',
+        'version': '2.2.0',
     }
     
     model_path = os.path.join(MODEL_DIR, 'guardquote_models.pkl')
@@ -198,12 +199,14 @@ def main():
     # Update metadata
     meta_path = os.path.join(MODEL_DIR, 'model_metadata.txt')
     with open(meta_path, 'w') as f:
-        f.write(f"version: 2.1.0\n")
+        f.write(f"version: 2.2.0\n")
         f.write(f"price_model: GradientBoostingRegressor\n")
+        f.write(f"risk_model: HistGradientBoostingClassifier\n")
         f.write(f"price_r2: {r2:.4f}\n")
         f.write(f"price_mae: {mae:.2f}\n")
         f.write(f"price_mape: {mape:.1f}%\n")
-        f.write(f"risk_accuracy: {accuracy:.4f}\n")
+        f.write(f"risk_accuracy: {risk_accuracy:.4f}\n")
+        f.write(f"accept_accuracy: {accept_accuracy:.4f}\n")
         f.write(f"training_samples: {len(df)}\n")
         f.write(f"trained_at: {datetime.now().isoformat()}\n")
     
@@ -216,10 +219,10 @@ def main():
     print(f"""
 Summary:
   Price Model:  R²={r2:.3f}, MAE=${mae:.2f}, MAPE={mape:.1f}%
-  Risk Model:   Accuracy={accuracy:.3f}
-  Accept Model: Accuracy={accuracy:.3f}
+  Risk Model:   Accuracy={risk_accuracy:.3f} (HistGradientBoosting)
+  Accept Model: Accuracy={accept_accuracy:.3f}
   Samples:      {len(df)}
-  
+
 Model ready for deployment!
 """)
 

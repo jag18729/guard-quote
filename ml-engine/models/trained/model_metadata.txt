@@ -1,8 +1,10 @@
-version: 2.1.0
+version: 2.2.0
 price_model: GradientBoostingRegressor
+risk_model: HistGradientBoostingClassifier
 price_r2: 0.9315
 price_mae: 5001.20
 price_mape: 11.1%
-risk_accuracy: 0.2545
+risk_accuracy: 0.8682
+accept_accuracy: 0.2545
 training_samples: 1100
-trained_at: 2026-02-20T17:37:49.310393
+trained_at: 2026-03-03T22:19:04.956246

@@ -18,6 +18,7 @@ import re
 import os
 import sys
 from datetime import datetime
+from string.templatelib import Template, Interpolation
 from pathlib import Path
 from decimal import Decimal
 
@@ -91,6 +92,22 @@ def detect_format(content: str) -> str:
         if len(lines) > 1 and ',' in lines[0]:
             return "csv"
     return "prose"
+
+
+def render_sql(template: Template) -> str:
+    """Render a t-string as safe SQL with proper escaping."""
+    parts = []
+    for item in template:
+        if isinstance(item, str):
+            parts.append(item)
+        elif isinstance(item, Interpolation):
+            val = item.value
+            if isinstance(val, (int, float)):
+                parts.append(str(val))
+            else:
+                escaped = str(val).replace("'", "''")
+                parts.append(f"'{escaped}'")
+    return "".join(parts)
 
 
 def slugify(text: str) -> str:
@@ -288,14 +305,15 @@ def generate_sql(data: dict) -> str:
             rate = et.get("base_rate", 35.00)
             mult = et.get("risk_multiplier", 1.0)
 
-            sql_parts.append(f"""INSERT INTO event_types (code, name, description, base_rate, risk_multiplier)
-VALUES ('{code}', '{name}', '{desc}', {rate}, {mult})
-ON CONFLICT (code) DO UPDATE SET
-    name = EXCLUDED.name,
-    description = EXCLUDED.description,
-    base_rate = EXCLUDED.base_rate,
-    risk_multiplier = EXCLUDED.risk_multiplier;
-""")
+            sql_parts.append(render_sql(
+                t"INSERT INTO event_types (code, name, description, base_rate, risk_multiplier)\n"
+                t"VALUES ({code}, {name}, {desc}, {rate}, {mult})\n"
+                t"ON CONFLICT (code) DO UPDATE SET\n"
+                t"    name = EXCLUDED.name,\n"
+                t"    description = EXCLUDED.description,\n"
+                t"    base_rate = EXCLUDED.base_rate,\n"
+                t"    risk_multiplier = EXCLUDED.risk_multiplier;\n"
+            ))
 
     # Locations
     if data.get("locations"):
@@ -307,14 +325,15 @@ ON CONFLICT (code) DO UPDATE SET
             zone = loc.get("risk_zone", "medium")
             modifier = loc.get("rate_modifier", 1.0)
 
-            sql_parts.append(f"""INSERT INTO locations (zip_code, city, state, risk_zone, rate_modifier)
-VALUES ('{zip_code}', '{city}', '{state}', '{zone}', {modifier})
-ON CONFLICT (zip_code) DO UPDATE SET
-    city = EXCLUDED.city,
-    state = EXCLUDED.state,
-    risk_zone = EXCLUDED.risk_zone,
-    rate_modifier = EXCLUDED.rate_modifier;
-""")
+            sql_parts.append(render_sql(
+                t"INSERT INTO locations (zip_code, city, state, risk_zone, rate_modifier)\n"
+                t"VALUES ({zip_code}, {city}, {state}, {zone}, {modifier})\n"
+                t"ON CONFLICT (zip_code) DO UPDATE SET\n"
+                t"    city = EXCLUDED.city,\n"
+                t"    state = EXCLUDED.state,\n"
+                t"    risk_zone = EXCLUDED.risk_zone,\n"
+                t"    rate_modifier = EXCLUDED.rate_modifier;\n"
+            ))
 
     return "\n".join(sql_parts)
 

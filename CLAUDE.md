@@ -94,6 +94,40 @@ cd backend && bun install && bun run dev
 DEMO_MODE=true bun run src/server.ts
 ```
 
+## Model Training
+
+Train on ThinkStation via Docker (requires Python 3.14, local is 3.12):
+
+```bash
+cd ml-engine
+sudo docker build -t guardquote-ml:audit .
+sudo docker run --rm \
+  -v $(pwd)/models/trained:/app/models/trained \
+  -v $(pwd)/scripts:/app/scripts \
+  -v $(pwd)/data:/app/data \
+  guardquote-ml:audit python -u scripts/train_from_csv.py
+```
+
+Commit the updated `models/trained/guardquote_models.pkl` and `model_metadata.txt`, then deploy to pi2:
+
+```bash
+git push origin dev
+
+# On pi2 (SSH to GitHub is blocked, use HTTPS for fetch):
+cd ~/guard-quote
+git remote set-url origin https://github.com/jag18729/guard-quote.git
+git fetch origin dev && git merge origin/dev
+git remote set-url origin git@github.com:jag18729/guard-quote.git
+
+cd ml-engine
+sudo docker build -t guardquote-ml:v2.3 .
+sudo docker save guardquote-ml:v2.3 | \
+  sudo ctr --address /run/containerd/containerd.sock -n k8s.io images import -
+sudo kubectl rollout restart deployment/guardquote-ml -n guardquote
+```
+
+Verify: `curl -s http://10.43.210.9:8000/health` should show `model_loaded: true`.
+
 ## Team
 
 | Member | GitHub | Role |

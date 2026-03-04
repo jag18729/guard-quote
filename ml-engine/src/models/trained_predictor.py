@@ -85,23 +85,23 @@ class TrainedPredictor:
                 event_type, num_guards, hours, is_armed, has_vehicle
             )
 
-        # Prepare features
+        # Prepare features — must match price_features order in train_from_csv.py
         features = np.array([[
-            self._encode_event_type(event_type),
-            self._encode_state(state),
-            self._encode_risk_zone(risk_zone),
-            int(zip_code[:3]) if zip_code else 900,
-            num_guards,
-            hours,
-            num_guards * hours,  # total_guard_hours
-            crowd_size,
-            event_date.weekday(),
-            event_date.hour,
-            event_date.month,
-            1 if event_date.weekday() >= 5 else 0,  # is_weekend
-            1 if event_date.hour >= 22 or event_date.hour < 6 else 0,  # is_night
-            1 if is_armed else 0,
-            1 if has_vehicle else 0,
+            self._encode_event_type(event_type),                       # [0] event_type_encoded
+            self._encode_state(state),                                 # [1] state_encoded
+            self._encode_risk_zone(risk_zone),                         # [2] risk_zone_encoded
+            num_guards,                                                # [3] guards
+            hours,                                                     # [4] duration
+            num_guards * hours,                                        # [5] total_guard_hours
+            crowd_size,                                                # [6] crowd_size
+            event_date.weekday(),                                      # [7] day_of_week
+            event_date.hour,                                           # [8] hour_of_day
+            event_date.month,                                          # [9] month
+            1 if event_date.weekday() >= 5 else 0,                     # [10] is_weekend
+            1 if event_date.hour >= 22 or event_date.hour < 6 else 0,  # [11] is_night_shift
+            1 if is_armed else 0,                                      # [12] is_armed
+            1 if has_vehicle else 0,                                   # [13] has_vehicle
+            0,                                                         # [14] tier (default)
         ]])
 
         # Predict

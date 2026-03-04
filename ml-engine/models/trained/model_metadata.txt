@@ -5,6 +5,6 @@ price_r2: 0.9315
 price_mae: 5001.20
 price_mape: 11.1%
 risk_accuracy: 0.8682
-accept_accuracy: 0.2545
+accept_accuracy: 0.7455
 training_samples: 1100
-trained_at: 2026-03-03T22:19:04.956246
+trained_at: 2026-03-04T00:07:54.888375

@@ -150,7 +150,7 @@ def main():
     accept_model = LogisticRegression(random_state=42, max_iter=1000)
     accept_model.fit(X_train_scaled, y_train)
     
-    y_pred = accept_model.predict(X_test)
+    y_pred = accept_model.predict(X_test_scaled)
     accept_accuracy = accuracy_score(y_test, y_pred)
 
     print(f"  Accuracy: {accept_accuracy:.4f}")

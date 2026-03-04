@@ -361,21 +361,69 @@ def generate_config(data: dict, source: str = "unknown") -> dict:
     return config
 
 
-def apply_to_database(sql: str) -> bool:
-    """Apply generated SQL to PostgreSQL."""
+def generate_parameterized_statements(data: dict) -> list[tuple[str, tuple]]:
+    """Generate parameterized SQL statements for safe database execution."""
+    statements = []
+
+    for et in data.get("event_types", []):
+        code = et.get("code", slugify(et.get("name", "unknown")))
+        name = et.get("name", code.replace("_", " ").title())
+        desc = et.get("description", "")
+        rate = et.get("base_rate", 35.00)
+        mult = et.get("risk_multiplier", 1.0)
+
+        sql = (
+            "INSERT INTO event_types (code, name, description, base_rate, risk_multiplier) "
+            "VALUES (%s, %s, %s, %s, %s) "
+            "ON CONFLICT (code) DO UPDATE SET "
+            "name = EXCLUDED.name, "
+            "description = EXCLUDED.description, "
+            "base_rate = EXCLUDED.base_rate, "
+            "risk_multiplier = EXCLUDED.risk_multiplier"
+        )
+        statements.append((sql, (code, name, desc, rate, mult)))
+
+    for loc in data.get("locations", []):
+        zip_code = loc.get("zip_code", "00000")
+        city = loc.get("city", "Unknown")
+        state = loc.get("state", "XX")
+        zone = loc.get("risk_zone", "medium")
+        modifier = loc.get("rate_modifier", 1.0)
+
+        sql = (
+            "INSERT INTO locations (zip_code, city, state, risk_zone, rate_modifier) "
+            "VALUES (%s, %s, %s, %s, %s) "
+            "ON CONFLICT (zip_code) DO UPDATE SET "
+            "city = EXCLUDED.city, "
+            "state = EXCLUDED.state, "
+            "risk_zone = EXCLUDED.risk_zone, "
+            "rate_modifier = EXCLUDED.rate_modifier"
+        )
+        statements.append((sql, (zip_code, city, state, zone, modifier)))
+
+    return statements
+
+
+def apply_to_database(data: dict) -> bool:
+    """Apply parsed data to PostgreSQL using parameterized queries."""
     if not HAS_PSYCOPG2:
-        print("Error: psycopg2 not installed. Cannot apply to database.")
+        print("Error: psycopg2 not installed. Install with: pip install guardquote-ml[db]")
+        return False
+
+    statements = generate_parameterized_statements(data)
+    if not statements:
+        print("No statements to apply.")
         return False
 
     try:
         conn = psycopg2.connect(**DB_CONFIG)
         cursor = conn.cursor()
 
-        # Execute SQL statements
-        cursor.execute(sql)
-        conn.commit()
+        for sql, params in statements:
+            cursor.execute(sql, params)
 
-        print(f"Successfully applied SQL to database at {DB_CONFIG['host']}")
+        conn.commit()
+        print(f"Successfully applied {len(statements)} statements to {DB_CONFIG['host']}")
 
         cursor.close()
         conn.close()
@@ -440,7 +488,7 @@ def main():
 
     # Apply to database if requested
     if args.apply:
-        apply_to_database(sql)
+        apply_to_database(data)
 
     # Print summary
     print(f"\n=== Ingestion Summary ===")

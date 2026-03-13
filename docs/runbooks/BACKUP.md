@@ -11,6 +11,18 @@
 | Configuration Files | Daily | 30 days | pi0:/backups/config/ |
 | Grafana Dashboards | Weekly | 90 days | pi0:/backups/grafana/ |
 | Secrets | On change | 5 versions | 1Password |
+| Suricata/Wazuh logs (Pi2) | Daily (3am) | 30 days | Pi0 NFS: /srv/nfs/backups/pi2/logs/ |
+| Long-term log archive | Weekly (Sun 4am) | 90 days | ThinkStation M:/Backups/logs/ |
+
+### Log Pipeline (3-2-1)
+
+| Copy | Location | Retention | Script |
+|------|----------|-----------|--------|
+| 1st | Pi2 `/var/log/suricata/` | 3 days | logrotate (`/etc/logrotate.d/suricata`) |
+| 2nd | Pi0 NFS `/srv/nfs/backups/pi2/logs/` | 30 days | `/usr/local/bin/fleet-log-offload.sh` (cron 3am on Pi2) |
+| 3rd | ThinkStation `M:/Backups/logs/` | 90 days | `scripts/archive-to-thinkstation.sh` (cron Sun 4am) |
+
+Pi0 NFS retention cleanup: Sunday 2am cron removes `.gz` files older than 30 days.
 
 ---
 
@@ -164,43 +176,44 @@ env | grep -E '^(CLOUDFLARE|GITHUB|PG|GRAFANA)' | age -r age1... > secrets-backu
 
 ### Scenario: Pi1 Total Loss
 
-1. **Flash new SD card** with Ubuntu 25.10 ARM64
+Pi1 hosts: **PostgreSQL 17** (GuardQuote DB) + **Grafana/Prometheus/Loki** (monitoring stack).
+
+1. **Flash new SD card** with Ubuntu 24.04 ARM64
 
 2. **Basic setup:**
    ```bash
    sudo apt update && sudo apt upgrade -y
-   sudo apt install -y docker.io docker-compose git curl
+   sudo apt install -y postgresql-17 docker.io docker-compose git curl
    ```
 
-3. **Restore configurations:**
+3. **Restore PostgreSQL:**
+   ```bash
+   # Restore from Pi0 backup
+   scp rafaeljg@pi0:/backups/db/guardquote-latest.sql.gz ~/
+   gunzip -c ~/guardquote-latest.sql.gz | sudo -u postgres psql -d guardquote
+   ```
+
+4. **Critical: restore pg_hba.conf** — K3s pods on Pi2 connect via Tailscale masquerade:
+   ```bash
+   echo 'hostnossl    all    all    100.64.0.0/10    scram-sha-256' | \
+     sudo tee -a /etc/postgresql/17/main/pg_hba.conf
+   sudo -u postgres psql -c 'SELECT pg_reload_conf();'
+   ```
+   Without this, GuardQuote will 401 with "no pg_hba.conf entry... no encryption".
+
+5. **Restore monitoring stack:**
    ```bash
    scp rafaeljg@pi0:/backups/pi1-mirror/config/latest/* ~/
-   tar -xzf etc.tar.gz -C /
-   tar -xzf guardquote.tar.gz -C ~/
-   ```
-
-4. **Restore database:**
-   ```bash
-   docker-compose -f ~/monitoring/docker-compose.yml up -d postgres
-   gunzip -c /backups/db/guardquote-latest.sql.gz | psql ...
-   ```
-
-5. **Start services:**
-   ```bash
+   tar -xzf monitoring.tar.gz -C ~/
    docker-compose -f ~/monitoring/docker-compose.yml up -d
-   cd ~/guardquote-deno && ./start.sh
    ```
 
-6. **Restore Cloudflare tunnel:**
+6. **Verify:**
    ```bash
-   cloudflared tunnel login
-   cloudflared tunnel run vandine-tunnel
-   ```
-
-7. **Verify:**
-   ```bash
-   curl http://localhost:3002/api/status
-   curl https://guardquote.vandine.us/api/status
+   # PostgreSQL accessible via Tailscale
+   PGPASSWORD=<pw> psql -h 100.77.26.41 -U postgres -d guardquote -c '\conninfo'
+   # GuardQuote health
+   curl https://guardquote.vandine.us/api/health
    ```
 
 ---
@@ -257,4 +270,4 @@ echo "Backup verification passed"
 
 ---
 
-*Last updated: 2026-02-06*
+*Last updated: 2026-03-12*

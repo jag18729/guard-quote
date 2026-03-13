@@ -11,17 +11,15 @@ Welcome to the team. Here's everything you need to get going.
 | **Project Board** | https://github.com/users/jag18729/projects/3 |
 | **Grafana** | https://grafana.vandine.us |
 | **GuardQuote (Live)** | https://guardquote.vandine.us |
-| **Backend Repo** | https://github.com/jag18729/guard-quote (`dev` branch) |
-| **Frontend Repo** | https://github.com/jag18729/guardquote-frontend (`master`) |
-| **CIT 480 Monorepo** | https://github.com/jag18729/GuardQuote (`main`) |
+| **Repo** | https://github.com/jag18729/guard-quote (`main`) |
 
 ---
 
 ## 🌐 Getting Connected
 
 1. **Tailscale** — You've been approved as network admin. Install from https://tailscale.com/download and log in. Run `tailscale status` to see the mesh.
-2. **SSH** — Once on Tailscale, you can SSH into the Pis. Ask Rafael for usernames and Tailscale IPs.
-3. **Grafana** — Credentials in the `.env` file (see below).
+2. **SSH** — Once on Tailscale, SSH to Pi2 (your primary box) and Pi1 (monitoring). Ask Rafael for credentials.
+3. **Grafana** — Credentials in the `.env` file (ask Rafael). Direct link: https://grafana.vandine.us
 
 ---
 
@@ -32,97 +30,94 @@ All credentials, IPs, and infrastructure details are in the shared `.env` file. 
 ```bash
 # Drop it in the repo root (it's gitignored)
 cp ~/path/to/shared.env .env
-
-# Bun loads it automatically — no imports needed
-bun run dev
 ```
-
-The `.env.example` in the repo shows every variable you need. The `.env` has the real values.
 
 **Rules:**
 - Never commit `.env` — it's in `.gitignore`
-- Never put credentials in code, comments, docs, or Slack messages
-- GitHub Secrets handle CI/CD — you don't need to touch those
+- Never put credentials in code, comments, docs, or messages
+- GitHub Secrets handle CI/CD — don't touch those
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-Internet → Cloudflare Pages (frontend)
-              ↓ /api/* proxy
-         CF Tunnel → Pi cluster (backend API)
-                        ↓
-                     PostgreSQL
-                        ↓
-                     ML Engine (v2)
+Internet → Cloudflare Tunnel → Pi2 K3s (NodePort 30522)
+                                    │
+                              GuardQuote Backend (Bun + Hono)
+                                    │
+                    ┌───────────────┴───────────────┐
+                    ▼                               ▼
+             PostgreSQL 17                   ML Engine
+             (Pi1 via Tailscale)          (K3s on Pi2)
+             100.77.26.41:5432
 ```
 
-The backend currently runs on Node.js + Hono. We're porting to Bun 1.3 for v2.
+**Key point:** PA-220 firewall blocks direct traffic between Pi zones. All cross-host connections (DB, OAuth, monitoring) route through **Tailscale**. This is why you can't reach Pi1's PostgreSQL from Pi2 directly.
 
 Three Pis behind a Palo Alto PA-220 firewall, each in its own DMZ zone:
-- **pi0** — Identity, DNS, log collection
-- **pi1** — Monitoring (Grafana, Prometheus, Loki), current GuardQuote backend
-- **pi2** — Security ops (Suricata, Wazuh, SentinelNet), K3s — **your primary box**
-
-Details (IPs, ports, zones) are in the `.env` file and on Grafana dashboards.
-
----
-
-## 🔐 Your Focus: SIEM & Security
-
-### What Exists
-- Suricata IDS on pi2 (network traffic analysis)
-- Wazuh agent on pi2 (host intrusion detection)
-- SentinelNet API (security event aggregation)
-- Logs ship to Loki via Vector
-
-### What You're Building
-
-**Issue #94 — SIEM Auth Events:**
-https://github.com/jag18729/guard-quote/issues/94
-
-A `siem_auth_events` table tracking 35 event types across the app:
-
-```
-LOGIN_SUCCESS, LOGIN_FAILURE, LOGIN_LOCKOUT,
-OAUTH_INITIATED, OAUTH_SUCCESS, OAUTH_FAILURE,
-SESSION_CREATED, SESSION_EXPIRED, SESSION_REVOKED,
-PASSWORD_CHANGED, PASSWORD_RESET_REQUEST,
-ACCOUNT_CREATED, ACCOUNT_LOCKED, ACCOUNT_UNLOCKED,
-MFA_ENABLED, MFA_DISABLED, MFA_SUCCESS, MFA_FAILURE,
-SUSPICIOUS_ACTIVITY, BRUTE_FORCE_DETECTED, GEO_ANOMALY,
-RATE_LIMIT_HIT, IP_BLOCKED, CORS_VIOLATION
-... and more
-```
-
-Features:
-- CEF severity mapping (0-10)
-- Auto-lockout trigger (5 failed logins in 15 min)
-- 90-day retention policy
-- Grafana-ready summary view
-
-**Full schema:** `docs/plans/guardquote-v2-schema-migration.sql`
-**Architecture doc:** `docs/plans/guardquote-v2-architecture.md`
-
-### Related Issues
-- **#91** — OAuth routes (feeds auth events to your SIEM table)
-- **#92** — ML engine (may generate security events)
-- **#93** — Demo mode (needs sample SIEM data for showcase)
+- **pi0** (dmz-mgmt) — DNS/AdGuard, LDAP, SNMP, NFS log archive
+- **pi1** (dmz-services) — PostgreSQL 17, Grafana, Prometheus, Loki — **monitoring**
+- **pi2** (dmz-security) — K3s (GuardQuote v2), Wazuh HIDS, cloudflared — **your primary box**
+- **RV2** (dmz-security) — Suricata IDS (74k rules), lab bastion
 
 ---
 
-## 📅 Project Board
+## 🔐 Your Focus: SIEM & Security Monitoring
 
-**Board:** https://github.com/users/jag18729/projects/3
+### What's Running on Pi2 (Your Box)
 
-| Phase | Focus | Issues |
-|-------|-------|--------|
-| **Phase 1** (Now) | Backend port, OAuth, DB schema | #90, #91, #98 |
-| **Phase 2** | ML engine, SIEM, email | #92, #94 |
-| **Phase 3** | Demo mode, frontend, deploy | #93, #95, #96, #97 |
+```bash
+# SSH in
+ssh rafaeljg@100.111.113.35
 
-Your primary: **#94 — SIEM Auth Events** (Phase 2, P1 priority)
+# K3s workloads
+kubectl get pods -n guardquote    # app workloads
+kubectl get pods -n sentinel      # SentinelNet + Sentinel Grafana
+kubectl get pods -n nettools      # NetTools API
+
+# Wazuh (Docker)
+docker ps | grep wazuh
+
+# Suricata is on RV2, NOT Pi2 (moved for disk reasons)
+ssh rafaeljg@100.118.229.114 "systemctl status suricata"
+```
+
+### Security Stack
+
+| Service | Host | Access | Status |
+|---------|------|--------|--------|
+| Wazuh HIDS | Pi2 Docker | `https://100.111.113.35:55000/` | ✅ Running |
+| Suricata IDS | RV2 | port 8090 | ✅ Running |
+| Sentinel Grafana | Pi2 K3s (:30300) | internal | ✅ Running |
+| SentinelNet API | Pi2 K3s (:30800) | internal | ⚠️ Image missing — needs rebuild |
+| Wazuh alerts → Loki | Pi2 → Pi1 | `{job="wazuh-alerts"}` in Grafana | ✅ Flowing |
+
+### Grafana Log Queries
+
+```
+# Wazuh alerts
+{job="wazuh-alerts"}
+
+# High severity only
+{job="wazuh-alerts", level="high"}
+
+# Suricata IDS events
+{job="suricata"}
+
+# GuardQuote app logs
+{source="vector", host="pi2"}
+```
+
+### Wazuh Agents
+
+| Agent | Host | ID | Status |
+|-------|------|----|--------|
+| 001 | Pi1 | 001 | Active |
+| 002 | Pi0 | 002 | Active |
+| 003 | ThinkStation | 003 | Active |
+| 004 | XPS | 004 | Active |
+| 005 | isaiah-pi | 005 | Registered |
 
 ---
 
@@ -132,32 +127,48 @@ Your primary: **#94 — SIEM Auth Events** (Phase 2, P1 priority)
 # Clone
 git clone https://github.com/jag18729/guard-quote.git
 cd guard-quote
-git checkout dev
 
 # Get the .env from Rafael, drop it in repo root
 
-# Install + run (Bun: https://bun.sh)
-bun install
-bun run dev
-```
+# Install + run backend (Bun: https://bun.sh)
+cd backend && bun install && bun run dev
 
-**Frontend:**
-```bash
-cd frontend
-bun install
-bun run dev
+# Frontend
+cd frontend && bun install && bun run dev
 # http://localhost:5173
 ```
 
 ---
 
-## 📅 Deadline
+## 📋 Your Issues
 
-> **SDPS Registration: March 3, 2026**
->
-> Senior Design Project Showcase — we demo to industry professionals.
-> Everything needs to work: OAuth login, ML predictions, SIEM event log.
-> Demo mode (#93) provides mock data for the showcase.
+| Issue | Title | Priority |
+|-------|-------|----------|
+| #56 | [UAT] Isaiah: Security & Monitoring | High |
+| #110 | Wazuh alert analysis + tuning | High |
+| #124 | Kali penetration testing — real attack data | Medium |
+| #109 | RV2 Edge IDS + Pi Fleet panels | Medium |
+
+---
+
+## 🧰 Useful Commands
+
+```bash
+# Check GuardQuote health
+curl https://guardquote.vandine.us/api/health
+
+# Wazuh API (from Pi2)
+curl -k -u wazuh-admin:VandineWazuh2026! https://localhost:55000/
+
+# Suricata rules count on RV2
+ssh rafaeljg@100.118.229.114 "grep -c '^alert' /var/lib/suricata/rules/suricata.rules"
+
+# Disk usage on Pi2 (keep under 75%)
+df -h /
+
+# View Wazuh alerts in Loki (via Grafana Explore)
+# {job="wazuh-alerts", level="high"}
+```
 
 ---
 
@@ -172,11 +183,4 @@ bun run dev
 
 ---
 
-## 📁 Start Here
-
-1. Read `docs/plans/guardquote-v2-architecture.md` — the full v2 design
-2. Read `docs/plans/guardquote-v2-schema-migration.sql` — your SIEM table
-3. Browse the Grafana dashboards — get familiar with what's monitored
-4. Check the project board — find your issues
-
-Let's ship it. 🚀
+*Last updated: 2026-03-12*

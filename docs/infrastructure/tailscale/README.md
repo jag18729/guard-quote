@@ -1,229 +1,91 @@
 # Tailscale VPN Configuration
 
-> Zero-trust mesh VPN for secure admin and SIEM access.
+> Last updated: 2026-03-12
 
 ## Overview
 
-Tailscale provides a WireGuard-based mesh VPN that connects all infrastructure nodes. It enables:
+Tailscale provides a WireGuard-based mesh VPN connecting all infrastructure nodes.
+It is the **primary cross-zone connectivity mechanism** — the PA-220 firewall blocks direct traffic between DMZ zones, so all cross-host connections (monitoring scrapes, DB connections, OAuth proxy) route through Tailscale.
 
-- **Admin access** - SSH to servers without public exposure
-- **SIEM integration** - Secure log forwarding to external systems
-- **RBAC** - Access Control Lists (ACLs) for granular permissions
+## Node IPs
 
-## Network Topology
+| Node | Tailscale IP | Zone / Network | Role |
+|------|-------------|----------------|------|
+| ThinkStation | 100.126.232.42 | untrust (192.168.2.x) | Dev workstation, OAuth proxy (:9876) |
+| Pi0 | 100.114.94.18 | dmz-mgmt (192.168.21.x) | DNS, LDAP, SNMP exporter, NFS archive |
+| Pi1 | 100.77.26.41 | dmz-services (192.168.20.x) | PostgreSQL 17, Grafana/Prometheus/Loki |
+| Pi2 | 100.111.113.35 | dmz-security (192.168.22.x) | K3s (GuardQuote v2), Wazuh, cloudflared |
+| RV2 | 100.118.229.114 | dmz-security (192.168.25.x) | Suricata IDS, lab bastion |
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Tailscale Mesh Network                        │
-│                                                                  │
-│   ┌─────────────┐     ┌─────────────┐     ┌─────────────┐      │
-│   │ ThinkStation│     │     Pi0     │     │     Pi1     │      │
-│   │ 100.x.x.80  │◄───►│ 100.x.x.101 │◄───►│ 100.x.x.70  │      │
-│   │             │     │             │     │             │      │
-│   │ - WSL Dev   │     │ - Syslog    │     │ - API       │      │
-│   │ - OpenClaw  │     │ - LDAP      │     │ - Grafana   │      │
-│   └─────────────┘     └─────────────┘     └─────────────┘      │
-│          │                   │                   │              │
-│          │                   │                   │              │
-│   ┌──────┴───────────────────┴───────────────────┴──────┐      │
-│   │                   Tailscale Mesh                     │      │
-│   │                  (WireGuard Encrypted)               │      │
-│   └──────┬───────────────────┬───────────────────┬──────┘      │
-│          │                   │                   │              │
-│   ┌──────▼─────┐      ┌──────▼─────┐      ┌─────▼──────┐      │
-│   │   iPhone   │      │   SIEM     │      │  Future    │      │
-│   │ 100.x.x.50 │      │  Client    │      │  Devices   │      │
-│   │            │      │ 100.x.x.200│      │            │      │
-│   │ Admin Only │      │ pi0:514    │      │            │      │
-│   │            │      │ only       │      │            │      │
-│   └────────────┘      └────────────┘      └────────────┘      │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
+## Why Tailscale for Cross-Zone Traffic
 
-## Nodes
+PA-220 zones block direct cross-zone connections:
 
-| Node | Tailscale IP | Role | Services Exposed |
-|------|--------------|------|------------------|
-| thinkstation | 100.x.x.80 | Admin workstation | SSH, OpenClaw |
-| pi0 | 100.x.x.101 | Log aggregator | Syslog (514), SSH (22) |
-| pi1 | 100.x.x.70 | App server | SSH (22), Grafana (3000), API (3002) |
-| rafa-iphone | 100.x.x.50 | Mobile admin | Client only |
+| From | To | Status |
+|------|----|--------|
+| Pi1 (dmz-services) | Pi2 (dmz-security) | BLOCKED — all ports |
+| Pi1 (dmz-services) | Pi0 (dmz-mgmt) | BLOCKED — most ports (DNS :53 allowed) |
+| K3s pods (Pi2) | Pi1 (dmz-services) | BLOCKED — all ports incl. 5432 |
 
-## ACL Policy
+Tailscale traffic routes via `tailscale0` on each host — bypasses PA-220 zone policy entirely.
 
-The ACL policy defines who can access what:
+## Critical Tailscale-Routed Connections
 
-```json
-{
-  "acls": [
-    {
-      // SIEM clients can only reach syslog
-      "action": "accept",
-      "src": ["tag:siem-client"],
-      "dst": ["tag:log-server:514"]
-    },
-    {
-      // Developers can reach monitoring only
-      "action": "accept",
-      "src": ["tag:developer"],
-      "dst": [
-        "tag:monitoring:3000",   // Grafana
-        "tag:monitoring:9090",   // Prometheus
-        "tag:monitoring:3100"    // Loki
-      ]
-    },
-    {
-      // Admins have full access
-      "action": "accept",
-      "src": ["group:admin"],
-      "dst": ["*:*"]
-    }
-  ],
-  "tagOwners": {
-    "tag:siem-client": ["rafael.garcia.contact.me@gmail.com"],
-    "tag:developer": ["rafael.garcia.contact.me@gmail.com"],
-    "tag:log-server": ["rafael.garcia.contact.me@gmail.com"],
-    "tag:monitoring": ["rafael.garcia.contact.me@gmail.com"]
-  },
-  "groups": {
-    "group:admin": ["rafael.garcia.contact.me@gmail.com"]
-  }
-}
-```
-
-## Adding a New User
-
-### 1. Send Invite
-
-```bash
-# Via Tailscale admin console
-# https://login.tailscale.com/admin/users
-```
-
-### 2. Assign Tags
-
-After user joins, assign appropriate tags:
-
-```bash
-# Via admin console or API
-# Add tag:siem-client for SIEM integration
-# Add tag:developer for team members
-```
-
-### 3. Verify Access
-
-```bash
-# On the new device
-tailscale status
-
-# Test connectivity
-ping pi0
-nc -vz pi0 514  # For SIEM client
-```
-
-## Installation
-
-### Linux (Ubuntu/Debian)
-
-```bash
-# Install
-curl -fsSL https://tailscale.com/install.sh | sh
-
-# Start and authenticate
-sudo tailscale up
-
-# Verify
-tailscale status
-tailscale ip
-```
-
-### macOS
-
-```bash
-# Via Homebrew
-brew install tailscale
-
-# Or download from App Store
-```
-
-### Windows
-
-Download installer from https://tailscale.com/download/windows
+| Service | From | To (Tailscale IP) | Port |
+|---------|------|-------------------|------|
+| GuardQuote DATABASE_URL | K3s pods (Pi2) | Pi1: 100.77.26.41 | 5432 |
+| OAuth proxy | K3s pods (Pi2) | ThinkStation: 100.126.232.42 | 9876 |
+| Prometheus → node-pi2 | Pi1 Docker | Pi2: 100.111.113.35 | 9100 |
+| Prometheus → Wazuh | Pi1 Docker | Pi2: 100.111.113.35 | 55000 |
+| Prometheus → SentinelNet | Pi1 Docker | Pi2: 100.111.113.35 | 30800 |
+| Prometheus → NetTools | Pi1 Docker | Pi2: 100.111.113.35 | 30880 |
+| Prometheus → Sentinel Grafana | Pi1 Docker | Pi2: 100.111.113.35 | 30300 |
+| Prometheus → SNMP exporter | Pi1 Docker | Pi0: 100.114.94.18 | 9116 |
+| Prometheus → AdGuard pi0 | Pi1 Docker | Pi0: 100.114.94.18 | 3001 |
+| Prometheus → RV2 services | Pi1 Docker | RV2: 100.118.229.114 | 8090/8091 |
+| fleet-log-offload (rsync) | Pi2 root | Pi0: via SSH alias | 22 |
 
 ## Common Commands
 
 ```bash
-# Check status
+# Check status and all peer IPs
 tailscale status
+
+# Verify peer reachability
+tailscale ping pi2
 
 # Get your Tailscale IP
 tailscale ip -4
-
-# Check connectivity to a peer
-tailscale ping pi0
-
-# View current ACL-allowed connections
-tailscale status --peers
-
-# Disconnect (but stay logged in)
-sudo tailscale down
-
-# Reconnect
-sudo tailscale up
-
-# Logout completely
-sudo tailscale logout
 ```
 
 ## Troubleshooting
 
-### Can't Connect to Peer
+**Prometheus target DOWN with "connection refused" or "context deadline exceeded":**
+Check that the target IP in `~/monitoring/prometheus.yml` (on Pi1) is the Tailscale IP, not the direct zone IP.
+See `docs/infrastructure/monitoring/README.md` for the full IP mapping table.
+
+**K3s pod can't reach PostgreSQL (401 on login, ECONNREFUSED):**
+`DATABASE_URL` secret must use `100.77.26.41:5432`, not `192.168.20.10:5432`.
+Also verify Pi1 `pg_hba.conf` has: `hostnossl all all 100.64.0.0/10 scram-sha-256`
+
+**OAuth failing ("Failed to complete login"):**
+Verify `oauth-proxy.service` is running on ThinkStation: `sudo systemctl status oauth-proxy`
+Check that the target OAuth hostname is in the proxy allowlist (`/home/johnmarston/oauth-proxy.ts`).
+
+## Installation
 
 ```bash
-# Check if peer is online
-tailscale status | grep <peer-name>
+# Linux
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
 
-# Check ACLs allow your connection
-# (ACL denials are logged in admin console)
-
-# Try direct ping
-tailscale ping <peer-name>
-```
-
-### Connection Slow
-
-```bash
-# Check if using relay vs direct
+# Verify
 tailscale status
-
-# "relay" means NAT traversal needed
-# "direct" is optimal
+tailscale ip -4
 ```
-
-### Logs
-
-```bash
-# View Tailscale logs
-journalctl -u tailscaled -f
-
-# On macOS
-log show --predicate 'subsystem == "com.tailscale.ipn.macos"' --last 1h
-```
-
-## Security Considerations
-
-1. **MFA**: Tailscale inherits MFA from your identity provider
-2. **Key Expiry**: Keys expire periodically (configurable)
-3. **ACLs**: Always use least-privilege ACLs
-4. **Logging**: All connections logged in admin console
 
 ## Resources
 
-- [Tailscale Documentation](https://tailscale.com/kb/)
-- [ACL Reference](https://tailscale.com/kb/1018/acls/)
-- [Admin Console](https://login.tailscale.com/admin)
-
----
-
-*Last updated: 2026-02-06*
+- [Tailscale Admin Console](https://login.tailscale.com/admin)
+- Cross-zone networking details: [`docs/runbooks/NETWORKING.md`](../../runbooks/NETWORKING.md)
+- Monitoring scrape target map: [`docs/infrastructure/monitoring/README.md`](../monitoring/README.md)

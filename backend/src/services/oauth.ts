@@ -6,31 +6,19 @@ import { getProvider } from "./oauth-config";
 const OAUTH_PROXY_URL = process.env.OAUTH_PROXY_URL || "";
 
 /**
- * Fetch with automatic fallback through proxy.
- * Pi2 (dmz-security) can't reach login.microsoftonline.com due to PA-220 rules.
- * Falls back to OAUTH_PROXY_URL (runs on ThinkStation, reachable via Tailscale).
- *
- * Uses a 4s timeout on the direct fetch so PA-220 silent drops fail fast
- * instead of waiting 15+ seconds for OS TCP timeout, which caused duplicate
- * OAuth callbacks (browser/Google retry) and "Invalid or expired state" errors.
+ * Fetch with proxy routing for OAuth calls.
+ * Pi2 (dmz-security) has no direct internet egress to OAuth providers (PA-220 rules).
+ * When OAUTH_PROXY_URL is set, go straight to the ThinkStation proxy — no direct
+ * attempt. Trying direct first added 4-8s of dead wait, causing duplicate OAuth
+ * callbacks and "Invalid or expired state" errors.
  */
 async function proxyFetch(url: string, options: RequestInit): Promise<Response> {
   if (OAUTH_PROXY_URL) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
-    try {
-      const res = await fetch(url, { ...options, signal: controller.signal });
-      clearTimeout(timeout);
-      return res;
-    } catch (err) {
-      clearTimeout(timeout);
-      console.warn(`[OAuth] Direct fetch failed for ${new URL(url).hostname}, using proxy`);
-      return fetch(OAUTH_PROXY_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, method: options.method || "GET", headers: options.headers, body: options.body }),
-      });
-    }
+    return fetch(OAUTH_PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, method: options.method || "GET", headers: options.headers, body: options.body }),
+    });
   }
   return fetch(url, options);
 }

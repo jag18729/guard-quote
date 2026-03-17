@@ -24,50 +24,50 @@ mermaid.initialize({
   },
   flowchart: {
     curve: 'basis',
-    padding: 24,
-    nodeSpacing: 80,
-    rankSpacing: 100,
+    padding: 20,
+    nodeSpacing: 50,
+    rankSpacing: 60,
     htmlLabels: true
   }
 });
 
 const architectureDiagram = `
-flowchart LR
+flowchart TD
     subgraph Internet["☁️ CLOUDFLARE EDGE"]
-        direction TB
+        direction LR
         User([👤 Users])
         CF[CDN + WAF]
     end
 
     subgraph DC["🏢 HOMELAB — PA-220 NGFW (4 DMZ Zones)"]
-        direction TB
+        direction LR
 
         subgraph MGMT["DMZ-MGMT · Pi0"]
-            direction LR
             DNS[DNS/AdGuard]
             LDAP[LDAP]
         end
 
+        subgraph Apps["DMZ-APPS · Pi2"]
+            direction TB
+            Tunnel[cloudflared Tunnel]
+            subgraph K3s["☸️ K3s"]
+                FE[📱 Frontend]
+                BE[⚡ Backend]
+                ML[🧠 ML Engine]
+            end
+            Wazuh[🛡️ Wazuh HIDS]
+        end
+
         subgraph Services["DMZ-SERVICES · Pi1"]
-            direction LR
+            direction TB
             DB[(PostgreSQL 17)]
             Graf[Grafana]
             Prom[Prometheus]
             Loki[Loki]
         end
 
-        subgraph Apps["DMZ-APPS · Pi2"]
-            subgraph K3s["☸️ K3s"]
-                FE[📱 Frontend]
-                BE[⚡ Backend]
-                ML[🧠 ML Engine]
-            end
-            Tunnel[cloudflared<br/>Tunnel]
-            Wazuh[🛡️ Wazuh HIDS]
-        end
-
         subgraph Security["DMZ-SECURITY · RV2"]
-            IDS[Suricata IDS<br/>74K rules]
+            IDS[Suricata IDS 74K rules]
         end
     end
 
@@ -76,6 +76,7 @@ flowchart LR
     FE --> BE
     BE --> ML
     BE -->|Tailscale| DB
+    BE -.-> DNS
 
     IDS -.->|EVE JSON| Loki
     Wazuh -.-> Loki

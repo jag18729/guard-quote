@@ -54,7 +54,7 @@ jobs:
         run: |
           TAG="guardquote-backend:${GITHUB_SHA::8}"
           echo "Building $TAG..."
-          docker build -t "$TAG" ./backend
+          docker build --network=host -t "$TAG" ./backend
           kubectl set image deployment/guardquote-backend backend="$TAG" -n guardquote
           kubectl rollout status deployment/guardquote-backend -n guardquote --timeout=120s
           echo "Backend deployed: $TAG"
@@ -64,7 +64,7 @@ jobs:
         run: |
           TAG="guardquote-frontend:${GITHUB_SHA::8}"
           echo "Building $TAG..."
-          docker build -t "$TAG" ./frontend
+          docker build --network=host -t "$TAG" ./frontend
           kubectl set image deployment/guardquote-frontend frontend="$TAG" -n guardquote
           kubectl rollout status deployment/guardquote-frontend -n guardquote --timeout=120s
           echo "Frontend deployed: $TAG"
@@ -74,7 +74,7 @@ jobs:
         run: |
           TAG="guardquote-ml:${GITHUB_SHA::8}"
           echo "Building $TAG..."
-          docker build -t "$TAG" ./ml-engine
+          docker build --network=host -t "$TAG" ./ml-engine
           kubectl set image deployment/guardquote-ml ml-engine="$TAG" -n guardquote
           kubectl rollout status deployment/guardquote-ml -n guardquote --timeout=180s
           echo "ML engine deployed: $TAG"
@@ -84,7 +84,7 @@ jobs:
         run: |
           TAG="soc-dashboard:${GITHUB_SHA::8}"
           echo "Building $TAG..."
-          docker build -t "$TAG" ./soc
+          docker build --network=host -t "$TAG" ./soc
           # Apply K3s manifest on first deploy (idempotent)
           kubectl apply -f ./k8s/soc-dashboard.yaml
           kubectl set image deployment/soc-dashboard soc-dashboard="$TAG" -n guardquote

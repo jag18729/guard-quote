@@ -33,72 +33,59 @@ mermaid.initialize({
 
 const architectureDiagram = `
 flowchart LR
-    subgraph Internet["☁️ INTERNET"]
+    subgraph Internet["☁️ CLOUDFLARE EDGE"]
         direction TB
         User([👤 Users])
-        CF[Cloudflare<br/>CDN + WAF]
+        CF[CDN + WAF]
     end
 
-    subgraph Remote["🌐 REMOTE SITE"]
-        direction TB
-        RNode[Tailscale<br/>Node]
+    subgraph Remote["🖥️ THINKSTATION"]
+        OAuth[OAuth Proxy<br/>:9876]
     end
 
-    subgraph DC["🏢 PRIMARY DATACENTER"]
+    subgraph DC["🏢 HOMELAB — PA-220 NGFW (4 DMZ Zones)"]
         direction TB
-        
-        subgraph Core["CORE NETWORK"]
-            GW[Gateway<br/>Router]
-            DB[(PostgreSQL)]
-        end
 
-        subgraph Firewall["🔥 NGFW"]
-            FW[Next-Gen<br/>Firewall]
-        end
-
-        subgraph MGMT["DMZ-MGMT"]
+        subgraph MGMT["DMZ-MGMT · Pi0"]
             direction LR
-            DNS[DNS<br/>Server]
-            LDAP[Identity<br/>Provider]
-            Vector[Log<br/>Shipper]
+            DNS[DNS/AdGuard]
+            LDAP[LDAP]
         end
 
-        subgraph Services["DMZ-MONITORING"]
-            Tunnel[Secure<br/>Tunnel]
+        subgraph Services["DMZ-SERVICES · Pi1"]
+            direction LR
+            DB[(PostgreSQL 17)]
             Graf[Grafana]
             Prom[Prometheus]
             Loki[Loki]
         end
 
-        subgraph Apps["DMZ-APPS"]
-            subgraph K3s["☸️ K3s Cluster"]
+        subgraph Apps["DMZ-APPS · Pi2"]
+            subgraph K3s["☸️ K3s"]
                 FE[📱 Frontend]
                 BE[⚡ Backend]
                 ML[🧠 ML Engine]
             end
+            Tunnel[cloudflared<br/>Tunnel]
+            Wazuh[🛡️ Wazuh HIDS]
         end
 
-        subgraph Security["DMZ-SECURITY"]
-            direction LR
-            IDS[🛡️ IDS/IPS]
-            SN[🕵️ Threat<br/>Detection]
+        subgraph Security["DMZ-SECURITY · RV2"]
+            IDS[Suricata IDS<br/>74K rules]
         end
     end
 
-    User --> CF
-    CF --> Tunnel
-    
-    RNode <-.->|VPN Mesh| Tunnel
-    RNode -.-> Graf
-    
+    User --> CF --> Tunnel
     Tunnel --> FE
     FE --> BE
     BE --> ML
-    BE --> DB
-    
-    FW -.-> Vector
-    IDS -.-> Vector
-    Vector --> Loki
+    BE -->|Tailscale| DB
+    BE --> OAuth
+
+    IDS -.->|EVE JSON| Loki
+    Wazuh -.-> Loki
+    BE -.-> Loki
+    Graf --- Prom
 
     classDef internet fill:#5e81ac,stroke:#4c566a,color:#eceff4
     classDef remote fill:#88c0d0,stroke:#4c566a,color:#2e3440
@@ -108,9 +95,9 @@ flowchart LR
     classDef data fill:#b48ead,stroke:#4c566a,color:#2e3440
 
     class User,CF internet
-    class RNode remote
-    class GW,Tunnel,FW,DNS,LDAP,Vector,Graf,Prom,Loki infra
-    class FE,BE,ML,SN app
+    class OAuth remote
+    class DNS,LDAP,Tunnel,Graf,Prom,Loki infra
+    class FE,BE,ML,Wazuh app
     class IDS security
     class DB data
 `;

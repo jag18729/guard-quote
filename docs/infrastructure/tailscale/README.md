@@ -11,7 +11,7 @@ It is the **primary cross-zone connectivity mechanism** — the PA-220 firewall 
 
 | Node | Tailscale IP | Zone / Network | Role |
 |------|-------------|----------------|------|
-| ThinkStation | 100.126.232.42 | untrust (192.168.2.x) | Dev workstation, OAuth proxy (:9876) |
+| ThinkStation | 100.126.232.42 | untrust (192.168.2.x) | Dev workstation, OpenClaw, log archive |
 | Pi0 | 100.114.94.18 | dmz-mgmt (192.168.21.x) | DNS, LDAP, SNMP exporter, NFS archive |
 | Pi1 | 100.77.26.41 | dmz-services (192.168.20.x) | PostgreSQL 17, Grafana/Prometheus/Loki |
 | Pi2 | 100.111.113.35 | dmz-security (192.168.22.x) | K3s (GuardQuote v2), Wazuh, cloudflared |
@@ -34,7 +34,7 @@ Tailscale traffic routes via `tailscale0` on each host — bypasses PA-220 zone 
 | Service | From | To (Tailscale IP) | Port |
 |---------|------|-------------------|------|
 | GuardQuote DATABASE_URL | K3s pods (Pi2) | Pi1: 100.77.26.41 | 5432 |
-| OAuth proxy | K3s pods (Pi2) | ThinkStation: 100.126.232.42 | 9876 |
+| Internet egress (OAuth, etc.) | K3s pods (Pi2) | direct via eth2 → UDM 192.168.2.1 | — (proxy eliminated 2026-03-17) |
 | Prometheus → node-pi2 | Pi1 Docker | Pi2: 100.111.113.35 | 9100 |
 | Prometheus → Wazuh | Pi1 Docker | Pi2: 100.111.113.35 | 55000 |
 | Prometheus → SentinelNet | Pi1 Docker | Pi2: 100.111.113.35 | 30800 |

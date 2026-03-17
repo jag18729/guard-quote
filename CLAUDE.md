@@ -39,7 +39,6 @@ ML-powered security service quoting platform. Self-hosted on Raspberry Pi cluste
 | Backend | Bun 1.3 + Hono (K3s on Pi2) |
 | Database | PostgreSQL 17 (Pi1, accessed via Tailscale 100.77.26.41:5432) |
 | Auth | Argon2id + JWT + OAuth 2.0 (GitHub ✅ Google ✅ Microsoft ✅) |
-| OAuth Proxy | Bun HTTP server on ThinkStation (:9876) — K3s pods have no direct egress |
 | ML Engine | Python FastAPI + XGBoost (K3s on Pi2) |
 | Hosting | Cloudflare Tunnel → K3s NodePort 30522 |
 | Monitoring | Grafana + Prometheus + Loki + Vector (Pi1) |
@@ -69,11 +68,8 @@ Stored in K8s secret:
 kubectl get secret guardquote-secrets -n guardquote -o jsonpath='{.data.database-url}' | base64 -d
 ```
 
-### OAuth Proxy
-K3s pods have no internet egress. OAuth flows via proxy on ThinkStation:
-- Service: `oauth-proxy.service` on ThinkStation
-- URL: `http://100.126.232.42:9876`
-- Source: `/home/johnmarston/oauth-proxy.ts`
+### OAuth
+K3s pods have direct internet egress via Pi2's matrix network adapter (USB ethernet, DHCP from UDM). The OAuth proxy on ThinkStation was eliminated 2026-03-17. `OAUTH_PROXY_URL` is empty; backend falls back to direct `fetch()` in `backend/src/services/oauth.ts`.
 
 ### K3s Namespaces
 | Namespace | Workloads |
@@ -184,4 +180,4 @@ Verify: `curl -s http://10.43.210.9:8000/health` should show `model_loaded: true
 
 ## Version
 - **Current:** v2.1 (production on K3s/Pi2)
-- **Last Updated:** 2026-03-12
+- **Last Updated:** 2026-03-17

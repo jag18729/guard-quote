@@ -69,8 +69,8 @@ See `docs/infrastructure/monitoring/README.md` for the full IP mapping table.
 Also verify Pi1 `pg_hba.conf` has: `hostnossl all all 100.64.0.0/10 scram-sha-256`
 
 **OAuth failing ("Failed to complete login"):**
-Verify `oauth-proxy.service` is running on ThinkStation: `sudo systemctl status oauth-proxy`
-Check that the target OAuth hostname is in the proxy allowlist (`/home/johnmarston/oauth-proxy.ts`).
+Pi2 has direct internet egress via matrix network adapter — no proxy needed.
+Check backend logs: `kubectl logs -n guardquote deployment/guardquote-backend --since=5m | grep -i oauth`
 
 ## Installation
 

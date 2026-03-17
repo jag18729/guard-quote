@@ -1,6 +1,6 @@
 # GuardQuote Networking Runbook
 
-> Last updated: 2026-03-12
+> Last updated: 2026-03-17
 
 ## Architecture Constraint: PA-220 Cross-Zone Blocking
 
@@ -15,7 +15,7 @@ Pi1 PostgreSQL is in `dmz-services` zone (192.168.20.x).
 |------|-----------|--------------|-----|
 | Pi1 (PostgreSQL) | 192.168.20.10 ❌ | 100.77.26.41 ✅ | DATABASE_URL |
 | Pi2 (K3s) | 192.168.22.10 ❌ | 100.111.113.35 ✅ | Inbound source |
-| ThinkStation | 192.168.2.x ❌ | 100.126.232.42 ✅ | OAUTH_PROXY_URL |
+| ThinkStation | 192.168.2.x | 100.126.232.42 | OpenClaw / monitoring |
 
 ---
 
@@ -67,37 +67,13 @@ ssh johnmarston@100.77.26.41 "echo 'hostnossl    all             all            
 
 ---
 
-## OAuth Proxy
+## Internet Egress (K3s Pods)
 
-K3s pods have no direct internet egress (PA-220 + Tailscale masquerade path only for Tailscale peers).
-OAuth token exchange and userinfo calls go through a proxy on ThinkStation.
+Pi2 has direct internet access via its matrix network USB ethernet adapter (DHCP from UDM, metric 50).
+K3s pods masquerade through Pi2's host network and inherit this egress path.
 
-**Service:** `oauth-proxy.service` on ThinkStation
-**Port:** 9876
-**Source:** `/home/johnmarston/oauth-proxy.ts`
-**OAUTH_PROXY_URL env:** `http://100.126.232.42:9876`
-
-**Allowlisted hosts** (update this file if adding a new OAuth provider):
-- `login.microsoftonline.com` — Microsoft token endpoint
-- `graph.microsoft.com` — Microsoft Graph userinfo
-- `oauth2.googleapis.com` — Google token endpoint
-- `accounts.google.com` — Google auth
-- `www.googleapis.com` — Google userinfo (`/oauth2/v2/userinfo`)
-- `github.com` — GitHub OAuth
-- `api.github.com` — GitHub userinfo
-
-**Check status:**
-```bash
-sudo systemctl status oauth-proxy
-```
-
-**Restart:**
-```bash
-sudo systemctl restart oauth-proxy
-```
-
-**If a new OAuth provider is added**, update the `allowed` array in `/home/johnmarston/oauth-proxy.ts`
-and restart the service.
+`OAUTH_PROXY_URL` is unset — the backend makes OAuth token and userinfo calls directly.
+The `oauth-proxy.service` on ThinkStation has been stopped and disabled (2026-03-17).
 
 ---
 

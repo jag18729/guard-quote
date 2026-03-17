@@ -1,6 +1,6 @@
 # K3s Operations Runbook
 
-> Last updated: 2026-03-12
+> Last updated: 2026-03-17
 
 ## Cluster Access
 
@@ -113,12 +113,12 @@ kubectl scale deployment/<name> -n <namespace> --replicas=0
 
 ## Networking Constraints
 
-**K3s pods have NO direct internet egress.** Pi2's internet path goes via Tailscale (`tailscale0`), not `eth1`. Pods use flannel CNI (bridge) and masquerade via `eth1` — PA-220 blocks this for external traffic.
+**K3s pods have direct internet egress** via Pi2's matrix network USB ethernet adapter (DHCP from UDM, metric 50). Pods masquerade through Pi2's host network and can reach external hosts directly.
 
-**Workarounds in use:**
-- OAuth → ThinkStation OAuth proxy (`http://100.126.232.42:9876`)
-- PostgreSQL → Pi1 Tailscale IP (`100.77.26.41:5432`)
-- DNS → Pods use `1.1.1.1` via CoreDNS (also blocked, but OAuth proxy bypasses DNS)
+**Routing in use:**
+- OAuth → direct `fetch()` — no proxy needed (2026-03-17)
+- PostgreSQL → Pi1 Tailscale IP (`100.77.26.41:5432`) — PA-220 still blocks direct Pi2→Pi1 cross-zone
+- DNS → Pods use CoreDNS; external DNS resolves via UDM
 
 See `docs/runbooks/NETWORKING.md` for full details.
 
@@ -176,8 +176,8 @@ ssh johnmarston@100.77.26.41 "sudo grep '100.64' /etc/postgresql/17/main/pg_hba.
 ### OAuth "Failed to complete login"
 
 ```bash
-# Check OAuth proxy on ThinkStation
-sudo systemctl status oauth-proxy
-# If stopped:
-sudo systemctl start oauth-proxy
+# Pods have direct internet — check backend logs for the actual error
+kubectl logs -n guardquote deployment/guardquote-backend --since=5m | grep -i oauth
+# Verify OAUTH_PROXY_URL is unset (should be empty or absent):
+kubectl exec -n guardquote deployment/guardquote-backend -- env | grep OAUTH
 ```

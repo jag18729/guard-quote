@@ -39,6 +39,20 @@ app.use("*", cors());
 // HEALTH & INFO
 // ============================================
 
+// DB check with hard 3s deadline so health endpoints always respond fast
+async function dbCheck(timeoutMs = 3000): Promise<boolean> {
+  try {
+    return await Promise.race([
+      testConnection(),
+      new Promise<boolean>((_, reject) =>
+        setTimeout(() => reject(new Error("db timeout")), timeoutMs)
+      ),
+    ]);
+  } catch {
+    return false;
+  }
+}
+
 app.get("/", (c) =>
   c.json({
     status: "ok",
@@ -48,16 +62,21 @@ app.get("/", (c) =>
   })
 );
 
+// Lightweight liveness — no DB call, just proves process is alive
+app.get("/live", (c) => {
+  return c.json({ status: "alive", timestamp: new Date().toISOString() });
+});
+
 app.get("/health", async (c) => {
-  const dbOk = await testConnection();
-  
+  const dbOk = await dbCheck();
+
   // Clock sanity check (critical for JWT)
   const now = new Date();
   const year = now.getFullYear();
   const clockOk = year >= 2026 && year <= 2030;
-  
+
   const isHealthy = dbOk && clockOk;
-  
+
   return c.json({
     status: isHealthy ? "healthy" : "degraded",
     database: dbOk ? "connected" : "disconnected",
@@ -67,7 +86,7 @@ app.get("/health", async (c) => {
 });
 
 app.get("/api/health", async (c) => {
-  const dbOk = await testConnection();
+  const dbOk = await dbCheck();
   return c.json({
     status: dbOk ? "healthy" : "degraded",
     database: dbOk ? "connected" : "disconnected",
@@ -1407,7 +1426,13 @@ app.get("/api/auth/callback/:provider", async (c) => {
   const returnUrl = tokenResult.returnUrl || "/admin";
   const separator = returnUrl.includes("?") ? "&" : "?";
   const redirectUrl = `${returnUrl}${separator}token=${accessToken}`;
-  console.log(`[OAuth] Redirecting to: ${redirectUrl.substring(0, 50)}...`);
+  // Log OAuth login to user_activity
+  const oauthIp = c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || null;
+  await sql`
+    INSERT INTO user_activity (user_id, action, details, ip_address)
+    VALUES (${user.id}, 'login', ${JSON.stringify({ method: "oauth", provider })}::jsonb, ${oauthIp})
+  `.catch(() => {});
+  console.log(`[OAuth] Login: user=${user.email} provider=${provider}`);
   return c.redirect(redirectUrl);
 });
 

@@ -46,16 +46,8 @@ export default function PublicLayout() {
         <Outlet />
       </main>
       
-      {/* Wave divider */}
-      <div className="relative">
-        <svg viewBox="0 0 1440 60" className="w-full h-[60px] text-zinc-950" preserveAspectRatio="none">
-          <path fill="none" stroke="rgba(20,184,166,0.2)" strokeWidth="1" d="M0,30 C360,50 720,10 1080,30 C1260,40 1380,35 1440,30" />
-          <path fill="none" stroke="rgba(6,182,212,0.1)" strokeWidth="1" d="M0,40 C360,55 720,20 1080,40 C1260,48 1380,44 1440,40" />
-        </svg>
-      </div>
-
       {/* Footer */}
-      <footer className="border-t border-teal-500/10 py-12 mt-0">
+      <footer className="border-t border-zinc-800/60 py-12 mt-8">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>

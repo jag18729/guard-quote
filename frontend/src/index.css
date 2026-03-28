@@ -38,20 +38,38 @@ select option {
 }
 .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
 
-/* Wave background pattern */
-.wave-bg {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='none' stroke='%2314b8a6' stroke-width='0.5' stroke-opacity='0.15' d='M0,160 C360,240 720,80 1080,160 C1260,200 1380,180 1440,160'/%3E%3Cpath fill='none' stroke='%2306b6d4' stroke-width='0.5' stroke-opacity='0.10' d='M0,200 C360,280 720,120 1080,200 C1260,240 1380,220 1440,200'/%3E%3C/svg%3E");
-  background-repeat: repeat-x;
-  background-size: 100% auto;
-}
-
-/* Radial glow orbs */
-.glow-orb {
+/* Concentric arc decorative lines — Figma-inspired corner accents */
+.arc-lines-tr {
   position: absolute;
-  width: 500px;
-  height: 500px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.12) 0%, transparent 70%);
+  top: -120px;
+  right: -120px;
+  width: 400px;
+  height: 400px;
   pointer-events: none;
   z-index: 0;
+}
+.arc-lines-bl {
+  position: absolute;
+  bottom: -120px;
+  left: -120px;
+  width: 400px;
+  height: 400px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Glass card — Figma-style with teal left accent */
+.glass-card {
+  background: rgba(17, 17, 19, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(39, 39, 42, 0.8);
+  border-radius: 12px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.glass-card:hover {
+  border-color: rgba(20, 184, 166, 0.25);
+  box-shadow: 0 0 24px rgba(20, 184, 166, 0.06);
+}
+.glass-card-accent {
+  border-left: 2px solid rgba(20, 184, 166, 0.5);
 }

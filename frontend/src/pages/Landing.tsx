@@ -155,33 +155,14 @@ export default function Landing() {
             )}
           </div>
 
-          {/* Right — layered shield graphic (Figma-inspired) */}
-          <div className="hidden md:block relative w-72 h-72 lg:w-[340px] lg:h-[340px] shrink-0">
-            {/* Soft glow behind shield */}
-            <div className="absolute inset-4 bg-teal-500/[0.06] blur-[60px] rounded-full" />
-            {/* Outer concentric rings */}
-            <svg viewBox="0 0 340 340" className="absolute inset-0 w-full h-full" fill="none">
-              <circle cx="170" cy="170" r="165" stroke="rgba(20,184,166,0.08)" strokeWidth="0.5" />
-              <circle cx="170" cy="170" r="145" stroke="rgba(20,184,166,0.06)" strokeWidth="0.5" />
-              <circle cx="170" cy="170" r="125" stroke="rgba(20,184,166,0.04)" strokeWidth="0.5" />
-            </svg>
-            {/* Filled shield */}
-            <svg viewBox="0 0 24 24" className="absolute inset-[15%] w-[70%] h-[70%] text-teal-500/[0.15]" fill="currentColor">
-              <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
-            </svg>
-            {/* Shield outline */}
-            <svg viewBox="0 0 24 24" className="absolute inset-[15%] w-[70%] h-[70%]" fill="none" stroke="rgba(20,184,166,0.35)" strokeWidth="0.4">
-              <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
-            </svg>
-            {/* Inner shield detail */}
-            <svg viewBox="0 0 24 24" className="absolute inset-[25%] w-[50%] h-[50%]" fill="none" stroke="rgba(20,184,166,0.2)" strokeWidth="0.3">
-              <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
-            </svg>
-            {/* Lock icon center */}
-            <svg viewBox="0 0 24 24" className="absolute inset-[38%] w-[24%] h-[24%] text-teal-400/50" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
+          {/* Right — 3D shield from Figma */}
+          <div className="hidden md:block relative shrink-0">
+            <div className="absolute inset-0 bg-teal-500/[0.06] blur-[80px] rounded-full" />
+            <img
+              src="/shield.png"
+              alt="Cybersecurity shield"
+              className="relative w-72 lg:w-[400px] h-auto drop-shadow-[0_0_40px_rgba(20,184,166,0.15)]"
+            />
           </div>
         </div>
       </section>

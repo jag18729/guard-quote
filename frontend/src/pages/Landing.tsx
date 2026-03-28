@@ -122,22 +122,22 @@ export default function Landing() {
 
             <p className="text-lg text-zinc-400 max-w-2xl mb-10">
               You focus on your business. We connect you with vetted security professionals
-              who design, implement, and manage your protection — so you don't have to become an expert.
+              who design, implement, and manage your protection so you never have to become one yourself.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+            <div className="flex flex-row gap-3 justify-center md:justify-start">
               <Link
                 to="/quote"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-accent hover:bg-accent-dark text-black font-semibold rounded-lg transition-all hover:scale-105 text-lg"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-accent hover:bg-accent-dark text-black font-semibold rounded-md transition-all hover:scale-105 text-sm whitespace-nowrap"
               >
                 Get a Free Quote
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
               <Link
                 to="/quote/lookup"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-zinc-700 hover:border-accent text-zinc-300 hover:text-accent font-medium rounded-lg transition-all text-lg"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 border border-zinc-700 hover:border-accent text-zinc-300 hover:text-accent font-medium rounded-md transition-all text-sm whitespace-nowrap"
               >
-                <FileSearch className="w-5 h-5" />
+                <FileSearch className="w-3.5 h-3.5" />
                 Review a Past Quote
               </Link>
             </div>
@@ -149,19 +149,19 @@ export default function Landing() {
             {/* Quick actions for returning users */}
             {user && (
               <div className="mt-4 flex items-center justify-center md:justify-start gap-3 text-sm">
-                <span className="text-zinc-500">Welcome back —</span>
+                <span className="text-zinc-500">Welcome back!</span>
                 <Link to="/admin" className="text-accent hover:underline font-medium">Go to Dashboard</Link>
               </div>
             )}
           </div>
 
           {/* Right — 3D shield from Figma */}
-          <div className="hidden md:block relative shrink-0">
+          <div className="hidden md:flex items-center justify-end flex-1 relative -mr-6 lg:-mr-12">
             <div className="absolute inset-0 bg-teal-500/[0.06] blur-[80px] rounded-full" />
             <img
               src="/shield.png"
               alt="Cybersecurity shield"
-              className="relative w-72 lg:w-[400px] h-auto drop-shadow-[0_0_40px_rgba(20,184,166,0.15)]"
+              className="relative w-[700px] lg:w-[1020px] max-w-none h-auto drop-shadow-[0_0_40px_rgba(20,184,166,0.15)]"
             />
           </div>
         </div>
@@ -233,7 +233,7 @@ export default function Landing() {
                 <p className="text-lg text-zinc-200 font-medium mb-2 transition-all duration-500">
                   {fact.fact}
                 </p>
-                <p className="text-xs text-zinc-500">— {fact.source}</p>
+                <p className="text-xs text-zinc-500">Source: {fact.source}</p>
               </div>
             </div>
             {/* Fact navigation dots */}
@@ -279,13 +279,13 @@ export default function Landing() {
               {
                 icon: Building2,
                 title: "Event Planners",
-                desc: "Corporate events, weddings, conferences — get professional security that keeps guests safe and lets you focus on the event.",
+                desc: "Corporate events, weddings, conferences. Get professional security that keeps guests safe and lets you focus on the event.",
                 examples: "Weddings • Conferences • Parties • Festivals"
               },
               {
                 icon: ShieldCheck,
                 title: "Developers & Startups",
-                desc: "Building an app or service? Our consultants help you design security that scales — from SOC2 prep to physical office security.",
+                desc: "Building an app or service? Our consultants help you design security that scales, from SOC2 prep to physical office security.",
                 examples: "Tech Startups • SaaS • Coworking • Data Centers"
               },
             ].map((card, i) => (
@@ -351,15 +351,15 @@ export default function Landing() {
           <div className="text-center mt-12 flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               to="/quote" 
-              className="inline-flex items-center gap-2 px-8 py-4 bg-accent hover:bg-accent-dark text-black font-semibold rounded-lg transition-all hover:scale-105"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-accent hover:bg-accent-dark text-black font-semibold rounded-lg transition-all hover:scale-105 text-sm"
             >
-              Start Your Free Quote <ArrowRight className="w-5 h-5" />
+              Start Your Free Quote <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link 
-              to="/quote/lookup" 
-              className="inline-flex items-center gap-2 px-6 py-4 border border-zinc-700 hover:border-zinc-500 text-zinc-400 hover:text-white font-medium rounded-lg transition-all"
+            <Link
+              to="/quote/lookup"
+              className="inline-flex items-center gap-2 px-5 py-2.5 border border-zinc-700 hover:border-zinc-500 text-zinc-400 hover:text-white font-medium rounded-lg transition-all text-sm"
             >
-              <FileSearch className="w-5 h-5" />
+              <FileSearch className="w-4 h-4" />
               Look Up Existing Quote
             </Link>
           </div>
@@ -484,7 +484,7 @@ export default function Landing() {
               },
               {
                 q: "What if I'm not sure what I need?",
-                a: "That's exactly why we exist. Start with a free quote — our system will ask simple questions and recommend the right solution for your situation."
+                a: "That's exactly why we exist. Start with a free quote and our system will ask simple questions and recommend the right solution for your situation."
               },
               {
                 q: "Are your consultants actually vetted?",
@@ -492,7 +492,7 @@ export default function Landing() {
               },
               {
                 q: "How does pricing work?",
-                a: "You'll see transparent pricing upfront — no hidden fees, no surprises. Pay only for what you need, and rates are competitive with (or better than) hiring directly."
+                a: "You'll see transparent pricing upfront. No hidden fees, no surprises. Pay only for what you need, and rates are competitive with hiring directly."
               },
             ].map((faq, i) => (
               <div key={i} className="glass-card p-5">
@@ -518,7 +518,7 @@ export default function Landing() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               to="/quote" 
-              className="inline-flex items-center gap-2 px-10 py-5 bg-accent hover:bg-accent-dark text-black font-semibold rounded-lg transition-all hover:scale-105 text-lg"
+              className="inline-flex items-center gap-2 px-8 py-3 bg-accent hover:bg-accent-dark text-black font-semibold rounded-lg transition-all hover:scale-105 text-base"
             >
               Get Your Free Quote <ArrowRight className="w-5 h-5" />
             </Link>

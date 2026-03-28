@@ -96,17 +96,22 @@ export default function Landing() {
   
   return (
     <div className="relative">
-      {/* Hero glow orbs */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-accent/10 blur-[120px] pointer-events-none" />
-      <div className="glow-orb absolute -top-32 -right-48" />
-      <div className="glow-orb absolute top-20 -left-64" />
+      {/* Hero ambient glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-teal-500/[0.07] blur-[100px] pointer-events-none" />
 
       {/* Hero */}
-      <section className="relative pt-20 pb-16 px-6 wave-bg overflow-hidden">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12">
+      <section className="relative pt-20 pb-16 px-6 overflow-hidden">
+        {/* Concentric arc lines — top right */}
+        <svg className="arc-lines-tr" viewBox="0 0 400 400" fill="none">
+          {[160, 200, 240, 280, 320].map((r, i) => (
+            <circle key={i} cx="400" cy="0" r={r} stroke="rgba(20,184,166,0.12)" strokeWidth="0.75" />
+          ))}
+        </svg>
+
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 relative z-10">
           {/* Left — text */}
           <div className="flex-1 text-center md:text-left">
-            <div className="inline-block mb-6 px-4 py-1.5 bg-accent/20 rounded text-accent text-xs font-mono font-medium tracking-wider">
+            <div className="inline-block mb-6 px-4 py-1.5 bg-accent/10 border border-accent/20 rounded text-accent text-xs font-mono font-medium tracking-wider">
               AI-POWERED SECURITY PRICING
             </div>
 
@@ -150,14 +155,32 @@ export default function Landing() {
             )}
           </div>
 
-          {/* Right — decorative shield */}
-          <div className="hidden md:block relative w-64 h-64 md:w-80 md:h-80 shrink-0">
-            <div className="absolute inset-0 bg-teal-500/10 blur-3xl rounded-full" />
-            <svg viewBox="0 0 24 24" className="w-full h-full text-teal-500/20" fill="currentColor">
+          {/* Right — layered shield graphic (Figma-inspired) */}
+          <div className="hidden md:block relative w-72 h-72 lg:w-[340px] lg:h-[340px] shrink-0">
+            {/* Soft glow behind shield */}
+            <div className="absolute inset-4 bg-teal-500/[0.06] blur-[60px] rounded-full" />
+            {/* Outer concentric rings */}
+            <svg viewBox="0 0 340 340" className="absolute inset-0 w-full h-full" fill="none">
+              <circle cx="170" cy="170" r="165" stroke="rgba(20,184,166,0.08)" strokeWidth="0.5" />
+              <circle cx="170" cy="170" r="145" stroke="rgba(20,184,166,0.06)" strokeWidth="0.5" />
+              <circle cx="170" cy="170" r="125" stroke="rgba(20,184,166,0.04)" strokeWidth="0.5" />
+            </svg>
+            {/* Filled shield */}
+            <svg viewBox="0 0 24 24" className="absolute inset-[15%] w-[70%] h-[70%] text-teal-500/[0.15]" fill="currentColor">
               <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
             </svg>
-            <svg viewBox="0 0 24 24" className="absolute inset-8 text-teal-400/40" fill="none" stroke="currentColor" strokeWidth="0.5">
+            {/* Shield outline */}
+            <svg viewBox="0 0 24 24" className="absolute inset-[15%] w-[70%] h-[70%]" fill="none" stroke="rgba(20,184,166,0.35)" strokeWidth="0.4">
               <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
+            </svg>
+            {/* Inner shield detail */}
+            <svg viewBox="0 0 24 24" className="absolute inset-[25%] w-[50%] h-[50%]" fill="none" stroke="rgba(20,184,166,0.2)" strokeWidth="0.3">
+              <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z"/>
+            </svg>
+            {/* Lock icon center */}
+            <svg viewBox="0 0 24 24" className="absolute inset-[38%] w-[24%] h-[24%] text-teal-400/50" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
           </div>
         </div>
@@ -249,37 +272,47 @@ export default function Landing() {
       </section>
 
       {/* Who it's for */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto">
+      <section className="relative py-20 px-6 overflow-hidden">
+        {/* Concentric arc lines — bottom left */}
+        <svg className="arc-lines-bl" viewBox="0 0 400 400" fill="none">
+          {[160, 200, 240, 280, 320].map((r, i) => (
+            <circle key={i} cx="0" cy="400" r={r} stroke="rgba(20,184,166,0.08)" strokeWidth="0.75" />
+          ))}
+        </svg>
+
+        <div className="max-w-5xl mx-auto relative z-10">
           <div className="text-center mb-12">
+            <div className="text-accent text-xs font-mono tracking-wider mb-3 uppercase">Our Services</div>
             <h2 className="text-3xl font-bold mb-3">Built for people like you</h2>
-            <p className="text-zinc-400">No security background needed. We handle the complexity.</p>
+            <p className="text-zinc-400 max-w-xl mx-auto">No security background needed. We handle the complexity.</p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { 
-                icon: User, 
-                title: "Business Owners", 
+              {
+                icon: User,
+                title: "Business Owners",
                 desc: "Protect your store, office, or property without hiring a full security team. Get expert guidance tailored to your budget.",
                 examples: "Retail • Restaurants • Offices • Warehouses"
               },
-              { 
-                icon: Building2, 
-                title: "Event Planners", 
+              {
+                icon: Building2,
+                title: "Event Planners",
                 desc: "Corporate events, weddings, conferences — get professional security that keeps guests safe and lets you focus on the event.",
                 examples: "Weddings • Conferences • Parties • Festivals"
               },
-              { 
-                icon: ShieldCheck, 
-                title: "Developers & Startups", 
+              {
+                icon: ShieldCheck,
+                title: "Developers & Startups",
                 desc: "Building an app or service? Our consultants help you design security that scales — from SOC2 prep to physical office security.",
                 examples: "Tech Startups • SaaS • Coworking • Data Centers"
               },
             ].map((card, i) => (
-              <div key={i} className="p-6 bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 rounded-xl hover:border-teal-500/40 hover:shadow-[0_0_30px_rgba(20,184,166,0.08)] transition-all">
-                <card.icon className="w-10 h-10 text-accent mb-4" />
-                <h3 className="text-xl font-semibold mb-2">{card.title}</h3>
+              <div key={i} className={`glass-card p-6 ${i === 0 ? "glass-card-accent" : ""}`}>
+                <div className="w-12 h-12 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mb-4">
+                  <card.icon className="w-6 h-6 text-accent" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{card.title}</h3>
                 <p className="text-zinc-400 text-sm mb-4">{card.desc}</p>
                 <p className="text-xs text-zinc-600">{card.examples}</p>
               </div>
@@ -289,8 +322,13 @@ export default function Landing() {
       </section>
 
       {/* How it works - simplified */}
-      <section className="relative py-20 px-6 bg-zinc-900/30 border-y border-zinc-800 wave-bg overflow-hidden">
-        <div className="glow-orb absolute -bottom-64 -right-48" />
+      <section className="relative py-20 px-6 bg-zinc-900/30 border-y border-zinc-800 overflow-hidden">
+        {/* Concentric arc lines — top right */}
+        <svg className="arc-lines-tr" viewBox="0 0 400 400" fill="none">
+          {[180, 220, 260, 300].map((r, i) => (
+            <circle key={i} cx="400" cy="0" r={r} stroke="rgba(20,184,166,0.06)" strokeWidth="0.75" />
+          ))}
+        </svg>
         <div className="max-w-4xl mx-auto relative z-10">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-3">How it works</h2>
@@ -319,8 +357,8 @@ export default function Landing() {
               },
             ].map((step, i) => (
               <div key={i} className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-accent/20 flex items-center justify-center">
-                  <step.icon className="w-7 h-7 text-accent" />
+                <div className="w-14 h-14 mx-auto mb-4 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+                  <step.icon className="w-6 h-6 text-accent" />
                 </div>
                 <div className="text-sm text-accent font-mono mb-2">Step {step.num}</div>
                 <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
@@ -428,7 +466,7 @@ export default function Landing() {
                 rating: 5
               },
             ].map((testimonial, i) => (
-              <div key={i} className="p-6 bg-zinc-900/80 backdrop-blur-sm border border-zinc-800 rounded-xl hover:border-teal-500/30 transition-colors">
+              <div key={i} className="glass-card p-6">
                 <div className="flex gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, j) => (
                     <Star key={j} className="w-4 h-4 text-amber-400 fill-current" />
@@ -476,7 +514,7 @@ export default function Landing() {
                 a: "You'll see transparent pricing upfront — no hidden fees, no surprises. Pay only for what you need, and rates are competitive with (or better than) hiring directly."
               },
             ].map((faq, i) => (
-              <div key={i} className="p-5 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-teal-500/30 transition-all">
+              <div key={i} className="glass-card p-5">
                 <h3 className="font-semibold mb-2">{faq.q}</h3>
                 <p className="text-zinc-400 text-sm">{faq.a}</p>
               </div>
@@ -486,8 +524,14 @@ export default function Landing() {
       </section>
 
       {/* Final CTA */}
-      <section className="relative py-20 px-6 bg-gradient-to-b from-zinc-900/50 to-zinc-950 wave-bg overflow-hidden">
-        <div className="max-w-3xl mx-auto text-center">
+      <section className="relative py-20 px-6 bg-gradient-to-b from-zinc-900/50 to-zinc-950 overflow-hidden">
+        {/* Concentric arc lines — bottom right */}
+        <svg className="absolute bottom-[-80px] right-[-80px] w-[300px] h-[300px] pointer-events-none" viewBox="0 0 300 300" fill="none">
+          {[120, 150, 180, 210].map((r, i) => (
+            <circle key={i} cx="300" cy="300" r={r} stroke="rgba(20,184,166,0.08)" strokeWidth="0.75" />
+          ))}
+        </svg>
+        <div className="max-w-3xl mx-auto text-center relative z-10">
           <h2 className="text-3xl font-bold mb-4">Ready to protect what matters?</h2>
           <p className="text-zinc-400 mb-8">Get a free quote in under 2 minutes. No commitment, no pressure.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

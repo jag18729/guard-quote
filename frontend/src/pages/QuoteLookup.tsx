@@ -2,6 +2,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FileSearch, ArrowRight, Clock, CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react";
 
+interface StatusHistoryEntry {
+  from_status: string | null;
+  to_status: string;
+  reason: string | null;
+  changed_at: string;
+}
+
 interface QuoteResult {
   quote_number: string;
   status: string;
@@ -13,6 +20,7 @@ interface QuoteResult {
   hours_per_guard: number;
   valid_until: string;
   created_at: string;
+  status_history?: StatusHistoryEntry[];
 }
 
 const STATUS_STYLES: Record<string, { color: string; icon: typeof CheckCircle2; label: string }> = {
@@ -113,7 +121,7 @@ export default function QuoteLookup() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-accent hover:bg-orange-600 disabled:opacity-50 disabled:hover:bg-accent text-black font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-accent hover:bg-accent-dark disabled:opacity-50 disabled:hover:bg-accent text-black font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
@@ -184,6 +192,43 @@ export default function QuoteLookup() {
                   </div>
                 </div>
                 
+                {/* Status History Timeline */}
+                {result.status_history && result.status_history.length > 0 && (
+                  <div className="pt-4 border-t border-zinc-800">
+                    <p className="text-xs text-zinc-500 mb-3 uppercase tracking-wider font-mono">Status History</p>
+                    <div className="space-y-3">
+                      {result.status_history.map((entry, i) => {
+                        const entryStyle = STATUS_STYLES[entry.to_status] || STATUS_STYLES.draft;
+                        const EntryIcon = entryStyle.icon;
+                        return (
+                          <div key={i} className="flex items-start gap-3">
+                            <div className={`mt-0.5 p-1 rounded-full ${entryStyle.color}`}>
+                              <EntryIcon className="w-3 h-3" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm font-medium">
+                                  {entry.from_status
+                                    ? `${(STATUS_STYLES[entry.from_status] || STATUS_STYLES.draft).label} \u2192 ${entryStyle.label}`
+                                    : entryStyle.label}
+                                </p>
+                                <p className="text-xs text-zinc-500">
+                                  {new Date(entry.changed_at).toLocaleDateString("en-US", {
+                                    month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
+                                  })}
+                                </p>
+                              </div>
+                              {entry.reason && (
+                                <p className="text-xs text-zinc-400 mt-0.5">{entry.reason}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Actions */}
                 {(result.status === "sent" || result.status === "pending") && (
                   <div className="pt-4 border-t border-zinc-800 flex gap-3">

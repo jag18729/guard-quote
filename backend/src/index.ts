@@ -410,10 +410,20 @@ app.get("/api/quotes/lookup", async (c) => {
     return c.json({ error: "Quote not found" }, 404);
   }
 
+  // Fetch status history for this quote
+  const history = await sql`
+    SELECT qsh.from_status, qsh.to_status, qsh.reason, qsh.changed_at
+    FROM quote_status_history qsh
+    JOIN quotes q ON qsh.quote_id = q.id
+    WHERE q.quote_number = ${number}
+    ORDER BY qsh.changed_at ASC
+  `;
+
   // Add a calculated valid_until (30 days from creation)
   const result = {
     ...quote[0],
     valid_until: new Date(new Date(quote[0].created_at).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    status_history: history,
   };
 
   return c.json(result);

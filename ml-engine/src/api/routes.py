@@ -150,10 +150,17 @@ async def get_model_info():
             "message": "Models not loaded - using rule-based fallback"
         }
 
+    price_metrics = predictor.models.get('price_metrics', {})
+    risk_metrics = predictor.models.get('risk_metrics', {})
+
     return {
         "status": "loaded",
-        "price_model": predictor.models.get('price_model_name', 'Unknown'),
-        "trained_at": predictor.models.get('trained_at', 'Unknown'),
+        "version": predictor.models.get('version', 'unknown'),
+        "model_type": f"{predictor.models.get('price_model_name', 'Unknown')} + {predictor.models.get('risk_model_name', 'Unknown')}",
+        "last_trained": predictor.models.get('trained_at', None),
+        "training_samples": predictor.models.get('training_samples', 0),
+        "accuracy": price_metrics.get('r2', 0),
+        "risk_accuracy": risk_metrics.get('accuracy', 0),
         "price_features": len(predictor.models.get('price_features', [])),
         "risk_features": len(predictor.models.get('risk_features', [])),
     }

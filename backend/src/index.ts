@@ -1844,16 +1844,22 @@ app.get("/api/admin/ml/status", async (c) => {
 
   try {
     const mlRes = await fetch(`${ML_ENGINE_URL}/api/v1/model-info`);
-    const mlInfo = await mlRes.json();
+    const mlInfo: Record<string, any> = await mlRes.json();
     const trainingCount = await sql`SELECT COUNT(*) as total, COUNT(DISTINCT event_type_code) as event_types, COUNT(DISTINCT state) as locations FROM ml_training_data`;
+    const version = mlInfo.version || "unknown";
+    const modelType = mlInfo.model_type || "unknown";
+    const lastTrained = mlInfo.last_trained || null;
+    const priceR2 = mlInfo.accuracy || 0;
+    const riskAcc = mlInfo.risk_accuracy || 0;
+    const trainingSamples = mlInfo.training_samples || 0;
     return c.json({
-      currentModel: { version: mlInfo.version || "unknown", type: mlInfo.model_type || "unknown", lastUpdated: mlInfo.last_trained || null, status: "active" },
-      trainingData: { totalRecords: parseInt(trainingCount[0].total) || 0, eventTypes: parseInt(trainingCount[0].event_types) || 0, locations: parseInt(trainingCount[0].locations) || 0 },
-      performance: { accuracy: mlInfo.accuracy || 0, avgConfidence: 0.92, predictionsToday: 0, avgResponseTime: "50ms" },
-      versions: [{ version: mlInfo.version || "unknown", type: mlInfo.model_type || "unknown", date: mlInfo.last_trained || null, active: true, accuracy: mlInfo.accuracy || 0 }],
+      currentModel: { version, type: modelType, lastUpdated: lastTrained, status: mlInfo.status === "loaded" ? "active" : "offline" },
+      trainingData: { totalRecords: parseInt(trainingCount[0].total) || 0, eventTypes: parseInt(trainingCount[0].event_types) || 0, locations: parseInt(trainingCount[0].locations) || 0, trainingSamples },
+      performance: { accuracy: priceR2, riskAccuracy: riskAcc, avgConfidence: 0.92, predictionsToday: 0, avgResponseTime: "50ms" },
+      versions: [{ version, type: modelType, date: lastTrained, active: true, accuracy: priceR2, riskAccuracy: riskAcc }],
     });
   } catch {
-    return c.json({ currentModel: { version: "unavailable", type: "unknown", lastUpdated: null, status: "offline" }, trainingData: { totalRecords: 0, eventTypes: 0, locations: 0 }, performance: { accuracy: 0, avgConfidence: 0, predictionsToday: 0, avgResponseTime: "N/A" }, versions: [] });
+    return c.json({ currentModel: { version: "unavailable", type: "unknown", lastUpdated: null, status: "offline" }, trainingData: { totalRecords: 0, eventTypes: 0, locations: 0 }, performance: { accuracy: 0, riskAccuracy: 0, avgConfidence: 0, predictionsToday: 0, avgResponseTime: "N/A" }, versions: [] });
   }
 });
 

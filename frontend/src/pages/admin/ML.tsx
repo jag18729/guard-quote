@@ -5,8 +5,8 @@ import { Brain, Database, RefreshCw, Download, RotateCcw, Trash2, TrendingUp, Ac
 interface ModelStatus {
   currentModel: { version: string; type: string; lastUpdated: string; status: string };
   trainingData: { totalRecords: number; eventTypes: number; locations: number };
-  performance: { accuracy: number; avgConfidence: number; predictionsToday: number; avgResponseTime: string };
-  versions: Array<{ version: string; type: string; date: string; active: boolean; accuracy: number }>;
+  performance: { accuracy: number; riskAccuracy?: number; avgConfidence: number; predictionsToday: number; avgResponseTime: string };
+  versions: Array<{ version: string; type: string; date: string; active: boolean; accuracy: number; riskAccuracy?: number }>;
 }
 
 interface TrainingRecord {
@@ -137,10 +137,10 @@ export default function ML() {
             <div className="p-4 bg-surface border border-border rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUp className="w-4 h-4 text-success" />
-                <span className="text-xs text-text-muted">Accuracy</span>
+                <span className="text-xs text-text-muted">Price R² Score</span>
               </div>
-              <div className="text-xl font-bold text-success">{status.performance.accuracy}%</div>
-              <div className="text-xs text-text-muted">Avg confidence: {status.performance.avgConfidence}%</div>
+              <div className="text-xl font-bold text-success">{status.performance.accuracy > 1 ? status.performance.accuracy : (status.performance.accuracy * 100).toFixed(1)}%</div>
+              <div className="text-xs text-text-muted">Risk: {status.performance.riskAccuracy ? `${(status.performance.riskAccuracy > 1 ? status.performance.riskAccuracy : status.performance.riskAccuracy * 100).toFixed(1)}%` : `${status.performance.avgConfidence}%`}</div>
             </div>
             <div className="p-4 bg-surface border border-border rounded-lg">
               <div className="flex items-center gap-2 mb-2">
@@ -272,8 +272,11 @@ export default function ML() {
                     <span className="text-lg font-bold">{v.version}</span>
                     {v.active && <span className="px-2 py-0.5 bg-accent/20 text-accent text-xs rounded">Active</span>}
                   </div>
-                  <div className="text-sm text-text-muted mb-2">{v.type} • Released {v.date}</div>
-                  <div className="text-sm">Accuracy: <span className="text-success font-medium">{v.accuracy}%</span></div>
+                  <div className="text-sm text-text-muted mb-2">{v.type} • Released {v.date ? new Date(v.date).toLocaleDateString() : "unknown"}</div>
+                  <div className="text-sm">
+                    R² Score: <span className="text-success font-medium">{v.accuracy > 1 ? v.accuracy : (v.accuracy * 100).toFixed(1)}%</span>
+                    {v.riskAccuracy != null && <span className="ml-3">Risk: <span className="text-success font-medium">{(v.riskAccuracy > 1 ? v.riskAccuracy : v.riskAccuracy * 100).toFixed(1)}%</span></span>}
+                  </div>
                 </div>
                 {!v.active && (
                   <button

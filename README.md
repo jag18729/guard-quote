@@ -1,8 +1,8 @@
 # GuardQuote
 
-**ML-powered security service pricing platform**
+**ML-powered security service pricing platform — designed from need, not flash**
 
-Get instant, accurate quotes for security services: event security, executive protection, and more.
+Every technology choice solves a real problem — supply chain risk, resource constraints, operational complexity, cost. This is how we think security applications should be architected in 2026.
 
 [![Live Site](https://img.shields.io/badge/Live-guardquote.vandine.us-orange)](https://guardquote.vandine.us)
 [![CI](https://github.com/jag18729/guard-quote/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/jag18729/guard-quote/actions)
@@ -48,18 +48,17 @@ Trained on 500+ historical quotes across 15 event types and 28 US locations.
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 18, TypeScript, Vite, Tailwind CSS |
-| Backend | Bun + Hono (TypeScript) |
-| ML Engine | Python, FastAPI, scikit-learn |
-| Database | PostgreSQL 16 |
-| Auth | OAuth 2.0 + PKCE, JWT sessions |
-| Infrastructure | K3s, Cloudflare Tunnel |
-| Monitoring | Grafana, Prometheus, Loki |
-| SIEM | Wazuh Manager 4.14.3, Wazuh Indexer 4.7.1 |
-| IDS | Suricata 7.0.5 (47,291 rules) |
-| SOC Dashboard | React + Vite (soc.vandine.us) |
+| Layer | Technology | Why |
+|-------|------------|-----|
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS | Vite eliminates webpack dependency chain |
+| Backend | Bun 1.3 + Hono | Built-in serve, crypto, env — minimal npm supply chain exposure |
+| ML Engine | Python, FastAPI, scikit-learn | Right-sized ML — no GPU needed, transparent pricing for an opaque industry |
+| Database | PostgreSQL 17 | Proven reliability, zero licensing, native async driver |
+| Auth | OAuth 2.0 PKCE + Bun.password (argon2id) | No auth SaaS, no bcrypt native compilation issues on ARM64 |
+| Infrastructure | K3s on Raspberry Pi 5, Cloudflare Tunnel | Enterprise patterns on commodity hardware, $0/month hosting |
+| Monitoring | Grafana, Prometheus, Loki | Full observability at $0 vs $2K+/month for Datadog/Splunk |
+| SIEM | Wazuh 4.14.3 + Suricata 7.0.5 (74K rules) | Enterprise SIEM without Splunk licensing |
+| SOC Dashboard | React + Vite (soc.vandine.us) | Real-time security visibility without SaaS dependency |
 
 ---
 

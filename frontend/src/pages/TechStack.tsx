@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Shield, Server, Database, Cloud, Cpu, Zap, Globe, Lock, ArrowRight, Activity, BarChart3, Rocket, Timer, HardDrive, Network, ExternalLink } from "lucide-react";
+import { Shield, Server, Database, Cloud, Cpu, Zap, Globe, Lock, ArrowRight, Activity, BarChart3, Rocket, Timer, HardDrive, Network, ExternalLink, ShieldAlert, Package, Check, X } from "lucide-react";
 import mermaid from "mermaid";
 
 // Initialize mermaid with Nord-inspired theme
@@ -126,7 +126,7 @@ const techStack = {
     items: [
       { name: "React 18", desc: "UI framework with concurrent features" },
       { name: "TypeScript", desc: "Type-safe development" },
-      { name: "Vite", desc: "Lightning-fast build tool" },
+      { name: "Vite", desc: "Fast builds, zero config" },
       { name: "TailwindCSS", desc: "Utility-first styling" },
       { name: "React Router 7", desc: "Client-side navigation" },
     ]
@@ -146,8 +146,8 @@ const techStack = {
     icon: Rocket,
     color: "text-green-400",
     items: [
-      { name: "Bun 1.3", desc: "Blazing fast JS runtime" },
-      { name: "Hono", desc: "Ultrafast web framework" },
+      { name: "Bun 1.3", desc: "Minimal-dependency JS runtime" },
+      { name: "Hono", desc: "Lightweight web framework (14KB)" },
       { name: "Native Serve", desc: "Single process HTTP + WS" },
       { name: "jose", desc: "JWT signing (PKCE OAuth)" },
       { name: "gRPC", desc: "ML engine communication" },
@@ -260,24 +260,24 @@ const bunBenchmarks = {
 
 const bunFeatures = [
   {
-    icon: Rocket,
-    title: "Native Speed",
-    desc: "JavaScriptCore engine (Safari's) with JIT compilation. 2-4x faster than V8 for most workloads."
+    icon: ShieldAlert,
+    title: "Smaller Attack Surface",
+    desc: "Core operations are runtime built-ins, not npm packages. Fewer dependencies means fewer supply chain risks."
   },
   {
     icon: HardDrive,
-    title: "Built-in APIs",
-    desc: "Native Bun.serve(), Bun.password, Bun.file — no external dependencies for core ops."
+    title: "Runs on Constrained Hardware",
+    desc: "34MB RSS at idle. Designed to run on a Raspberry Pi, not a $200/mo cloud instance. Real-world resource efficiency."
   },
   {
     icon: Timer,
-    title: "Instant Start",
-    desc: "12ms cold start vs 89ms Node.js. Critical for K8s pod scaling and development iteration."
+    title: "K8s-Ready Cold Starts",
+    desc: "12ms to first response. When a pod scales up on a Pi cluster, you can't afford 89ms Node.js startup times."
   },
   {
     icon: Network,
-    title: "Unified Server",
-    desc: "HTTP + WebSocket in single Bun.serve() call. One process, one port, simpler deployment."
+    title: "Fewer Moving Parts",
+    desc: "HTTP + WebSocket in a single Bun.serve() call. One process, one port — less to configure, less to break."
   },
 ];
 
@@ -293,12 +293,13 @@ export default function TechStack() {
         {/* Header */}
         <div className="text-center mb-16">
           <div className="inline-block mb-4 px-4 py-1.5 bg-emerald-500/20 rounded text-emerald-400 text-xs font-mono font-medium tracking-wider">
-            POWERED BY BUN 1.3
+            DESIGNED FROM NEED, NOT FLASH
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Tech Stack</h1>
           <p className="text-zinc-400 max-w-2xl mx-auto">
-            Built on cutting-edge technology. Bun runtime for blazing performance, 
-            K3s for orchestration, ML-powered pricing, all self-hosted on Raspberry Pi.
+            Every technology choice here solves a real problem -- supply chain risk, resource constraints,
+            operational complexity, cost. This is how we think security applications should be
+            architected in 2026.
           </p>
         </div>
 
@@ -315,14 +316,15 @@ export default function TechStack() {
             <div className="flex-1 text-center lg:text-left">
               <h2 className="text-3xl font-bold mb-2">Why Bun?</h2>
               <p className="text-zinc-400 text-lg mb-4">
-                We migrated from Node.js to Bun 1.3 for GuardQuote v2. The results speak for themselves:
-                <span className="text-emerald-400 font-semibold"> 2x faster requests, 50% less memory, 7x faster cold starts.</span>
+                Node.js left us dependent on dozens of npm packages for basic operations -- each one a trust boundary
+                that could be compromised. Bun 1.3 ships HTTP serving, password hashing, file I/O, and bundling
+                as <span className="text-emerald-400 font-semibold">runtime built-ins</span>. Fewer dependencies, smaller attack surface, less to go wrong.
               </p>
               <div className="flex flex-wrap justify-center lg:justify-start gap-3 text-sm">
-                <span className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full font-medium">JavaScriptCore Engine</span>
+                <span className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full font-medium">Minimal Dependencies</span>
                 <span className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full font-medium">Native TypeScript</span>
-                <span className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full font-medium">Built-in Bundler</span>
-                <span className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full font-medium">npm Compatible</span>
+                <span className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full font-medium">Built-in Crypto</span>
+                <span className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full font-medium">ARM64 Optimized</span>
               </div>
             </div>
           </div>
@@ -330,8 +332,8 @@ export default function TechStack() {
 
         {/* Bun Benchmarks */}
         <div className="mb-16">
-          <h2 className="text-2xl font-bold mb-2 text-center">Performance Benchmarks</h2>
-          <p className="text-zinc-500 text-center mb-8">Bun 1.3 vs Node.js 22 vs Deno 2.x — tested on Raspberry Pi 5 (ARM64)</p>
+          <h2 className="text-2xl font-bold mb-2 text-center">Why It Matters on Real Hardware</h2>
+          <p className="text-zinc-500 text-center mb-8">We run on a Raspberry Pi 5 -- not a cloud VM. Every millisecond and megabyte counts. Tested on ARM64.</p>
           
           <div className="grid md:grid-cols-2 gap-6">
             {Object.entries(bunBenchmarks).map(([key, benchmark]) => (
@@ -399,13 +401,15 @@ export default function TechStack() {
           </div>
           <ArchitectureDiagram />
           <p className="text-center text-zinc-500 text-sm mt-4">
-            Multi-site deployment with mesh VPN, zone-based firewall segmentation, and K3s orchestration
+            Zone-based firewall segmentation, mesh VPN for cross-zone routing, and K3s orchestration -- demonstrating
+            enterprise security patterns on commodity hardware
           </p>
         </div>
 
         {/* Tech Grid */}
         <div className="mb-16">
-          <h2 className="text-2xl font-bold mb-8 text-center">Full Stack</h2>
+          <h2 className="text-2xl font-bold mb-2 text-center">Full Stack</h2>
+          <p className="text-zinc-500 text-center mb-8">Every layer chosen to solve a specific problem -- not because it's trending</p>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {Object.entries(techStack).map(([key, category]) => (
               <div key={key} className="p-5 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-700 transition-colors">
@@ -433,37 +437,113 @@ export default function TechStack() {
         <div className="mb-16 p-8 bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 rounded-xl">
           <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
             <Shield className="w-6 h-6 text-accent" />
-            Migration Story: Node.js → Bun
+            The Problems We Solved: Node.js → Bun
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h4 className="font-semibold text-emerald-400 mb-2">Why we switched</h4>
+              <h4 className="font-semibold text-emerald-400 mb-2">Problem: Dependency sprawl</h4>
               <p className="text-sm text-zinc-400">
-                Node.js 22 with Express had 89ms cold starts — unacceptable for K8s pod scaling. 
-                Bun's 12ms starts and native TypeScript support made development and deployment faster.
+                Node.js needed Express, bcrypt, ws, dotenv, and node-fetch just for basics -- each one a
+                maintainer account that could be hijacked. Bun ships these as built-ins. We eliminated the risk.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-emerald-400 mb-2">What we kept</h4>
+              <h4 className="font-semibold text-emerald-400 mb-2">Problem: Pod scaling on constrained hardware</h4>
               <p className="text-sm text-zinc-400">
-                Hono framework worked perfectly — zero code changes. npm packages like <code className="text-emerald-300">jose</code> and 
-                <code className="text-emerald-300"> postgres</code> just worked. Full npm compatibility.
+                Node.js 22 had 89ms cold starts -- too slow for K3s pod autoscaling on a Raspberry Pi.
+                Bun starts in 12ms. That's not a nice-to-have, it's the difference between usable and broken.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-emerald-400 mb-2">ARM64 Performance</h4>
+              <h4 className="font-semibold text-emerald-400 mb-2">Problem: Native compilation on ARM64</h4>
               <p className="text-sm text-zinc-400">
-                Bun's JavaScriptCore runs exceptionally well on ARM64 (Raspberry Pi 5). 
-                Better SIMD utilization than V8 for our JSON-heavy API workload.
+                Packages like <code className="text-emerald-300">bcrypt</code> require native compilation -- fragile on ARM64 Pi hardware.
+                <code className="text-emerald-300"> Bun.password</code> provides argon2id natively. No build step, no breakage.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-emerald-400 mb-2">Built-in wins</h4>
+              <h4 className="font-semibold text-emerald-400 mb-2">Constraint: No migration tax</h4>
               <p className="text-sm text-zinc-400">
-                <code className="text-emerald-300">Bun.password</code> for argon2id (no native deps), 
-                <code className="text-emerald-300"> Bun.serve()</code> for unified HTTP+WS. Fewer moving parts.
+                We couldn't afford a rewrite. Hono and <code className="text-emerald-300">jose</code> worked
+                with zero code changes. <code className="text-emerald-300">postgres</code> driver ran identically.
+                We solved the problems without starting over.
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Supply Chain Security */}
+        <div className="mb-16 p-8 bg-gradient-to-br from-red-900/20 via-zinc-900 to-zinc-900 border border-red-800/30 rounded-2xl">
+          <div className="flex items-start gap-4 mb-6">
+            <ShieldAlert className="w-8 h-8 text-red-400 flex-shrink-0 mt-1" />
+            <div>
+              <h2 className="text-2xl font-bold mb-2">Supply Chain Security</h2>
+              <p className="text-zinc-400">
+                On March 31, 2026, <span className="text-red-400 font-semibold">axios</span> -- npm's most popular HTTP client
+                with 100M+ weekly downloads -- was compromised in a supply chain attack. A hijacked maintainer account pushed
+                malicious versions that silently installed a cross-platform RAT on every <code className="text-red-300 bg-red-500/10 px-1 rounded">npm install</code>.
+                GuardQuote was never at risk. Here's why.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
+            <div className="p-5 bg-zinc-900/80 border border-zinc-800 rounded-xl">
+              <h4 className="font-semibold text-red-400 mb-3 flex items-center gap-2">
+                <Package className="w-4 h-4" />
+                The Typical Node.js App
+              </h4>
+              <ul className="space-y-2 text-sm text-zinc-400">
+                {[
+                  { dep: "axios", purpose: "HTTP requests" },
+                  { dep: "express", purpose: "Web server" },
+                  { dep: "bcrypt", purpose: "Password hashing" },
+                  { dep: "ws", purpose: "WebSocket server" },
+                  { dep: "dotenv", purpose: "Env variables" },
+                  { dep: "node-fetch", purpose: "Fetch polyfill" },
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <X className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                    <code className="text-red-300">{item.dep}</code>
+                    <span className="text-zinc-600">-- {item.purpose}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-zinc-600">Each dependency is a trust boundary. Each one can be compromised.</p>
+            </div>
+
+            <div className="p-5 bg-zinc-900/80 border border-emerald-800/30 rounded-xl">
+              <h4 className="font-semibold text-emerald-400 mb-3 flex items-center gap-2">
+                <Zap className="w-4 h-4" />
+                GuardQuote with Bun 1.3
+              </h4>
+              <ul className="space-y-2 text-sm text-zinc-400">
+                {[
+                  { builtin: "fetch()", replaces: "axios / node-fetch" },
+                  { builtin: "Bun.serve()", replaces: "express / ws" },
+                  { builtin: "Bun.password", replaces: "bcrypt / argon2" },
+                  { builtin: "Bun.env", replaces: "dotenv" },
+                  { builtin: "Bun.file()", replaces: "fs-extra" },
+                  { builtin: "Bun.build()", replaces: "webpack / esbuild" },
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                    <code className="text-emerald-300">{item.builtin}</code>
+                    <span className="text-zinc-600">-- replaces <span className="line-through">{item.replaces}</span></span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-emerald-600">Built-in APIs. Zero trust boundaries. Zero attack surface.</p>
+            </div>
+          </div>
+
+          <div className="p-4 bg-zinc-950/50 border border-zinc-800 rounded-lg">
+            <p className="text-sm text-zinc-400">
+              <span className="text-emerald-400 font-semibold">The lesson:</span> Every <code className="text-zinc-300 bg-zinc-800 px-1 rounded">npm install</code> is an act of trust.
+              Bun eliminates that trust decision for core operations by shipping them as runtime built-ins.
+              Fewer dependencies means fewer maintainer accounts to compromise, fewer postinstall scripts to audit,
+              and a smaller blast radius when the next supply chain attack hits.
+            </p>
           </div>
         </div>
 
@@ -474,8 +554,8 @@ export default function TechStack() {
             <div>
               <h3 className="text-xl font-semibold mb-2">ML-Powered Pricing Engine</h3>
               <p className="text-zinc-400 mb-4">
-                Our ML engine uses GradientBoosting and HistGradientBoosting models trained on 1,100 real security service quotes.
-                Backend communicates via gRPC for low-latency inference.
+                Security service pricing is inconsistent and opaque. We trained GradientBoosting models on 1,100 real quotes
+                to make it predictable. Backend communicates via gRPC -- chosen for binary efficiency on constrained hardware, not hype.
               </p>
               <div className="flex flex-wrap gap-3 text-sm">
                 <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full">R² = 0.932 (price prediction)</span>
@@ -488,7 +568,8 @@ export default function TechStack() {
 
         {/* Key Metrics */}
         <div className="mb-16">
-          <h2 className="text-2xl font-bold mb-8 text-center">Key Metrics</h2>
+          <h2 className="text-2xl font-bold mb-2 text-center">The Results</h2>
+          <p className="text-zinc-500 text-center mb-8">What solving real problems with intentional architecture looks like in production</p>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             {[
               { value: "0.932", label: "ML R² Score" },
@@ -510,10 +591,10 @@ export default function TechStack() {
         {/* Footer */}
         <div className="mt-12 text-center text-sm text-zinc-600">
           <p>
-            Built with 🥟 Bun by the <span className="text-accent">GuardQuote</span> team
+            Designed from need. Built to demonstrate. <span className="text-accent">GuardQuote</span> — security architecture by example.
           </p>
           <p className="mt-1">
-            California State University, Northridge · CIT 480 Senior Design · February 2026
+            California State University, Northridge · CIT 480 Senior Design · 2026
           </p>
         </div>
       </div>

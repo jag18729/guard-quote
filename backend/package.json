@@ -12,20 +12,20 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/bcrypt": "^5.0.2",
-    "@types/node": "^22.10.0",
+    "@types/bcrypt": "^6.0.0",
+    "@types/node": "^25.5.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
-    "@hono/node-server": "^1.19.11",
+    "@hono/node-server": "^1.19.12",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
-    "hono": "^4.12.8",
+    "hono": "^4.12.9",
     "postgres": "3.3.5",
-    "resend": "^6.9.3"
+    "resend": "^6.9.4"
   },
   "engines": {
     "node": ">=22.0.0"

@@ -450,10 +450,10 @@ text{font-family:'IBM Plex Sans',sans-serif}
 <text x="45"  y="173" class="zl" fill="#fb923c">matrix (192.168.2.0/24)</text>
 <rect x="355" y="155" width="270" height="125" rx="8" class="zr zp"/>
 <text x="370" y="173" class="zl" fill="#facc15">🔥 PA-220 Firewall</text>
-<rect x="30"  y="298" width="310" height="222" rx="8" class="zr zdm"/>
-<text x="45"  y="316" class="zl" fill="#38bdf8">dmz-mgmt (192.168.21.0/24)</text>
-<rect x="350" y="298" width="300" height="222" rx="8" class="zr zdv"/>
-<text x="365" y="316" class="zl" fill="#4ade80">dmz-services (192.168.20.0/24)</text>
+<rect x="30"  y="320" width="310" height="222" rx="8" class="zr zdm"/>
+<text x="45"  y="338" class="zl" fill="#38bdf8">dmz-mgmt (192.168.21.0/24)</text>
+<rect x="350" y="320" width="300" height="222" rx="8" class="zr zdv"/>
+<text x="365" y="338" class="zl" fill="#4ade80">dmz-services (192.168.20.0/24)</text>
 <rect x="660" y="155" width="750" height="625" rx="8" class="zr zds"/>
 <text x="675" y="173" class="zl" fill="#fb7185">dmz-security (192.168.22.0/24)</text>
 <rect x="680" y="182" width="360" height="295" rx="8" class="zr zk"/>
@@ -489,20 +489,20 @@ text{font-family:'IBM Plex Sans',sans-serif}
 <path d="M937,63 L1025,63 L1025,960 L360,960 L360,899" fill="none" stroke="#06b6d4" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ac)"/>
 <text x="695" y="954" font-size="9" fill="#67e8f9" text-anchor="middle">SIEM access</text>
 
-<!-- 6. Tunnel → BastionAdmin  [left exit, y=292 gap bus, x=340 vertical] (gray) -->
-<path d="M360,448 L340,448 L340,292 L240,292 L240,434" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
-<text x="287" y="286" font-size="9" fill="#94a3b8" text-anchor="middle">Admin</text>
+<!-- 6. Tunnel → BastionAdmin  [left exit, y=305 gap bus, x=340 vertical] (gray) -->
+<path d="M360,470 L340,470 L340,305 L240,305 L240,456" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
+<text x="287" y="299" font-size="9" fill="#94a3b8" text-anchor="middle">Admin</text>
 
-<!-- 7. Tunnel → Frontend  [right exit y=448, x=645 vertical, up to FE] (gray) -->
-<path d="M470,448 L645,448 L645,268 L703,268" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
-<text x="558" y="442" font-size="9" fill="#94a3b8" text-anchor="middle">Tailscale</text>
+<!-- 7. Tunnel → Frontend  [right exit y=470, x=645 vertical, up to FE] (gray) -->
+<path d="M470,470 L645,470 L645,268 L703,268" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
+<text x="558" y="464" font-size="9" fill="#94a3b8" text-anchor="middle">Tailscale</text>
 
-<!-- 8. Tunnel → BastionUser  [bottom-right exit y=472, x=495 vertical] (gray) -->
-<path d="M430,472 L495,472 L495,448" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
+<!-- 8. Tunnel → BastionUser  [bottom-right exit y=494, x=495 vertical] (gray) -->
+<path d="M430,494 L495,494 L495,470" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
 
-<!-- 9. Tunnel → BastionThreat  [bottom-left exit y=500 bus] (gray) -->
-<path d="M395,472 L395,500 L1180,500 L1180,442" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
-<text x="790" y="494" font-size="9" fill="#94a3b8" text-anchor="middle">Threat Analysis</text>
+<!-- 9. Tunnel → BastionThreat  [bottom-left exit y=510 bus] (gray) -->
+<path d="M395,494 L395,510 L1180,510 L1180,442" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
+<text x="790" y="504" font-size="9" fill="#94a3b8" text-anchor="middle">Threat Analysis</text>
 
 <!-- 10. Frontend → Backend (green) -->
 <line x1="760" y1="292" x2="760" y2="324" stroke="#4ade80" stroke-width="1.5" marker-end="url(#ag)"/>
@@ -513,21 +513,21 @@ text{font-family:'IBM Plex Sans',sans-serif}
 <text x="778" y="392" font-size="9" fill="#86efac">gRPC</text>
 
 <!-- 12. Backend → PostgreSQL  [x=655 boundary vertical] (purple) -->
-<path d="M703,348 L655,348 L655,362 L617,362" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ad)"/>
+<path d="M703,348 L655,348 L655,384 L617,384" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ad)"/>
 
-<!-- 13. BastionUser → NetTools  [y=520 sub-zone bus, x=920 vertical] (gray dashed) -->
-<path d="M560,472 L560,520 L920,520 L920,324" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#a)"/>
+<!-- 13. BastionUser → NetTools  [y=530 sub-zone bus, x=920 vertical] (gray dashed) -->
+<path d="M560,494 L560,530 L920,530 L920,324" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#a)"/>
 
-<!-- 14. PA-220 → pi0 Traffic Logs  [y=280 inter-zone gap bus] (yellow) -->
-<path d="M422,218 L355,218 L355,280 L235,280 L235,346" fill="none" stroke="#facc15" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ay)"/>
-<text x="290" y="274" font-size="9" fill="#fde68a" text-anchor="middle">Traffic Logs</text>
+<!-- 14. PA-220 → pi0 Traffic Logs  [via PA-220 bottom, y=290 inter-zone gap bus] (yellow) -->
+<path d="M490,242 L490,290 L175,290 L175,368" fill="none" stroke="#facc15" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ay)"/>
+<text x="333" y="284" font-size="9" fill="#fde68a" text-anchor="middle">Traffic Logs</text>
 
-<!-- 15. pi0 → Loki Vector  [x=175 vertical, y=815 bottom bus] (blue) -->
-<path d="M175,394 L175,815 L90,815 L90,855" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ab)"/>
-<text x="157" y="614" font-size="9" fill="#7dd3fc" text-anchor="middle" transform="rotate(-90,157,614)">Vector</text>
+<!-- 15. pi0 → Loki Vector  [pi0 left exit, x=90 vertical to Loki] (blue) -->
+<path d="M115,392 L90,392 L90,855" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ab)"/>
+<text x="72" y="624" font-size="9" fill="#7dd3fc" text-anchor="middle" transform="rotate(-90,72,624)">Vector</text>
 
-<!-- 16. Suricata → pi0 EVE JSON  [y=143 top bus, x=270 vertical] (rose dashed) -->
-<path d="M1180,234 L1180,143 L270,143 L270,346 L175,346" fill="none" stroke="#fb7185" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ar)"/>
+<!-- 16. Suricata → pi0 EVE JSON  [y=143 top bus, x=260 vertical, enters pi0 right] (rose dashed) -->
+<path d="M1180,234 L1180,143 L260,143 L260,392 L235,392" fill="none" stroke="#fb7185" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ar)"/>
 <text x="725" y="137" font-size="9" fill="#fda4af" text-anchor="middle">EVE JSON → pi0</text>
 
 <!-- 17. LLM → Suricata Triage  [left lane x=1160] (rose) -->
@@ -539,9 +539,9 @@ text{font-family:'IBM Plex Sans',sans-serif}
 <text x="1225" y="346" font-size="9" fill="#94a3b8">Analysis</text>
 
 <!-- 19–21. pi1 → Graf / Prom / Loki  [staggered y=795,806,817 buses] (yellow dashed) -->
-<path d="M430,384 L430,795 L360,795 L360,855" fill="none" stroke="#facc15" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
-<path d="M415,384 L415,806 L220,806 L220,855" fill="none" stroke="#facc15" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
-<path d="M400,384 L400,817 L90,817 L90,855" fill="none" stroke="#facc15" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
+<path d="M430,406 L430,795 L360,795 L360,855" fill="none" stroke="#facc15" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
+<path d="M415,406 L415,806 L220,806 L220,855" fill="none" stroke="#facc15" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
+<path d="M400,406 L400,817 L90,817 L90,855" fill="none" stroke="#facc15" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
 
 <!-- 22. SentinelNet → Wazuh Alerts  [y=568 bus] (gray dashed) -->
 <path d="M920,292 L920,568 L470,568 L470,855" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4" stroke-linejoin="round" marker-end="url(#ad)"/>
@@ -562,13 +562,13 @@ text{font-family:'IBM Plex Sans',sans-serif}
 <!-- PA-220 -->
 <g transform="translate(490,218)"><rect x="-68" y="-24" width="136" height="48" class="nr np"/><text y="-7" class="t1" fill="#facc15">🔥 PA-220</text><text y="10" class="t2" fill="#fde68a">PAN-OS 10.2 · 4 Zones</text></g>
 <!-- dmz-mgmt -->
-<g transform="translate(175,370)"><rect x="-60" y="-24" width="120" height="48" class="nr" style="fill:#0c2440;stroke:#38bdf8;stroke-width:1.5"/><text y="-7" class="t1" fill="#38bdf8">pi0</text><text y="10" class="t2" fill="#7dd3fc">DNS / LDAP / Vector</text></g>
-<g transform="translate(175,458)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><text y="-7" class="t1" fill="#c084fc">🔐 Admin Bastion</text><text y="10" class="t2" fill="#d8b4fe">bastion.vandine.us</text></g>
+<g transform="translate(175,392)"><rect x="-60" y="-24" width="120" height="48" class="nr" style="fill:#0c2440;stroke:#38bdf8;stroke-width:1.5"/><text y="-7" class="t1" fill="#38bdf8">pi0</text><text y="10" class="t2" fill="#7dd3fc">DNS / LDAP / Vector</text></g>
+<g transform="translate(175,480)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><text y="-7" class="t1" fill="#c084fc">🔐 Admin Bastion</text><text y="10" class="t2" fill="#d8b4fe">bastion.vandine.us</text></g>
 <!-- dmz-services  (2×2 grid: top row pi1/DB, bottom row Tunnel/BastionUser) -->
-<g transform="translate(415,360)"><rect x="-60" y="-24" width="120" height="48" class="nr na"/><text y="-7" class="t1" fill="#4ade80">pi1</text><text y="10" class="t2" fill="#86efac">Grafana / Prom / Loki</text></g>
-<g transform="translate(560,360)"><rect x="-57" y="-24" width="114" height="48" class="nr nd"/><text y="-7" class="t1" fill="#a78bfa">🗄️ PostgreSQL</text><text y="10" class="t2" fill="#c4b5fd">pi1 · 192.168.20.10</text></g>
-<g transform="translate(415,448)"><rect x="-55" y="-24" width="110" height="48" class="nr" style="fill:#022714;stroke:#4ade80;stroke-width:1.5"/><text y="-7" class="t1" fill="#4ade80">cloudflared</text><text y="10" class="t2" fill="#86efac">Tunnel Ingress</text></g>
-<g transform="translate(560,448)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><text y="-7" class="t1" fill="#c084fc">🖥️ User Bastion</text><text y="10" class="t2" fill="#d8b4fe">nettools.vandine.us</text></g>
+<g transform="translate(415,382)"><rect x="-60" y="-24" width="120" height="48" class="nr na"/><text y="-7" class="t1" fill="#4ade80">pi1</text><text y="10" class="t2" fill="#86efac">Grafana / Prom / Loki</text></g>
+<g transform="translate(560,382)"><rect x="-57" y="-24" width="114" height="48" class="nr nd"/><text y="-7" class="t1" fill="#a78bfa">🗄️ PostgreSQL</text><text y="10" class="t2" fill="#c4b5fd">pi1 · 192.168.20.10</text></g>
+<g transform="translate(415,470)"><rect x="-55" y="-24" width="110" height="48" class="nr" style="fill:#022714;stroke:#4ade80;stroke-width:1.5"/><text y="-7" class="t1" fill="#4ade80">cloudflared</text><text y="10" class="t2" fill="#86efac">Tunnel Ingress</text></g>
+<g transform="translate(560,470)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><text y="-7" class="t1" fill="#c084fc">🖥️ User Bastion</text><text y="10" class="t2" fill="#d8b4fe">nettools.vandine.us</text></g>
 <!-- K3s — left column -->
 <g transform="translate(760,268)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><text y="-7" class="t1" fill="#4ade80">📱 Frontend</text><text y="10" class="t2" fill="#86efac">React+nginx · :30522</text></g>
 <g transform="translate(760,348)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><text y="-7" class="t1" fill="#4ade80">⚡ Backend</text><text y="10" class="t2" fill="#86efac">Bun+Hono · :30520</text></g>

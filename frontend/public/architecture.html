@@ -832,24 +832,24 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
     <section>
       <h2>Log Pipeline</h2>
       <div class="pipeline">
-        <div class="pipeline-step">🔥 PA-220</div>
-        <span class="pipeline-arrow">→</span>
-        <div class="pipeline-step">📝 Syslog CSV</div>
-        <span class="pipeline-arrow">→</span>
-        <div class="pipeline-step">🔄 Vector (pi0)</div>
-        <span class="pipeline-arrow">→</span>
-        <div class="pipeline-step">📊 Loki (pi1)</div>
-        <span class="pipeline-arrow">→</span>
-        <div class="pipeline-step">📈 Grafana</div>
+        <div class="pipeline-step"><svg width="14" height="14" style="color:#ca8a04"><use href="#i-flame"/></svg>PA-220</div>
+        <span class="pipeline-arrow">&rarr;</span>
+        <div class="pipeline-step"><svg width="14" height="14" style="color:#ca8a04"><use href="#i-file"/></svg>Syslog CSV</div>
+        <span class="pipeline-arrow">&rarr;</span>
+        <div class="pipeline-step">Vector (pi0)</div>
+        <span class="pipeline-arrow">&rarr;</span>
+        <div class="pipeline-step"><svg width="14" height="14" style="color:#ca8a04"><use href="#i-file"/></svg>Loki (pi1)</div>
+        <span class="pipeline-arrow">&rarr;</span>
+        <div class="pipeline-step"><svg width="14" height="14" style="color:#ca8a04"><use href="#i-grafana"/></svg>Grafana</div>
       </div>
       <div class="pipeline">
-        <div class="pipeline-step">🛡️ Suricata</div>
-        <span class="pipeline-arrow">→</span>
-        <div class="pipeline-step">📝 EVE JSON</div>
-        <span class="pipeline-arrow">→</span>
-        <div class="pipeline-step">🤖 LLM Triage</div>
-        <span class="pipeline-arrow">→</span>
-        <div class="pipeline-step">📱 Telegram/Email</div>
+        <div class="pipeline-step"><svg width="14" height="14" style="color:#e11d48"><use href="#i-radar"/></svg>Suricata</div>
+        <span class="pipeline-arrow">&rarr;</span>
+        <div class="pipeline-step"><svg width="14" height="14" style="color:#e11d48"><use href="#i-file"/></svg>EVE JSON</div>
+        <span class="pipeline-arrow">&rarr;</span>
+        <div class="pipeline-step"><svg width="14" height="14" style="color:#e11d48"><use href="#i-bot"/></svg>LLM Triage</div>
+        <span class="pipeline-arrow">&rarr;</span>
+        <div class="pipeline-step">Telegram / Email</div>
       </div>
     </section>
 

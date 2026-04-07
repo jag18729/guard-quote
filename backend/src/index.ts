@@ -3,7 +3,7 @@
  * High-performance backend with webhooks support
  */
 import { Hono } from "hono";
-import { cors } from "hono/cors";
+import { corsMiddleware } from "./cors-config";
 import { logger } from "hono/logger";
 import { sql, testConnection } from "./db/connection";
 import { checkMLHealth, getMLClientStatus } from "./services/ml-client";
@@ -33,7 +33,7 @@ import {
 const app = new Hono();
 
 app.use("*", logger());
-app.use("*", cors());
+app.use("*", corsMiddleware);
 
 // ============================================
 // HEALTH & INFO

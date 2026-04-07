@@ -4,7 +4,7 @@ import { Resend } from "resend";
 import os from 'os';
 import { execSync } from 'child_process';
 import { Hono } from 'hono';
-import { cors } from 'hono/cors';
+import { corsMiddleware } from './src/cors-config';
 import { logger } from 'hono/logger';
 import bcrypt from "bcrypt";
 import { sql, testConnection } from './src/db/connection';
@@ -19,7 +19,7 @@ function getResend() {
   return resend;
 }
 app.use('*', logger());
-app.use('*', cors());
+app.use('*', corsMiddleware);
 
 // Health
 app.get('/', (c) => c.json({ status: 'ok', service: 'GuardQuote API', version: '2.2.0' }));

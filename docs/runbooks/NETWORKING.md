@@ -13,8 +13,8 @@ Pi1 PostgreSQL is in `dmz-services` zone (192.168.20.x).
 
 | Host | Direct IP | Tailscale IP | Use |
 |------|-----------|--------------|-----|
-| Pi1 (PostgreSQL) | 192.168.20.10 ❌ | 100.77.26.41 ✅ | DATABASE_URL |
-| Pi2 (K3s) | 192.168.22.10 ❌ | 100.111.113.35 ✅ | Inbound source |
+| Pi1 (PostgreSQL) | 192.168.20.10 | 100.77.26.41 | DATABASE_URL |
+| Pi2 (K3s) | 192.168.22.10 | 100.111.113.35 | Inbound source |
 | ThinkStation | 192.168.2.x | 100.126.232.42 | OpenClaw / monitoring |
 
 ---
@@ -37,7 +37,7 @@ kubectl patch secret guardquote-secrets -n guardquote \
 kubectl rollout restart deployment/guardquote-backend -n guardquote
 ```
 
-**Never use** `192.168.20.10:5432` — blocked by PA-220.
+**Never use** `192.168.20.10:5432`, blocked by PA-220.
 
 ---
 
@@ -72,7 +72,7 @@ ssh johnmarston@100.77.26.41 "echo 'hostnossl    all             all            
 Pi2 has direct internet access via its matrix network USB ethernet adapter (DHCP from UDM, metric 50).
 K3s pods masquerade through Pi2's host network and inherit this egress path.
 
-`OAUTH_PROXY_URL` is unset — the backend makes OAuth token and userinfo calls directly.
+`OAUTH_PROXY_URL` is unset, the backend makes OAuth token and userinfo calls directly.
 The `oauth-proxy.service` on ThinkStation has been stopped and disabled (2026-03-17).
 
 ---
@@ -98,7 +98,7 @@ ssh rafaeljg@100.111.113.35 "kubectl get svc -n guardquote"
 
 ## Prometheus Scrape Targets
 
-All Prometheus jobs in `~/monitoring/prometheus.yml` on Pi1 that target Pi2 or Pi0 services **must use Tailscale IPs** — Pi1 (dmz-services) has no direct route to Pi2 (dmz-security) or many Pi0 ports.
+All Prometheus jobs in `~/monitoring/prometheus.yml` on Pi1 that target Pi2 or Pi0 services **must use Tailscale IPs**, Pi1 (dmz-services) has no direct route to Pi2 (dmz-security) or many Pi0 ports.
 
 Full mapping and details: `docs/infrastructure/monitoring/README.md`
 

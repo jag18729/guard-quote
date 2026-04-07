@@ -74,11 +74,11 @@ event_type:database_error OR message:"connection timeout"
 
 When you ingest these samples, your SIEM should trigger:
 
-- ⚠️ **3 brute force alerts** (multiple failed SSH from same IP)
-- ⚠️ **4 API auth failures** (invalid credentials)
-- ⚠️ **1 permission denied** (developer trying to delete user)
-- ⚠️ **1 database error** (connection timeout)
-- ℹ️ **3 sudo commands** (privileged actions)
+- **3 brute force alerts** (multiple failed SSH from same IP)
+- **4 API auth failures** (invalid credentials)
+- **1 permission denied** (developer trying to delete user)
+- **1 database error** (connection timeout)
+- ℹ **3 sudo commands** (privileged actions)
 
 ## Live Log Connection
 

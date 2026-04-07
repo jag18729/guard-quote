@@ -12,7 +12,7 @@ feature/xxx          ← Individual work
 
 ---
 
-## 🚀 Quick Reference
+## Quick Reference
 
 ### Starting Work on an Issue
 
@@ -40,7 +40,7 @@ git push -u origin feature/45-vector-elastic
 
 ---
 
-## 📋 Common Commands
+## Common Commands
 
 ### Branch Management
 
@@ -172,7 +172,7 @@ gh pr merge 123 --squash
 
 ---
 
-## 🔧 Issue #45 Workflow
+## Issue #45 Workflow
 
 ### Step 1: Create Feature Branch
 
@@ -271,7 +271,7 @@ git branch -d feature/45-vector-elastic
 
 ---
 
-## ⚠️ Conflict Resolution
+## Conflict Resolution
 
 ```bash
 # If you get conflicts during merge/rebase:
@@ -299,7 +299,7 @@ git merge --continue
 
 ---
 
-## 🔗 Useful Aliases
+## Useful Aliases
 
 Add to `~/.gitconfig`:
 
@@ -317,7 +317,7 @@ Add to `~/.gitconfig`:
 
 ---
 
-## 📁 Branch Naming Convention
+## Branch Naming Convention
 
 ```
 feature/45-vector-elastic    # New feature tied to issue

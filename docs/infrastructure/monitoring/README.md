@@ -24,13 +24,13 @@ Metrics are collected from all fleet hosts via node_exporter, blackbox, and SNMP
          ▼
 ┌────────────────────────────────────────────────────┐
 │  node_exporter :9100 on each host                  │
-│  Pi0: 100.114.94.18  (Tailscale — DMZ IP dead)     │
+│  Pi0: 100.114.94.18  (Tailscale, DMZ IP dead)     │
 │  Pi2: 100.111.113.35 (Tailscale only)              │
 │  RV2: 192.168.25.2   (reachable via dmz-security)  │
 └────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────┐
-│  Pi2 — Promtail (Docker)                             │
+│  Pi2, Promtail (Docker)                             │
 │  Scrapes: K3s pod logs (guardquote namespace)        │
 │  Ships to: Loki at http://100.77.26.41:3100          │
 │  Config: ~/promtail/config.yml                       │
@@ -63,7 +63,7 @@ The DMZ ethernet adapter (`enx806d972f9573`) was physically moved from Pi0 to Pi
 
 Affected jobs: `node-pi0`, `dns-probes` (dns-primary), `dns-pi3`, `tcp-syslog`, `http-services` (lam), `http-adguard` (adguard-primary), `blackbox-pi3-internal`.
 
-Instance label relabeling preserves human-readable labels (e.g. `192.168.21.10:53`) in Grafana even though scraping goes through Tailscale — see `prometheus.yml` relabeling rules for `service=dns-primary` and `service=adguard-primary`.
+Instance label relabeling preserves human-readable labels (e.g. `192.168.21.10:53`) in Grafana even though scraping goes through Tailscale, see `prometheus.yml` relabeling rules for `service=dns-primary` and `service=adguard-primary`.
 
 ## Prometheus Config
 
@@ -75,8 +75,8 @@ Instance label relabeling preserves human-readable labels (e.g. `192.168.21.10:5
 | Status | Count | Notes |
 |--------|-------|-------|
 | UP | 42 | All reachable hosts and services |
-| DOWN (expected) | 1 | Pi3 node_exporter (node-pi3 — Pi3 recently moved) |
-| DOWN (expected) | 1 | XPS — offline |
+| DOWN (expected) | 1 | Pi3 node_exporter (node-pi3, Pi3 recently moved) |
+| DOWN (expected) | 1 | XPS, offline |
 | DOWN (expected) | 1 | Pi3 blackbox Prometheus probe (9090/-/healthy returns non-200) |
 
 ## Grafana Datasources
@@ -116,7 +116,7 @@ docker exec grafana grafana-cli admin reset-admin-password '<password>'
 
 This is run automatically in the deployment runbook. See credentials in team `.env`.
 
-## Promtail (Pi2 — K3s Log Shipping)
+## Promtail (Pi2, K3s Log Shipping)
 
 Promtail runs as a Docker container on Pi2, scraping all K3s pod logs in the `guardquote` namespace and shipping them to Loki on Pi1.
 
@@ -145,7 +145,7 @@ Loki stream labels produced:
 {job="guardquote-logs"} |~ "(error|Error|ERROR|failed|Failed|OAuth|401|403)"
 ```
 
-## iperf3 — Disabled Fleet-Wide
+## iperf3, Disabled Fleet-Wide
 
 iperf3 services have been disabled on all hosts.
 
@@ -153,7 +153,7 @@ iperf3 services have been disabled on all hosts.
 |------|-----------------|
 | Pi2 | `iperf3-exporter.service`, `iperf3-server.service`, `iperf3.service` |
 | Pi0 | `iperf3-server.service` |
-| Pi1 | `iperf3-server.service` (disabled previously — Wazuh noise) |
+| Pi1 | `iperf3-server.service` (disabled previously, Wazuh noise) |
 
 ## SNMP Exporter
 

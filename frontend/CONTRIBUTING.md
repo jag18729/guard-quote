@@ -12,9 +12,9 @@ The `master` branch is protected. All changes must go through pull requests.
    ```
 
 2. **Make your changes**
-   - Follow existing code style
-   - Add tests if applicable
-   - Update documentation
+  - Follow existing code style
+  - Add tests if applicable
+  - Update documentation
 
 3. **Commit with clear messages**
    ```bash
@@ -27,20 +27,20 @@ The `master` branch is protected. All changes must go through pull requests.
    ```bash
    git push origin feature/your-feature-name
    ```
-   Then create a Pull Request on GitHub.
+  Then create a Pull Request on GitHub.
 
 5. **Wait for review**
-   - CI must pass (lint, build, tests)
-   - Code owner (Rafa) must approve
-   - Address any feedback
+  - CI must pass (lint, build, tests)
+  - Code owner (Rafa) must approve
+  - Address any feedback
 
 ## What NOT to do
 
-- ❌ Push directly to `master`
-- ❌ Force push to any branch
-- ❌ Change CI/CD configuration without discussion
-- ❌ Modify auth/security code without approval
-- ❌ Delete or rename core files
+- Push directly to `master`
+- Force push to any branch
+- Change CI/CD configuration without discussion
+- Modify auth/security code without approval
+- Delete or rename core files
 
 ## Architecture Decisions
 

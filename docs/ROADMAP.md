@@ -1,11 +1,11 @@
 # GuardQuote Roadmap & UAT Plan
 
-**Last Updated:** 2026-04-07  
+**Last Updated:** 2026-04-07
 **Target:** Capstone Presentation (TBD - update date)
 
 ---
 
-## 📊 What's Done (This Week Alone)
+## What's Done (This Week Alone)
 
 ### Infrastructure (Rafa)
 - [x] Migrated off AWS entirely → Pi cluster
@@ -46,30 +46,30 @@
 
 ---
 
-## 🗓️ Roadmap
+## Roadmap
 
-### Week 1: Feb 3-7 — Infrastructure & Integration ✅
-
-| Day | Tasks | Owner | Status |
-|-----|-------|-------|--------|
-| Mon 2/3 | Pi cluster setup, Deno migration | Rafa | ✅ Done |
-| Tue 2/4 | Monitoring stack, LDAP | Rafa | ✅ Done |
-| Wed 2/5 | Admin dashboard, RBAC, GitHub sync | Rafa | ✅ Done |
-| Thu 2/6 | SNMP monitoring, data flow diagram, docs | Rafa | ✅ Done |
-| Fri 2/7 | Team meeting prep, final integration | Rafa | ✅ Done |
-| Sat 2/7 | Team Meeting @ 3PM | All | ✅ Done |
-
-### Week 1.5: Feb 8-9 — Node.js Migration & APM ✅
+### Week 1: Feb 3-7, Infrastructure & Integration
 
 | Day | Tasks | Owner | Status |
 |-----|-------|-------|--------|
-| Sat 2/8 | GitHub security automation, CI/CD | Rafa | ✅ Done |
-| Sun 2/9 | Node.js + dd-trace migration | Rafa | ✅ Done |
-| Sun 2/9 | Datadog APM integration (68+ spans) | Rafa | ✅ Done |
-| Sun 2/9 | Full API parity (50 endpoints) | Rafa | ✅ Done |
-| Sun 2/9 | Tech stack page redesign | Rafa | ✅ Done |
+| Mon 2/3 | Pi cluster setup, Deno migration | Rafa | Done |
+| Tue 2/4 | Monitoring stack, LDAP | Rafa | Done |
+| Wed 2/5 | Admin dashboard, RBAC, GitHub sync | Rafa | Done |
+| Thu 2/6 | SNMP monitoring, data flow diagram, docs | Rafa | Done |
+| Fri 2/7 | Team meeting prep, final integration | Rafa | Done |
+| Sat 2/7 | Team Meeting @ 3PM | All | Done |
 
-### Week 2: Feb 10-14 (Current) — SIEM & Testing
+### Week 1.5: Feb 8-9, Node.js Migration & APM
+
+| Day | Tasks | Owner | Status |
+|-----|-------|-------|--------|
+| Sat 2/8 | GitHub security automation, CI/CD | Rafa | Done |
+| Sun 2/9 | Node.js + dd-trace migration | Rafa | Done |
+| Sun 2/9 | Datadog APM integration (68+ spans) | Rafa | Done |
+| Sun 2/9 | Full API parity (50 endpoints) | Rafa | Done |
+| Sun 2/9 | Tech stack page redesign | Rafa | Done |
+
+### Week 2: Feb 10-14 (Current), SIEM & Testing
 
 | Day | Tasks | Owner | Status |
 |-----|-------|-------|--------|
@@ -82,7 +82,7 @@
 
 > **Note:** Backend API is ready for UAT. All 50 endpoints functional with Datadog APM tracing.
 
-### Week 3: Feb 17-21 — UAT & Documentation
+### Week 3: Feb 17-21, UAT & Documentation
 
 | Day | Tasks | Owner | Status |
 |-----|-------|-------|--------|
@@ -92,7 +92,7 @@
 | Thu 2/20 | Final documentation | All | ⏳ |
 | Fri 2/21 | **Peer Review** | All | ⏳ |
 
-### Week 4: Feb 24-28 — Final Polish
+### Week 4: Feb 24-28, Final Polish
 
 | Day | Tasks | Owner | Status |
 |-----|-------|-------|--------|
@@ -104,7 +104,7 @@
 
 ---
 
-## ✅ UAT Checklist
+## UAT Checklist
 
 ### Round 1: Feb 14 (Functional Testing)
 
@@ -169,7 +169,7 @@
 
 ---
 
-## 📝 Documentation Checklist
+## Documentation Checklist
 
 ### Technical Docs
 - [ ] Architecture diagram (current)
@@ -193,7 +193,7 @@
 
 ---
 
-## 🎯 Success Criteria
+## Success Criteria
 
 ### Functional
 - [ ] Client can request quote end-to-end
@@ -220,7 +220,7 @@
 
 ---
 
-## 🏁 Final Checklist (Before Presentation)
+## Final Checklist (Before Presentation)
 
 - [ ] All UAT passed
 - [ ] All docs reviewed

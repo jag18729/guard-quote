@@ -1,10 +1,10 @@
-# 🛡️ SecOps Onboarding — GuardQuote v2.0
+# SecOps Onboarding, GuardQuote v2.0
 
 Welcome to the team. Here's everything you need to get going.
 
 ---
 
-## 📋 Links
+## Links
 
 | Resource | URL |
 |----------|-----|
@@ -15,15 +15,15 @@ Welcome to the team. Here's everything you need to get going.
 
 ---
 
-## 🌐 Getting Connected
+## Getting Connected
 
-1. **Tailscale** — You've been approved as network admin. Install from https://tailscale.com/download and log in. Run `tailscale status` to see the mesh.
-2. **SSH** — Once on Tailscale, SSH to Pi2 (your primary box) and Pi1 (monitoring). Ask Rafael for credentials.
-3. **Grafana** — Credentials in the `.env` file (ask Rafael). Direct link: https://grafana.vandine.us
+1. **Tailscale**, You've been approved as network admin. Install from https://tailscale.com/download and log in. Run `tailscale status` to see the mesh.
+2. **SSH**, Once on Tailscale, SSH to Pi2 (your primary box) and Pi1 (monitoring). Ask Rafael for credentials.
+3. **Grafana**, Credentials in the `.env` file (ask Rafael). Direct link: https://grafana.vandine.us
 
 ---
 
-## 🔑 Secrets
+## Secrets
 
 All credentials, IPs, and infrastructure details are in the shared `.env` file. **Ask Rafael for it.**
 
@@ -33,13 +33,13 @@ cp ~/path/to/shared.env .env
 ```
 
 **Rules:**
-- Never commit `.env` — it's in `.gitignore`
+- Never commit `.env`, it's in `.gitignore`
 - Never put credentials in code, comments, docs, or messages
-- GitHub Secrets handle CI/CD — don't touch those
+- GitHub Secrets handle CI/CD, don't touch those
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 Internet → Cloudflare Tunnel → Pi2 K3s (NodePort 30522)
@@ -56,14 +56,14 @@ Internet → Cloudflare Tunnel → Pi2 K3s (NodePort 30522)
 **Key point:** PA-220 firewall blocks direct traffic between Pi zones. All cross-host connections (DB, OAuth, monitoring) route through **Tailscale**. This is why you can't reach Pi1's PostgreSQL from Pi2 directly.
 
 Three Pis behind a Palo Alto PA-220 firewall, each in its own DMZ zone:
-- **pi0** (dmz-mgmt) — DNS/AdGuard, LDAP, SNMP, NFS log archive
-- **pi1** (dmz-services) — PostgreSQL 17, Grafana, Prometheus, Loki — **monitoring**
-- **pi2** (dmz-security) — K3s (GuardQuote v2), Wazuh HIDS, cloudflared — **your primary box**
-- **RV2** (dmz-security) — Suricata IDS (74k rules), lab bastion
+- **pi0** (dmz-mgmt), DNS/AdGuard, LDAP, SNMP, NFS log archive
+- **pi1** (dmz-services), PostgreSQL 17, Grafana, Prometheus, Loki, **monitoring**
+- **pi2** (dmz-security), K3s (GuardQuote v2), Wazuh HIDS, cloudflared, **your primary box**
+- **RV2** (dmz-security), Suricata IDS (74k rules), lab bastion
 
 ---
 
-## 🔐 Your Focus: SIEM & Security Monitoring
+## Your Focus: SIEM & Security Monitoring
 
 ### What's Running on Pi2 (Your Box)
 
@@ -87,11 +87,11 @@ ssh rafaeljg@100.118.229.114 "systemctl status suricata"
 
 | Service | Host | Access | Status |
 |---------|------|--------|--------|
-| Wazuh HIDS | Pi2 Docker | `https://100.111.113.35:55000/` | ✅ Running |
-| Suricata IDS | RV2 | port 8090 | ✅ Running |
-| Sentinel Grafana | Pi2 K3s (:30300) | internal | ✅ Running |
-| SentinelNet API | Pi2 K3s (:30800) | internal | ⚠️ Image missing — needs rebuild |
-| Wazuh alerts → Loki | Pi2 → Pi1 | `{job="wazuh-alerts"}` in Grafana | ✅ Flowing |
+| Wazuh HIDS | Pi2 Docker | `https://100.111.113.35:55000/` | Running |
+| Suricata IDS | RV2 | port 8090 | Running |
+| Sentinel Grafana | Pi2 K3s (:30300) | internal | Running |
+| SentinelNet API | Pi2 K3s (:30800) | internal | Image missing, needs rebuild |
+| Wazuh alerts → Loki | Pi2 → Pi1 | `{job="wazuh-alerts"}` in Grafana | Flowing |
 
 ### Grafana Log Queries
 
@@ -121,7 +121,7 @@ ssh rafaeljg@100.118.229.114 "systemctl status suricata"
 
 ---
 
-## 🧪 Local Dev
+## Local Dev
 
 ```bash
 # Clone
@@ -140,24 +140,24 @@ cd frontend && bun install && bun run dev
 
 ---
 
-## 📋 Your Issues
+## Your Issues
 
 | Issue | Title | Priority |
 |-------|-------|----------|
 | #56 | [UAT] Isaiah: Security & Monitoring | High |
 | #110 | Wazuh alert analysis + tuning | High |
-| #124 | Kali penetration testing — real attack data | Medium |
+| #124 | Kali penetration testing, real attack data | Medium |
 | #109 | RV2 Edge IDS + Pi Fleet panels | Medium |
 
 ---
 
-## 🧰 Useful Commands
+## Useful Commands
 
 ```bash
 # Check GuardQuote health
 curl https://guardquote.vandine.us/api/health
 
-# Wazuh API (from Pi2) — credentials in .env (ask Rafael)
+# Wazuh API (from Pi2), credentials in .env (ask Rafael)
 curl -k -u wazuh-admin:<password> https://localhost:55000/
 
 # Suricata rules count on RV2
@@ -172,14 +172,14 @@ df -h /
 
 ---
 
-## 👥 Team
+## Team
 
 | Name | Role | GitHub |
 |------|------|--------|
-| Rafael Garcia | Lead — CI/CD, ML, Data | @jag18729 |
-| Milkias Kassa | IAM — Identity & Access | @Malachizirgod |
-| Isaiah Bernal | SecOps — SIEM & Security | @ibernal1815 |
-| Xavier Nguyen | UX — Design & Frontend | @xan942 |
+| Rafael Garcia | Lead, CI/CD, ML, Data | @jag18729 |
+| Milkias Kassa | IAM, Identity & Access | @Malachizirgod |
+| Isaiah Bernal | SecOps, SIEM & Security | @ibernal1815 |
+| Xavier Nguyen | UX, Design & Frontend | @xan942 |
 
 ---
 

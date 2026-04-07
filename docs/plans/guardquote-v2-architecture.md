@@ -1,6 +1,6 @@
-# GuardQuote v2.0 — Architecture Document
+# GuardQuote v2.0, Architecture Document
 
-> **Role**: Architect (documentation only — no implementation code)
+> **Role**: Architect (documentation only, no implementation code)
 > **Status**: Proposed changes with examples, rationale, and recommendations
 > **Last updated**: 2026-04-07
 
@@ -17,7 +17,7 @@
 7. [Database Schema Evolution](#7-database-schema-evolution)
 8. [Deployment Architecture](#8-deployment-architecture)
 9. [Migration Strategy](#9-migration-strategy)
-10. [Architect's Concerns — Open Questions & Known Gaps](#10-architects-concerns--open-questions--known-gaps)
+10. [Architect's Concerns, Open Questions & Known Gaps](#10-architects-concerns--open-questions--known-gaps)
 6. [Frontend Changes](#6-frontend-changes)
 7. [Database Schema Evolution](#7-database-schema-evolution)
 8. [Deployment Architecture](#8-deployment-architecture)
@@ -31,27 +31,27 @@
 
 The v1 backend is a 1,450-line monolithic `index.ts` that does everything: routing, auth, CRUD, ML prediction, webhook delivery, Pi SSH management, and WebSocket handling. It's a working prototype, but it's got three structural problems that block the next stage of growth:
 
-1. **The "ML engine" is hardcoded math.** The code says `model_used: "GuardQuote ML v2.0"` and reports `r2_score: 0.89`, but those are **static strings** — there's no model, no training, no inference. The `ml_training_data` table exists and has good feature columns, but nothing reads from it to learn. The entire pricing logic is nested if/else multipliers.
+1. **The "ML engine" is hardcoded math.** The code says `model_used: "GuardQuote ML v2.0"` and reports `r2_score: 0.89`, but those are **static strings**, there's no model, no training, no inference. The `ml_training_data` table exists and has good feature columns, but nothing reads from it to learn. The entire pricing logic is nested if/else multipliers.
 
 2. **1,900 lines of infrastructure management don't belong here.** `infrastructure.ts` (622L), `monitor.ts` (600L), and `pi-services.ts` (696L) SSH into Raspberry Pis to manage systemd services. This is the same thing OpenClaw, Prometheus, and Grafana already do. It's duplicated effort, and it means a quoting app has SSH credentials and systemd control baked in.
 
-3. **No SSO.** Users can only sign up with email/password. For a B2B security quoting platform, OAuth via GitHub/Google is table stakes — clients expect it, and it removes friction from the signup funnel.
+3. **No SSO.** Users can only sign up with email/password. For a B2B security quoting platform, OAuth via GitHub/Google is table stakes, clients expect it, and it removes friction from the signup funnel.
 
 ### What Works Well (Keep These)
 
 - **Database schema**: 3NF normalized, 11 tables, clean relationships. The `ml_training_data` table has exactly the right features for real training.
-- **Auth service** (`services/auth.ts`): Already uses `Bun.password` with argon2id. Hand-rolled JWT with HMAC-SHA256 via `crypto.subtle` — clean, no deps.
+- **Auth service** (`services/auth.ts`): Already uses `Bun.password` with argon2id. Hand-rolled JWT with HMAC-SHA256 via `crypto.subtle`, clean, no deps.
 - **WebSocket service** (`services/websocket.ts`): Pub/sub channels, real-time price updates, admin vs client connections. Architecture is sound.
 - **Webhook system**: HMAC-signed delivery with retry tracking and logs. Production-grade pattern.
 - **S2S auth middleware** (`middleware/s2s-auth.ts`): Pre-shared key for internal service communication. This is exactly what the ML engine will need.
 - **Ingest schemas** (`schemas/ingest.ts`): Zod transforms that handle messy AI-generated training data. Smart defensive pattern.
-- **Frontend**: React 18, Tailwind, framer-motion, xyflow — solid stack, good component structure.
+- **Frontend**: React 18, Tailwind, framer-motion, xyflow, solid stack, good component structure.
 
 ### What the Codebase Tells Us
 
-Looking at `index.ts` lines ~280-420, the ML prediction endpoint duplicates the same multiplier logic that exists in `services/quote-calculator.ts`. This happened because the monolithic file grew organically — someone needed a `/ml/quote` endpoint and copy-pasted the calculation instead of importing the service. This is the #1 sign it's time to split into modules.
+Looking at `index.ts` lines ~280-420, the ML prediction endpoint duplicates the same multiplier logic that exists in `services/quote-calculator.ts`. This happened because the monolithic file grew organically, someone needed a `/ml/quote` endpoint and copy-pasted the calculation instead of importing the service. This is the #1 sign it's time to split into modules.
 
-The frontend `admin/ML.tsx` already has UI for model status, training data management, version rollback, and retraining triggers — but the backend endpoints it calls (`/api/admin/ml/status`, `/api/admin/ml/rollback`, `/api/admin/ml/retrain`) don't exist in `index.ts`. The admin ML page is **built for a real ML engine that was never connected**. That's actually good news — the frontend is ready.
+The frontend `admin/ML.tsx` already has UI for model status, training data management, version rollback, and retraining triggers, but the backend endpoints it calls (`/api/admin/ml/status`, `/api/admin/ml/rollback`, `/api/admin/ml/retrain`) don't exist in `index.ts`. The admin ML page is **built for a real ML engine that was never connected**. That's actually good news, the frontend is ready.
 
 ---
 
@@ -63,7 +63,7 @@ Let users sign in with GitHub or Google instead of (or in addition to) email/pas
 
 ### Why This Matters
 
-The current flow requires every new client to create a password. For a security company selling to tech-savvy businesses, that's friction. GitHub OAuth is particularly relevant — security teams live in GitHub. Google covers everyone else. The architecture should make adding a new provider a config change, not a code change.
+The current flow requires every new client to create a password. For a security company selling to tech-savvy businesses, that's friction. GitHub OAuth is particularly relevant, security teams live in GitHub. Google covers everyone else. The architecture should make adding a new provider a config change, not a code change.
 
 ### How It Works
 
@@ -77,9 +77,9 @@ The current flow requires every new client to create a password. For a security 
 │ "Login   │     │          │     │          │     │          │
 │  with    │     │ Generate │     │ User     │     │ Exchange │
 │  GitHub" │     │ state +  │     │ consents │     │ code for │
-│          │     │ redirect │     │          │     │ token,   │
+│          │     │ redirect │     │          │     │ token,  │
 │          │     │          │     │          │     │ get user │
-│          │◄────│──────────│◄────│──────────│◄────│ info,    │
+│          │◄────│──────────│◄────│──────────│◄────│ info,   │
 │ Receive  │     │          │     │          │     │ issue    │
 │ JWT      │     │          │     │          │     │ JWT      │
 └─────────┘     └──────────┘     └──────────┘     └──────────┘
@@ -105,16 +105,16 @@ DELETE /api/auth/link/:provider → Unlink provider from account
 2. Exchange the authorization `code` for an access token (HTTP POST to provider)
 3. Fetch the user's profile from the provider API (email, name, avatar)
 4. **Decision point**: Does this email already exist in our `users` table?
-   - **Yes, with this provider linked**: Log them in, issue JWT
-   - **Yes, but different provider or password-only**: Link the provider, log them in
-   - **No**: Create new user with `provider = 'github'`, no password needed
+  - **Yes, with this provider linked**: Log them in, issue JWT
+  - **Yes, but different provider or password-only**: Link the provider, log them in
+  - **No**: Create new user with `provider = 'github'`, no password needed
 5. Issue JWT (same `createToken()` we already have in `services/auth.ts`)
 
-**Why no framework**: The OAuth flow is just 3 HTTP requests (redirect, token exchange, profile fetch). Using `fetch()` directly to GitHub/Google APIs is simpler than pulling in passport.js or similar. We already have `crypto.subtle` for HMAC — we can use it to sign/verify the state parameter too.
+**Why no framework**: The OAuth flow is just 3 HTTP requests (redirect, token exchange, profile fetch). Using `fetch()` directly to GitHub/Google APIs is simpler than pulling in passport.js or similar. We already have `crypto.subtle` for HMAC, we can use it to sign/verify the state parameter too.
 
 ### What Changes in the Frontend
 
-**Login page** (`Login.tsx`): Currently a single email/password form. Add OAuth buttons above the form with a "— or —" divider:
+**Login page** (`Login.tsx`): Currently a single email/password form. Add OAuth buttons above the form with a ", or, " divider:
 
 ```
 ┌─────────────────────────────────┐
@@ -131,11 +131,11 @@ DELETE /api/auth/link/:provider → Unlink provider from account
 └─────────────────────────────────┘
 ```
 
-The OAuth buttons just navigate to `/api/auth/github` — the backend handles the redirect chain. On successful callback, the backend redirects back to the frontend with a token (via URL fragment or cookie).
+The OAuth buttons just navigate to `/api/auth/github`, the backend handles the redirect chain. On successful callback, the backend redirects back to the frontend with a token (via URL fragment or cookie).
 
 **Profile page** (`admin/Profile.tsx`): Add a "Connected Accounts" section showing which providers are linked, with connect/disconnect buttons.
 
-**AuthContext.tsx**: Extend to handle the OAuth return flow — check for token in URL hash on mount, store it, fetch user profile. The existing `checkSession` useEffect is the right place.
+**AuthContext.tsx**: Extend to handle the OAuth return flow, check for token in URL hash on mount, store it, fetch user profile. The existing `checkSession` useEffect is the right place.
 
 ### What Changes in the Database
 
@@ -144,13 +144,13 @@ The OAuth buttons just navigate to `/api/auth/github` — the backend handles th
 CREATE TABLE user_oauth_providers (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    provider VARCHAR(20) NOT NULL,         -- 'github', 'google'
+    provider VARCHAR(20) NOT NULL,        -- 'github', 'google'
     provider_user_id VARCHAR(255) NOT NULL, -- Their ID in the provider system
-    email VARCHAR(255),                     -- Email from provider (may differ from users.email)
+    email VARCHAR(255),                    -- Email from provider (may differ from users.email)
     display_name VARCHAR(255),
     avatar_url VARCHAR(500),
-    access_token TEXT,                      -- For API calls on their behalf
-    refresh_token TEXT,                     -- For token renewal
+    access_token TEXT,                     -- For API calls on their behalf
+    refresh_token TEXT,                    -- For token renewal
     token_expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(provider, provider_user_id)      -- One link per provider account
@@ -160,13 +160,13 @@ CREATE INDEX idx_oauth_provider_user ON user_oauth_providers(provider, provider_
 CREATE INDEX idx_oauth_user_id ON user_oauth_providers(user_id);
 ```
 
-We do NOT add a `provider` column to the `users` table itself — a user can have multiple providers linked plus a password. The relationship is one-to-many (one user → many providers).
+We do NOT add a `provider` column to the `users` table itself, a user can have multiple providers linked plus a password. The relationship is one-to-many (one user → many providers).
 
 ### Recommendation
 
 - **Phase this**: Get GitHub working first (it's the simplest OAuth flow), then add Google.
 - **Store tokens encrypted** if we plan to make API calls on behalf of users (e.g., pull their GitHub repos for security assessments).
-- **Don't remove password auth** — some enterprise clients won't want OAuth. Both should coexist.
+- **Don't remove password auth**, some enterprise clients won't want OAuth. Both should coexist.
 - **State parameter**: Use HMAC-signed JSON (`{nonce, timestamp, redirect}`) rather than random strings in Redis. Stateless, no extra infrastructure.
 
 ### Pre-requisites
@@ -193,11 +193,11 @@ The current "ML" is a fixed formula:
 const finalPrice = laborCost * eventMultiplier * locationMultiplier * timeMultiplier * crowdFactor;
 ```
 
-This gives the same price every time for the same inputs. A real model would learn patterns like "concerts in Miami on Saturday nights with 2000+ crowds tend to get rejected at prices above $X" or "corporate events in Beverly Hills accept quotes 30% higher than the base." The `ml_training_data` table already captures these signals — nothing uses them.
+This gives the same price every time for the same inputs. A real model would learn patterns like "concerts in Miami on Saturday nights with 2000+ crowds tend to get rejected at prices above $X" or "corporate events in Beverly Hills accept quotes 30% higher than the base." The `ml_training_data` table already captures these signals, nothing uses them.
 
 ### The Three Sources
 
-The idea is to **triangulate** — no single source is the oracle. Combine all three and weight them by confidence.
+The idea is to **triangulate**, no single source is the oracle. Combine all three and weight them by confidence.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -231,14 +231,14 @@ The idea is to **triangulate** — no single source is the oracle. Combine all t
 │  Else:                                                   │
 │    weight: rules 50%, model 30%, APIs 20%               │
 │                                                          │
-│  Output: final_price, risk_score, confidence,            │
+│  Output: final_price, risk_score, confidence,           │
 │          breakdown (per-source contributions)            │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ### Source 1: Trained Model (Python Microservice)
 
-**Why Python**: scikit-learn and XGBoost are the pragmatic choices for tabular data prediction. The `ml_training_data` table has exactly the feature set these models expect: categorical (event type, state, risk zone), numeric (guards, hours, crowd size), boolean (weekend, night, armed). This isn't a deep learning problem — it's classic supervised regression + classification.
+**Why Python**: scikit-learn and XGBoost are the pragmatic choices for tabular data prediction. The `ml_training_data` table has exactly the feature set these models expect: categorical (event type, state, risk zone), numeric (guards, hours, crowd size), boolean (weekend, night, armed). This isn't a deep learning problem, it's classic supervised regression + classification.
 
 **The microservice**:
 
@@ -266,7 +266,7 @@ The idea is to **triangulate** — no single source is the oracle. Combine all t
 │      7. Email report with metrics        │
 │                                          │
 │  GET /model/info                         │
-│    Output: version, metrics, features,   │
+│    Output: version, metrics, features,  │
 │            training date, sample count   │
 │                                          │
 │  GET /health                             │
@@ -293,7 +293,7 @@ When retrain is triggered (manually from admin UI, or via OpenClaw cron):
   "event": "ml.training.completed",
   "data": {
     "model_version": "3.1.0",
-    "status": "promoted",  // or "rejected" if worse
+    "status": "promoted", // or "rejected" if worse
     "metrics": {
       "price_mae": 142.30,
       "price_rmse": 198.50,
@@ -311,7 +311,7 @@ When retrain is triggered (manually from admin UI, or via OpenClaw cron):
 }
 ```
 
-8. **Email report** via Resend (the backend already has Resend integration) — send to admin users with training summary, metric comparisons, drift warnings if feature distributions shifted.
+8. **Email report** via Resend (the backend already has Resend integration), send to admin users with training summary, metric comparisons, drift warnings if feature distributions shifted.
 
 **What the frontend `admin/ML.tsx` already expects**: The page has UI for model status, training data table, version history with rollback, and a retrain button. The backend endpoints it calls don't exist yet:
 
@@ -341,26 +341,26 @@ These all become thin proxies to the ML engine, with admin auth middleware wrapp
 - Local events: cache 6h
 - Census: cache 7 days
 
-**Enrichment doesn't just affect price** — it enriches the quote response with context the client can see:
+**Enrichment doesn't just affect price**, it enriches the quote response with context the client can see:
 
 ```json
 {
   "enrichment": {
     "crime_context": "This zip code has 23% higher property crime than state average",
-    "weather_warning": "70% chance of thunderstorms on event date — outdoor risk elevated",
-    "nearby_events": "Lakers game at Staples Center same evening — expect traffic + crowd spillover",
+    "weather_warning": "70% chance of thunderstorms on event date, outdoor risk elevated",
+    "nearby_events": "Lakers game at Staples Center same evening, expect traffic + crowd spillover",
     "recommendation": "Consider adding vehicle patrol for crowd management"
   }
 }
 ```
 
-This is powerful because it makes the quote **feel intelligent** — the client sees that the system knows about their specific situation, not just generic multipliers.
+This is powerful because it makes the quote **feel intelligent**, the client sees that the system knows about their specific situation, not just generic multipliers.
 
 ### Source 3: Rule Engine (Business Logic)
 
 **Goal**: Enforce business constraints that a model shouldn't learn (minimums, client-specific deals, regulatory requirements).
 
-**What the current `quote-calculator.ts` does** is actually a rule engine — it just needs to be labeled and treated as one source instead of the only source.
+**What the current `quote-calculator.ts` does** is actually a rule engine, it just needs to be labeled and treated as one source instead of the only source.
 
 **Rules that should stay as rules** (not learned by ML):
 
@@ -375,7 +375,7 @@ This is powerful because it makes the quote **feel intelligent** — the client 
 - Minimum guards: crowd_size / 250, rounded up (insurance requirement)
 ```
 
-**The rule engine should be configurable** — admin UI to adjust multipliers, add/remove rules, set client overrides. Store rules in the database (new `pricing_rules` table) rather than hardcoded in TypeScript. The current code has these as literals like `crowdSize > 5000 ? 1.35 : crowdSize > 2000 ? 1.25 : ...` — that should become a lookup.
+**The rule engine should be configurable**, admin UI to adjust multipliers, add/remove rules, set client overrides. Store rules in the database (new `pricing_rules` table) rather than hardcoded in TypeScript. The current code has these as literals like `crowdSize > 5000 ? 1.35 : crowdSize > 2000 ? 1.25 : ...`, that should become a lookup.
 
 ### How the Three Sources Combine
 
@@ -409,10 +409,10 @@ The response always shows the breakdown so the admin (and optionally the client)
 
 ### Recommendation
 
-- **Start with rules + external APIs** (Sources 2+3) — these can ship before the Python model is trained. The rule engine is basically already written.
-- **Train initial model on synthetic + seeded data** — the `seed-training-data.ts` file exists for this. Generate 500-1000 realistic training records to bootstrap.
-- **Python service is a separate K3s pod** — ClusterIP (internal only), not exposed externally. Backend is the only caller via S2S auth.
-- **Retrain weekly via OpenClaw cron** — use `sessions_spawn` to trigger retrain, get results, notify admin.
+- **Start with rules + external APIs** (Sources 2+3), these can ship before the Python model is trained. The rule engine is basically already written.
+- **Train initial model on synthetic + seeded data**, the `seed-training-data.ts` file exists for this. Generate 500-1000 realistic training records to bootstrap.
+- **Python service is a separate K3s pod**, ClusterIP (internal only), not exposed externally. Backend is the only caller via S2S auth.
+- **Retrain weekly via OpenClaw cron**, use `sessions_spawn` to trigger retrain, get results, notify admin.
 
 ---
 
@@ -424,12 +424,12 @@ Port the monolithic Hono-based `index.ts` to native `Bun.serve()` with modular r
 
 ### Why Native Bun.serve (No Framework)
 
-We proved this works with MarketPulse. The v1 backend has ~35 routes. With native `Bun.serve()` routing, each route is a function in a module — no middleware chain, no magic. The performance difference is measurable on Pi hardware (Bun.serve handles routing at C++ level, not JavaScript middleware chains).
+We proved this works with MarketPulse. The v1 backend has ~35 routes. With native `Bun.serve()` routing, each route is a function in a module, no middleware chain, no magic. The performance difference is measurable on Pi hardware (Bun.serve handles routing at C++ level, not JavaScript middleware chains).
 
 **Current pattern** (Hono):
 
 ```typescript
-// v1: index.ts — everything in one file, Hono framework
+// v1: index.ts, everything in one file, Hono framework
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -454,7 +454,7 @@ app.post("/api/quotes", async (c) => {
 **Proposed pattern** (native Bun.serve):
 
 ```typescript
-// v2: src/server.ts — thin entry, delegates to route modules
+// v2: src/server.ts, thin entry, delegates to route modules
 import { authRoutes } from "./routes/auth";
 import { quoteRoutes } from "./routes/quotes";
 import { clientRoutes } from "./routes/clients";
@@ -550,7 +550,7 @@ Each route module exports handler functions. Here's the thought process for stru
 // 5. Registration
 //
 // Each handler is a standalone function that receives Request, returns Response.
-// No framework context object — just Web Standards.
+// No framework context object, just Web Standards.
 
 import { createToken, verifyPassword, hashPassword, getUserFromToken } from "../services/auth";
 import { exchangeGithubCode, getGithubUser } from "../services/oauth-github";
@@ -586,7 +586,7 @@ export const authRoutes = {
 
 ### The withDb() Helper
 
-MarketPulse taught us this pattern — a helper that gets a connection from the pool, runs your query, and handles errors:
+MarketPulse taught us this pattern, a helper that gets a connection from the pool, runs your query, and handles errors:
 
 ```typescript
 // THOUGHT: Every route handler needs DB access. Rather than importing `sql` globally
@@ -610,12 +610,12 @@ async function listQuotes(req: Request): Promise<Response> {
 }
 ```
 
-### Password Hashing — Already Correct
+### Password Hashing, Already Correct
 
 The v1 `services/auth.ts` already does this right:
 
 ```typescript
-// v1 auth.ts (line 70) — already uses Bun.password with argon2id
+// v1 auth.ts (line 70), already uses Bun.password with argon2id
 export async function hashPassword(password: string): Promise<string> {
   return await Bun.password.hash(password, {
     algorithm: "argon2id",
@@ -625,14 +625,14 @@ export async function hashPassword(password: string): Promise<string> {
 }
 ```
 
-**No change needed** for the hashing. The MarketPulse lesson about SHA-256 → argon2id doesn't apply here because GuardQuote already made the right call. The only change: when an OAuth user has no password, their `password_hash` is `NULL` — the login endpoint needs to handle this (suggest OAuth login instead of "invalid password").
+**No change needed** for the hashing. The MarketPulse lesson about SHA-256 → argon2id doesn't apply here because GuardQuote already made the right call. The only change: when an OAuth user has no password, their `password_hash` is `NULL`, the login endpoint needs to handle this (suggest OAuth login instead of "invalid password").
 
-### Redis — Native Bun Client
+### Redis, Native Bun Client
 
 The current `services/cache.ts` (448 lines) implements a custom Redis client using `Bun.connect` TCP sockets with manual RESP protocol parsing. Bun 1.3 has a native Redis client:
 
 ```typescript
-// v1: cache.ts — 448 lines of custom Redis protocol implementation
+// v1: cache.ts, 448 lines of custom Redis protocol implementation
 class RedisClient {
   private socket: any = null;
   async connect(): Promise<void> {
@@ -665,13 +665,13 @@ This eliminates ~440 lines and the entire `middleware/rate-limit.ts` custom Redi
 
 ```
 src/
-├── server.ts                 # Bun.serve() entry — routes + WS + CORS (~80 lines)
+├── server.ts                 # Bun.serve() entry, routes + WS + CORS (~80 lines)
 ├── routes/
 │   ├── auth.ts               # Login, register, OAuth flows, refresh (~200 lines)
 │   ├── quotes.ts             # CRUD, status transitions (~150 lines)
 │   ├── clients.ts            # CRUD (~80 lines)
 │   ├── admin.ts              # Dashboard stats, user management, quote requests (~200 lines)
-│   ├── ml.ts                 # Predict, batch, stats — proxies to Python ML engine (~100 lines)
+│   ├── ml.ts                 # Predict, batch, stats, proxies to Python ML engine (~100 lines)
 │   └── webhooks.ts           # CRUD + delivery (~80 lines)
 ├── services/
 │   ├── auth.ts               # JWT creation/verification, password hashing (KEEP from v1)
@@ -697,10 +697,10 @@ src/
 
 ### Recommendation
 
-- **Port auth.ts first** — it's the most critical and already well-structured. Add OAuth routes.
-- **Port quote routes second** — these are the bread and butter.
-- **The ML proxy routes are thin** — they just forward to the Python service with S2S auth. Write these after the ML engine exists.
-- **Don't rewrite websocket.ts from scratch** — the pub/sub architecture is sound. Just adapt it to use Bun.serve's native websocket handlers (which it's 90% already doing via the v1 `export default { websocket: { ... } }` pattern).
+- **Port auth.ts first**, it's the most critical and already well-structured. Add OAuth routes.
+- **Port quote routes second**, these are the bread and butter.
+- **The ML proxy routes are thin**, they just forward to the Python service with S2S auth. Write these after the ML engine exists.
+- **Don't rewrite websocket.ts from scratch**, the pub/sub architecture is sound. Just adapt it to use Bun.serve's native websocket handlers (which it's 90% already doing via the v1 `export default { websocket: { ... } }` pattern).
 
 ---
 
@@ -712,7 +712,7 @@ Remove ~2,350 lines of infrastructure management code from GuardQuote. A quoting
 
 ### Why This Is Important
 
-This isn't just about line count. Having SSH credentials (`pi-services.ts` line 8: `const PI_PASS = process.env.PI_PASS` (previously had hardcoded fallback)) and systemd control inside a web application is a **security surface area problem**. If GuardQuote gets compromised, the attacker gets SSH access to the Pi fleet. Separation of concerns isn't just clean architecture — it's defense in depth.
+This isn't just about line count. Having SSH credentials (`pi-services.ts` line 8: `const PI_PASS = process.env.PI_PASS` (previously had hardcoded fallback)) and systemd control inside a web application is a **security surface area problem**. If GuardQuote gets compromised, the attacker gets SSH access to the Pi fleet. Separation of concerns isn't just clean architecture, it's defense in depth.
 
 ### What Gets Removed
 
@@ -727,7 +727,7 @@ This isn't just about line count. Having SSH credentials (`pi-services.ts` line 
 
 ### What Stays (Simplified)
 
-The `monitor.ts` concept isn't entirely wrong — the admin dashboard should show "is the DB connected? is the ML engine responding?" But that's a 20-line health endpoint, not a 600-line monitoring service:
+The `monitor.ts` concept isn't entirely wrong, the admin dashboard should show "is the DB connected? is the ML engine responding?" But that's a 20-line health endpoint, not a 600-line monitoring service:
 
 ```typescript
 // v2: Just a health endpoint in routes/admin.ts
@@ -764,8 +764,8 @@ async function systemHealth(req: Request): Promise<Response> {
 
 ### Recommendation
 
-- **Remove infrastructure code in the first commit of the Bun port** — don't port it, don't refactor it, just don't include it. Clean break.
-- **Keep the `health` endpoint simple** — backend reports its own health, not the world's health.
+- **Remove infrastructure code in the first commit of the Bun port**, don't port it, don't refactor it, just don't include it. Clean break.
+- **Keep the `health` endpoint simple**, backend reports its own health, not the world's health.
 - **Add a Grafana iframe or link** on the admin dashboard for users who want infra visibility without leaving GuardQuote. But don't rebuild Grafana inside GuardQuote.
 
 ---
@@ -809,10 +809,10 @@ Update the React frontend to support OAuth login, show real ML intelligence, and
 ```
 
 **Key changes**:
-- Title changes from "Admin Login" to "Welcome to GuardQuote" — not just admins log in, clients do too
+- Title changes from "Admin Login" to "Welcome to GuardQuote", not just admins log in, clients do too
 - OAuth buttons are **above** the email form (preferred path)
 - "Sign up" link for new client registration
-- The OAuth buttons are just `<a href="/api/auth/github">` links — the backend handles the redirect chain
+- The OAuth buttons are just `<a href="/api/auth/github">` links, the backend handles the redirect chain
 - Error handling: If OAuth callback fails, redirect to login with `?error=oauth_failed` query param, show error banner
 
 ### AuthContext Changes
@@ -880,7 +880,7 @@ interface User {
 When viewing a specific quote, show a stacked bar or pie showing how much each source contributed:
 
 ```
-Quote #GQ-2026-0342 — Final Price: $4,250
+Quote #GQ-2026-0342, Final Price: $4,250
 
 Price Sources:
   ML Model (60%)     ████████████████████  $4,100 (confidence: 89%)
@@ -912,16 +912,16 @@ Risk Assessment:
 - Quotes (combine Quotes + Quote Requests)
 - Clients
 - Users
-- ML Intelligence (rename from "ML" — sounds better)
+- ML Intelligence (rename from "ML", sounds better)
 - Blog
 - Settings (combine Features + Profile)
-- 🔗 Infrastructure (link to Grafana, opens new tab)
+- Infrastructure (link to Grafana, opens new tab)
 
 ### Recommendation
 
-- **Frontend changes are the LAST phase** — they depend on backend OAuth + ML engine being ready
-- **Don't redesign everything** — the current Tailwind dark theme looks good. Just add OAuth buttons, remove dead pages, enhance ML page.
-- **The DataFlowDiagram.tsx (xyflow)** should be updated to show the 3-source architecture. It's already using xyflow for flow diagrams — add nodes for ML Engine, External APIs, Rule Engine.
+- **Frontend changes are the LAST phase**, they depend on backend OAuth + ML engine being ready
+- **Don't redesign everything**, the current Tailwind dark theme looks good. Just add OAuth buttons, remove dead pages, enhance ML page.
+- **The DataFlowDiagram.tsx (xyflow)** should be updated to show the 3-source architecture. It's already using xyflow for flow diagrams, add nodes for ML Engine, External APIs, Rule Engine.
 
 ---
 
@@ -952,12 +952,12 @@ CREATE TABLE ml_models (
     version VARCHAR(20) NOT NULL UNIQUE,
     status VARCHAR(20) DEFAULT 'training'
         CHECK (status IN ('training', 'evaluating', 'active', 'retired', 'failed')),
-    artifact_path VARCHAR(500),          -- Path to serialized model file
+    artifact_path VARCHAR(500),         -- Path to serialized model file
     training_samples INT,
-    metrics JSONB,                        -- { mae, rmse, r2, auc, ... }
-    feature_importances JSONB,            -- { event_type: 0.23, crowd_size: 0.18, ... }
+    metrics JSONB,                       -- { mae, rmse, r2, auc, ... }
+    feature_importances JSONB,           -- { event_type: 0.23, crowd_size: 0.18, ... }
     training_duration_s INT,
-    promoted_at TIMESTAMP,                -- When it became the active model
+    promoted_at TIMESTAMP,               -- When it became the active model
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -967,10 +967,10 @@ CREATE TABLE pricing_rules (
     name VARCHAR(100) NOT NULL,
     rule_type VARCHAR(30) NOT NULL
         CHECK (rule_type IN ('multiplier', 'flat_fee', 'minimum', 'maximum', 'discount')),
-    condition JSONB NOT NULL,             -- { "field": "is_night_shift", "op": "eq", "value": true }
-    value DECIMAL(10, 4) NOT NULL,        -- The multiplier, fee amount, or percentage
-    priority INT DEFAULT 0,               -- Higher priority rules apply first
-    applies_to VARCHAR(50),               -- NULL = all, or specific client_id, event_type, etc.
+    condition JSONB NOT NULL,            -- { "field": "is_night_shift", "op": "eq", "value": true }
+    value DECIMAL(10, 4) NOT NULL,       -- The multiplier, fee amount, or percentage
+    priority INT DEFAULT 0,              -- Higher priority rules apply first
+    applies_to VARCHAR(50),              -- NULL = all, or specific client_id, event_type, etc.
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -978,9 +978,9 @@ CREATE TABLE pricing_rules (
 -- 4. API enrichment cache (avoid hitting external APIs repeatedly)
 CREATE TABLE enrichment_cache (
     id SERIAL PRIMARY KEY,
-    cache_key VARCHAR(255) NOT NULL UNIQUE,  -- e.g., "crime:90001" or "weather:90001:2026-03-15"
+    cache_key VARCHAR(255) NOT NULL UNIQUE, -- e.g., "crime:90001" or "weather:90001:2026-03-15"
     data JSONB NOT NULL,
-    source VARCHAR(50) NOT NULL,              -- 'fbi_ucr', 'openweathermap', 'predicthq'
+    source VARCHAR(50) NOT NULL,             -- 'fbi_ucr', 'openweathermap', 'predicthq'
     fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP NOT NULL
 );
@@ -1021,8 +1021,8 @@ ALTER TABLE quotes ADD COLUMN enrichment_context JSONB;
 
 ### Recommendation
 
-- **Run migrations incrementally** — don't drop and recreate. Use `ALTER TABLE` for existing tables.
-- **The `pricing_rules` table is powerful** — it means admins can adjust multipliers without code changes. The rule engine reads from this table at query time (cache in Redis for performance).
+- **Run migrations incrementally**, don't drop and recreate. Use `ALTER TABLE` for existing tables.
+- **The `pricing_rules` table is powerful**, it means admins can adjust multipliers without code changes. The rule engine reads from this table at query time (cache in Redis for performance).
 - **`enrichment_cache` can be Redis-only** if we don't need persistence across restarts. But Postgres gives us queryability (e.g., "show me all crime data we've cached for California").
 
 ---
@@ -1042,8 +1042,8 @@ Namespace: guardquote
 │  │ Port: 305XX     │PSK │ ClusterIP only       │ │
 │  │ NodePort        │    │ (not exposed)        │ │
 │  │                  │    │                      │ │
-│  │ HTTP + WS       │    │ Predict, train,      │ │
-│  │ OAuth, CRUD,    │    │ model management     │ │
+│  │ HTTP + WS       │    │ Predict, train,     │ │
+│  │ OAuth, CRUD,   │    │ model management     │ │
 │  │ ML proxy        │    │                      │ │
 │  └────────┬────────┘    └──────────┬───────────┘ │
 │           │                        │              │
@@ -1098,9 +1098,9 @@ CMD ["uvicorn", "ml_engine.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 ### Recommendation
 
-- **Use the exact same K8s manifest pattern from MarketPulse** — Deployment + Service + Secret. It's proven.
-- **ML engine starts as a single pod** — no need for replicas, training is infrequent, predictions are fast (sub-100ms for XGBoost on tabular data).
-- **Redis can be a simple single-pod deployment** — no need for Sentinel/Cluster. If Redis dies, the app falls back gracefully (cache miss = query DB directly).
+- **Use the exact same K8s manifest pattern from MarketPulse**, Deployment + Service + Secret. It's proven.
+- **ML engine starts as a single pod**, no need for replicas, training is infrequent, predictions are fast (sub-100ms for XGBoost on tabular data).
+- **Redis can be a simple single-pod deployment**, no need for Sentinel/Cluster. If Redis dies, the app falls back gracefully (cache miss = query DB directly).
 
 ---
 
@@ -1140,7 +1140,7 @@ Phase 4: Cutover
 
 ### Parallel Opportunities
 
-Phases 1b and 2a are independent — the backend port and the ML engine can be built simultaneously by subagents. Phase 3 depends on both completing.
+Phases 1b and 2a are independent, the backend port and the ML engine can be built simultaneously by subagents. Phase 3 depends on both completing.
 
 ### Rollback Plan
 
@@ -1152,12 +1152,12 @@ At every phase, v1 remains running on pi1. If v2 has issues:
 ### Recommendation
 
 - **Use our skills for every phase**: infra-brainstorming for Phase 4a (firewall), task-decomposition for each phase, parallel-dispatch for 1b+2a, agent-review-gates for all subagent output.
-- **Don't rush Phase 4** — let v2 bake on a test port with real traffic (mirror or canary) before cutting over.
-- **The ML engine can ship with synthetic data** — it doesn't need 1000 real quotes to be useful. Even 200 synthetic samples give it better predictions than hardcoded multipliers.
+- **Don't rush Phase 4**, let v2 bake on a test port with real traffic (mirror or canary) before cutting over.
+- **The ML engine can ship with synthetic data**, it doesn't need 1000 real quotes to be useful. Even 200 synthetic samples give it better predictions than hardcoded multipliers.
 
 ---
 
-## 10. Architect's Concerns — Open Questions & Known Gaps
+## 10. Architect's Concerns, Open Questions & Known Gaps
 
 > This section is an honest assessment of where the above architecture is weakest, where I'm making assumptions I can't fully validate, and where decisions need more input before implementation. These are the things I'd raise in a design review.
 
@@ -1165,19 +1165,19 @@ At every phase, v1 remains running on pi1. If v2 has issues:
 
 I said the ML engine "can ship with synthetic data" and that "200 synthetic samples give better predictions than hardcoded multipliers." **I'm not confident that's true.**
 
-The problem: when you generate synthetic training data, the model learns the patterns **you embedded in the generator**, not real-world patterns. If the synthetic data generator uses the same multiplier logic that's in `quote-calculator.ts`, the "ML model" is just a fancy regression that reproduces the existing formula — with added noise from randomization. You'd have a model that says `r2 = 0.91` but is actually just re-deriving the rules you already have.
+The problem: when you generate synthetic training data, the model learns the patterns **you embedded in the generator**, not real-world patterns. If the synthetic data generator uses the same multiplier logic that's in `quote-calculator.ts`, the "ML model" is just a fancy regression that reproduces the existing formula, with added noise from randomization. You'd have a model that says `r2 = 0.91` but is actually just re-deriving the rules you already have.
 
-**What would actually make synthetic data useful**: If the synthetic generator incorporates patterns the rule engine *doesn't* — like "acceptance rate drops above $5000 for private events" or "Miami quotes close 20% more than Chicago quotes at the same price point." But that requires domain knowledge about the private security industry that I don't have.
+**What would actually make synthetic data useful**: If the synthetic generator incorporates patterns the rule engine *doesn't*, like "acceptance rate drops above $5000 for private events" or "Miami quotes close 20% more than Chicago quotes at the same price point." But that requires domain knowledge about the private security industry that I don't have.
 
 **My recommendation is weaker than I stated**: The honest path is:
 1. Ship with rules + external APIs (Sources 2+3) first
 2. Collect **real** quote data as users interact with the system
 3. Only train a model once you have 200+ *real* records with outcomes (`was_accepted`)
-4. Until then, the "ML" column on quotes says "insufficient data — rule-based estimate"
+4. Until then, the "ML" column on quotes says "insufficient data, rule-based estimate"
 
 **Question for you**: How much real quote data exists in the current production database? If there are already hundreds of completed quotes with outcomes, we can train immediately. If it's mostly empty test data, the model needs to wait.
 
-### 10.2 OAuth Token in URL Fragment — Security Leak
+### 10.2 OAuth Token in URL Fragment, Security Leak
 
 In Section 6 (Frontend Changes), I proposed the OAuth callback returns a JWT via URL fragment:
 
@@ -1187,37 +1187,37 @@ In Section 6 (Frontend Changes), I proposed the OAuth callback returns a JWT via
 
 This is a common pattern but has a known weakness: if the user clicks any external link on the page before the fragment is cleaned from the URL, the full URL (including token) can leak via the `Referer` header. Some browsers strip fragments from Referer, but not all do reliably.
 
-**The current codebase already supports httpOnly cookies** — `AuthContext.tsx` has both cookie-based and localStorage-based auth, with CSRF token handling. The safer approach for OAuth returns:
+**The current codebase already supports httpOnly cookies**, `AuthContext.tsx` has both cookie-based and localStorage-based auth, with CSRF token handling. The safer approach for OAuth returns:
 
 1. Backend sets an httpOnly session cookie on the callback response
 2. Redirects to the frontend (no token in URL at all)
-3. Frontend's `checkSession` useEffect hits `/api/auth/me` with `credentials: "include"` — picks up the cookie automatically
+3. Frontend's `checkSession` useEffect hits `/api/auth/me` with `credentials: "include"`, picks up the cookie automatically
 4. No token exposure in URL, Referer headers, or browser history
 
 **I should have recommended this from the start.** The URL fragment approach is a shortcut that trades security for simplicity. For a security company's product, that tradeoff is wrong.
 
-### 10.3 PKCE — Did I Skip It?
+### 10.3 PKCE, Did I Skip It?
 
-The OAuth flow I described (authorization code grant, backend-mediated) is the **confidential client** pattern — the SPA never handles the authorization code directly, the backend does. This is correct and PKCE isn't strictly required for confidential clients.
+The OAuth flow I described (authorization code grant, backend-mediated) is the **confidential client** pattern, the SPA never handles the authorization code directly, the backend does. This is correct and PKCE isn't strictly required for confidential clients.
 
-However, adding PKCE (Proof Key for Code Exchange) anyway is defense-in-depth. It prevents authorization code interception attacks even if HTTPS is somehow compromised. Google now recommends PKCE for all OAuth flows. The implementation cost is trivial — generate a `code_verifier` (random string), SHA-256 hash it into `code_challenge`, send the challenge on the initial redirect, send the verifier on the code exchange.
+However, adding PKCE (Proof Key for Code Exchange) anyway is defense-in-depth. It prevents authorization code interception attacks even if HTTPS is somehow compromised. Google now recommends PKCE for all OAuth flows. The implementation cost is trivial, generate a `code_verifier` (random string), SHA-256 hash it into `code_challenge`, send the challenge on the initial redirect, send the verifier on the code exchange.
 
 **Recommendation**: Add PKCE. The added implementation is ~10 lines. The security benefit is real. I should have included it in the flow diagram.
 
-### 10.4 WebSocket Authentication — Currently Missing
+### 10.4 WebSocket Authentication, Currently Missing
 
 The v1 `services/websocket.ts` accepts connections without authentication:
 
 ```typescript
-// v1: websocket.ts — handleOpen takes a type but no auth check
+// v1: websocket.ts, handleOpen takes a type but no auth check
 export function handleOpen(ws, type, userId?, role?) {
-  // userId and role are optional — and in index.ts, they're never passed for client connections
+  // userId and role are optional, and in index.ts, they're never passed for client connections
 ```
 
 In `index.ts`, the WebSocket upgrade happens without checking JWT:
 
 ```typescript
-// v1: index.ts — no token validation before upgrade
+// v1: index.ts, no token validation before upgrade
 if (url.pathname.startsWith("/ws/")) {
   const connectionType = pathParts[2] === "admin" ? "admin" : "client";
   server.upgrade(req, { data: { connectionType } });  // No auth!
@@ -1226,14 +1226,14 @@ if (url.pathname.startsWith("/ws/")) {
 
 **Anyone can connect to `/ws/admin` and receive system events.** This is a security bug in v1 that I didn't flag prominently enough. The v2 architecture must:
 
-1. Require JWT in the WebSocket upgrade request (via `?token=` query param or `Sec-WebSocket-Protocol` header — cookies don't work reliably with WebSocket upgrades cross-origin)
+1. Require JWT in the WebSocket upgrade request (via `?token=` query param or `Sec-WebSocket-Protocol` header, cookies don't work reliably with WebSocket upgrades cross-origin)
 2. Verify the token before calling `server.upgrade()`
 3. Reject upgrade if token is invalid or expired
 4. For admin connections, verify `role === "admin"` before granting admin channel subscriptions
 
-### 10.5 Middleware Without a Framework — The Repetition Problem
+### 10.5 Middleware Without a Framework, The Repetition Problem
 
-I positioned "no middleware chain" as a feature of native Bun.serve. But middleware exists for a reason. Consider the admin routes — every single one needs:
+I positioned "no middleware chain" as a feature of native Bun.serve. But middleware exists for a reason. Consider the admin routes, every single one needs:
 
 ```typescript
 // This pattern repeats in EVERY admin handler
@@ -1245,7 +1245,7 @@ async function adminEndpoint(req: Request): Promise<Response> {
 }
 ```
 
-With Hono, this was `app.use("/api/admin/*", authMiddleware)` — one line for all admin routes. Without a framework, we either:
+With Hono, this was `app.use("/api/admin/*", authMiddleware)`, one line for all admin routes. Without a framework, we either:
 
 **Option A**: Accept the repetition (explicit, no magic, but verbose)
 **Option B**: Write a `wrapAdmin(handler)` higher-order function:
@@ -1267,9 +1267,9 @@ function wrapAdmin(handler: (req: Request, user: AuthUser) => Promise<Response>)
 
 **Option C**: Reintroduce a minimal middleware layer (but then why did we drop Hono?)
 
-I recommended Option A in the architecture but should have flagged this tradeoff. For 35 routes, 15 of which are admin-only, the repetition is noticeable. **Option B is probably the right answer** — we get the explicitness of no framework while eliminating the auth boilerplate.
+I recommended Option A in the architecture but should have flagged this tradeoff. For 35 routes, 15 of which are admin-only, the repetition is noticeable. **Option B is probably the right answer**, we get the explicitness of no framework while eliminating the auth boilerplate.
 
-### 10.6 Python ML Engine on Pi2 — Resource Concerns
+### 10.6 Python ML Engine on Pi2, Resource Concerns
 
 I said "deploy Python FastAPI + XGBoost as a K3s pod on pi2." But I don't know pi2's actual RAM:
 
@@ -1281,7 +1281,7 @@ I said "deploy Python FastAPI + XGBoost as a K3s pod on pi2." But I don't know p
 **If pi2 is 4GB total**, adding a Python ML service may cause OOM kills. K3s itself uses ~500MB, Suricata is memory-hungry (1-2GB for deep packet inspection), and we've already got multiple pods running.
 
 **Alternatives if pi2 can't handle it**:
-1. **Run ML training on ThinkStation, inference on pi2**: Train weekly via OpenClaw cron on the ThinkStation (plenty of resources), export the model artifact, deploy a lightweight inference-only Python container on pi2 (much smaller memory footprint — just loads a serialized model and does predict)
+1. **Run ML training on ThinkStation, inference on pi2**: Train weekly via OpenClaw cron on the ThinkStation (plenty of resources), export the model artifact, deploy a lightweight inference-only Python container on pi2 (much smaller memory footprint, just loads a serialized model and does predict)
 2. **Run the entire ML service on ThinkStation**: Expose via Tailscale, backend calls it over the network. Adds ~10ms latency per prediction but removes all resource concerns.
 3. **Replace Python with a Bun-native ML approach**: Use a lightweight decision tree library in JavaScript (less optimal than XGBoost but zero new runtime). Only viable if the model complexity stays low.
 
@@ -1296,8 +1296,8 @@ const EVENT_TYPE_MAP: Record<string, string> = {
   corporate: "CORPORATE",
   concert: "CONCERT",
   sports: "SPORT",
-  private: "WEDDING",      // ← WRONG: private events aren't weddings
-  construction: "RETAIL",   // ← WRONG: construction sites aren't retail
+  private: "WEDDING",     // ← WRONG: private events aren't weddings
+  construction: "RETAIL",  // ← WRONG: construction sites aren't retail
   retail: "RETAIL",
   residential: "EXECUTIVE", // ← WRONG: residential security isn't executive protection
   festival: "FESTIVAL",
@@ -1324,21 +1324,21 @@ The schema uses **lowercase** codes (`corporate`, `concert`), but the map conver
 
 **This is a v1 bug that needs fixing regardless of v2.** The v2 architecture should:
 1. Make `event_types.code` the canonical identifier (lowercase, stored in DB)
-2. Remove the mapping entirely — frontend sends the code as-is
+2. Remove the mapping entirely, frontend sends the code as-is
 3. Validate against the DB on every quote request
 
-### 10.8 The `pricing_rules` JSONB Condition Engine — Scope Creep Risk
+### 10.8 The `pricing_rules` JSONB Condition Engine, Scope Creep Risk
 
 In Section 7, I proposed:
 
 ```sql
 CREATE TABLE pricing_rules (
-    condition JSONB NOT NULL,  -- { "field": "is_night_shift", "op": "eq", "value": true }
+    condition JSONB NOT NULL, -- { "field": "is_night_shift", "op": "eq", "value": true }
     ...
 );
 ```
 
-This sounds elegant but means building a **rule evaluation engine** that parses JSON conditions, supports operators (`eq`, `gt`, `lt`, `in`, `between`), handles type coercion, and supports compound conditions (`AND`/`OR`). That's a non-trivial piece of code — easily 200+ lines to do correctly, with edge cases around null handling, type mismatches, and operator precedence.
+This sounds elegant but means building a **rule evaluation engine** that parses JSON conditions, supports operators (`eq`, `gt`, `lt`, `in`, `between`), handles type coercion, and supports compound conditions (`AND`/`OR`). That's a non-trivial piece of code, easily 200+ lines to do correctly, with edge cases around null handling, type mismatches, and operator precedence.
 
 **Simpler alternative for v2.0**: Instead of a generic rule DSL, use typed rule categories:
 
@@ -1348,23 +1348,23 @@ CREATE TABLE pricing_rules (
     name VARCHAR(100) NOT NULL,
     rule_type VARCHAR(30) NOT NULL,
     -- For multiplier rules: which field and threshold
-    trigger_field VARCHAR(50),   -- 'crowd_size', 'is_night_shift', 'event_type', etc.
-    trigger_value VARCHAR(100),  -- '5000', 'true', 'concert', etc.
+    trigger_field VARCHAR(50),  -- 'crowd_size', 'is_night_shift', 'event_type', etc.
+    trigger_value VARCHAR(100), -- '5000', 'true', 'concert', etc.
     trigger_op VARCHAR(10) DEFAULT 'eq', -- 'eq', 'gt', 'gte', 'lt', 'in'
     -- What it does
     adjustment_type VARCHAR(20), -- 'multiply', 'add_flat', 'add_per_guard', 'minimum', 'maximum'
     adjustment_value DECIMAL(10, 4),
     priority INT DEFAULT 0,
-    client_id INT REFERENCES clients(id),  -- NULL = applies to all
+    client_id INT REFERENCES clients(id), -- NULL = applies to all
     is_active BOOLEAN DEFAULT true
 );
 ```
 
 No JSONB parsing needed. The rule engine is a simple loop: query active rules, check each condition against the quote input, apply adjustments in priority order. This covers 95% of real pricing rules. Save the generic DSL for v3.0 when you actually need compound conditions.
 
-### 10.9 `enrichment_cache` — Just Use Redis
+### 10.9 `enrichment_cache`, Just Use Redis
 
-I proposed a PostgreSQL `enrichment_cache` table and then noted "Redis might be better." Having thought about it more: **just use Redis.** 
+I proposed a PostgreSQL `enrichment_cache` table and then noted "Redis might be better." Having thought about it more: **just use Redis.**
 
 - Cache entries have TTL (Redis does this natively with `EX`)
 - We don't need to query cache entries (we never ask "show me all cached crime data for California")
@@ -1385,19 +1385,19 @@ The v1 codebase has three test files (`health.test.ts`, `auth.test.ts`, `quote.t
 - **Webhook delivery**: HMAC signatures are correct, retries work, timeouts handled
 - **Rule engine**: Priority ordering, client-specific overrides, edge cases (no matching rules, conflicting rules)
 
-**For the ML engine specifically**: We need "sanity tests" — not unit tests of internal functions, but integration tests that say "for a 10-guard, armed, night concert in a high-crime zip code with 3000 attendees, the predicted price should be between $X and $Y." These catch regressions when the model is retrained.
+**For the ML engine specifically**: We need "sanity tests", not unit tests of internal functions, but integration tests that say "for a 10-guard, armed, night concert in a high-crime zip code with 3000 attendees, the predicted price should be between $X and $Y." These catch regressions when the model is retrained.
 
 **Recommendation**: Use `bun test` (built-in test runner). Each route module gets a test file. ML engine gets its own pytest suite. Add testing as an explicit phase in the migration plan (probably Phase 3.5, between frontend and cutover).
 
 ### 10.11 The Demo Mode Question
 
-`pi-services.ts` has a `checkDemoMode()` function that returns mock data when the Pi is unreachable. This suggests the app was designed to be demoed without real infrastructure — maybe for sales presentations or local development.
+`pi-services.ts` has a `checkDemoMode()` function that returns mock data when the Pi is unreachable. This suggests the app was designed to be demoed without real infrastructure, maybe for sales presentations or local development.
 
 I recommended removing all infra code. But if GuardQuote needs a demo mode for trade shows, sales calls, or local dev, we lose that capability.
 
-**Question for you**: Is demo mode important? If so, the v2 architecture needs a `DEMO_MODE=true` environment variable that makes the ML engine return plausible mock predictions, and the backend returns seed data instead of querying the real DB. This is a different concern from "managing Pi services" — it's about the app being self-contained when disconnected from infrastructure.
+**Question for you**: Is demo mode important? If so, the v2 architecture needs a `DEMO_MODE=true` environment variable that makes the ML engine return plausible mock predictions, and the backend returns seed data instead of querying the real DB. This is a different concern from "managing Pi services", it's about the app being self-contained when disconnected from infrastructure.
 
-### 10.12 The `quote_requests` Table — Inline Migration Antipattern
+### 10.12 The `quote_requests` Table, Inline Migration Antipattern
 
 In `index.ts` (around line 800), there's this:
 
@@ -1406,15 +1406,15 @@ In `index.ts` (around line 800), there's this:
 sql`CREATE TABLE IF NOT EXISTS quote_requests (...)`.catch(() => {});
 ```
 
-The app creates its own database table at import time. This works for a single-process development setup, but in K3s with multiple pod replicas, you'd have a race condition — two pods starting simultaneously both try to create the table. `CREATE TABLE IF NOT EXISTS` handles this for table creation specifically, but this pattern doesn't scale to schema modifications (what happens when you need to `ALTER TABLE quote_requests ADD COLUMN ...`?).
+The app creates its own database table at import time. This works for a single-process development setup, but in K3s with multiple pod replicas, you'd have a race condition, two pods starting simultaneously both try to create the table. `CREATE TABLE IF NOT EXISTS` handles this for table creation specifically, but this pattern doesn't scale to schema modifications (what happens when you need to `ALTER TABLE quote_requests ADD COLUMN ...`?).
 
 **v2 should use explicit migrations**: A `migrations/` directory with numbered SQL files (`001_initial.sql`, `002_add_oauth_providers.sql`, etc.), run by a one-shot K8s Job before the app pods start. Or use a lightweight migration tool (`dbmate`, `golang-migrate`, or even a Bun script that runs SQL files in order and tracks state in a `schema_migrations` table).
 
-### 10.13 Resend Email Integration — Underspecified
+### 10.13 Resend Email Integration, Underspecified
 
-The user specifically mentioned email reports and assessments. The backend has Resend as a dependency (`re_ekCeyEnv_FKJb6GN2hXWoq6URnnuiWtLk` — though this key is for whale-watcher, GuardQuote needs its own). I didn't detail:
+The user specifically mentioned email reports and assessments. The backend has Resend as a dependency (`re_ekCeyEnv_FKJb6GN2hXWoq6URnnuiWtLk`, though this key is for whale-watcher, GuardQuote needs its own). I didn't detail:
 
-1. **Quote emails to clients**: When a quote status changes to `sent`, email the client a formatted quote with the 3-source breakdown. What does that email look like? It should show the price, risk assessment, and enrichment context (weather warning, nearby events) — this is a competitive differentiator that makes the quote feel intelligent.
+1. **Quote emails to clients**: When a quote status changes to `sent`, email the client a formatted quote with the 3-source breakdown. What does that email look like? It should show the price, risk assessment, and enrichment context (weather warning, nearby events), this is a competitive differentiator that makes the quote feel intelligent.
 
 2. **ML training report emails**: When the model retrains, email admins with: new model version, metric comparisons vs previous version, feature importance changes, drift warnings. This is the webhook payload formatted for humans.
 

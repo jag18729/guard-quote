@@ -2,7 +2,7 @@
 
 Hey Isaiah! This doc gets you up and running fast.
 
-## 🚀 Clone & Setup
+## Clone & Setup
 
 ```bash
 # Clone the repo
@@ -16,7 +16,7 @@ git checkout feature/wazuh-siem-integration
 ls -la docs/
 ```
 
-## 📋 Your Checklist
+## Your Checklist
 
 ### 1. Set Up Wazuh Manager
 
@@ -52,7 +52,7 @@ Send Rafa:
 - Agent key for pi0
 - Agent key for pi1
 
-## 📊 What You'll Receive
+## What You'll Receive
 
 Once connected, your SIEM will get:
 
@@ -71,7 +71,7 @@ Once connected, your SIEM will get:
 - **Vulnerability Scan** - Ubuntu CVE database
 - **System Inventory** - packages, ports, processes
 
-## 🗺️ Architecture
+## Architecture
 
 ```
 Your Wazuh Manager
@@ -92,16 +92,16 @@ Your Wazuh Manager
 └────────────────────────────────────────┘
 ```
 
-## 🔗 Useful Links
+## Useful Links
 
 - **Data Pipeline Visualization**: https://guardquote.vandine.us/admin/network
 - **Full SIEM Docs**: `docs/SIEM-SETUP-ISAIAH.md`
 - **Contributing Guide**: `CONTRIBUTING.md`
 
-## 💬 Questions?
+## Questions?
 
 Hit up Rafa in Slack/Discord or create a GitHub issue.
 
 ---
 
-Good luck! 🛡️
+Good luck!

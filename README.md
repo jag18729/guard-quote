@@ -1,8 +1,8 @@
 # GuardQuote
 
-**ML-powered security service pricing platform — designed from need, not flash**
+**ML-powered security service pricing platform, designed from need, not flash**
 
-Every technology choice solves a real problem — supply chain risk, resource constraints, operational complexity, cost. This is how we think security applications should be architected in 2026.
+Every technology choice solves a real problem, supply chain risk, resource constraints, operational complexity, cost. This is how we think security applications should be architected in 2026.
 
 [![Live Site](https://img.shields.io/badge/Live-guardquote.vandine.us-orange)](https://guardquote.vandine.us)
 [![CI](https://github.com/jag18729/guard-quote/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/jag18729/guard-quote/actions)
@@ -51,8 +51,8 @@ Trained on 500+ historical quotes across 15 event types and 28 US locations.
 | Layer | Technology | Why |
 |-------|------------|-----|
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS | Vite eliminates webpack dependency chain |
-| Backend | Bun 1.3 + Hono | Built-in serve, crypto, env — minimal npm supply chain exposure |
-| ML Engine | Python, FastAPI, scikit-learn | Right-sized ML — no GPU needed, transparent pricing for an opaque industry |
+| Backend | Bun 1.3 + Hono | Built-in serve, crypto, env, minimal npm supply chain exposure |
+| ML Engine | Python, FastAPI, scikit-learn | Right-sized ML, no GPU needed, transparent pricing for an opaque industry |
 | Database | PostgreSQL 17 | Proven reliability, zero licensing, native async driver |
 | Auth | OAuth 2.0 PKCE + Bun.password (argon2id) | No auth SaaS, no bcrypt native compilation issues on ARM64 |
 | Infrastructure | K3s on Raspberry Pi 5, Cloudflare Tunnel | Enterprise patterns on commodity hardware, $0/month hosting |

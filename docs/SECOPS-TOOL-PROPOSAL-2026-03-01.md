@@ -1,7 +1,7 @@
-# SecOps Tool Proposal — Security Stack Expansion
+# SecOps Tool Proposal, Security Stack Expansion
 **Date:** 2026-03-01
-**Author:** Isaiah Bernal (@ibernal1815) — Security Operations
-**Status:** Proposed — Pending Team Review
+**Author:** Isaiah Bernal (@ibernal1815), Security Operations
+**Status:** Proposed, Pending Team Review
 **Scope:** GuardQuote infrastructure (pi0, pi1, pi2, rv2) + future deployments
 
 ---
@@ -10,7 +10,7 @@
 
 This proposal evaluates Zeek and six additional security tools against the current GuardQuote security stack. Findings are drawn from the initial vulnerability audit (`SECOPS-FINDINGS-2026-03-01.md`) and a review of existing infrastructure coverage.
 
-The goal is to identify tools that add distinct, non-overlapping security value — not tools that duplicate what Wazuh, Suricata, and the PA-220 already cover.
+The goal is to identify tools that add distinct, non-overlapping security value, not tools that duplicate what Wazuh, Suricata, and the PA-220 already cover.
 
 ### Current Stack Coverage
 
@@ -37,7 +37,7 @@ The goal is to identify tools that add distinct, non-overlapping security value 
 
 ---
 
-## 2. Zeek — Not Recommended
+## 2. Zeek, Not Recommended
 
 ### What It Does
 
@@ -50,7 +50,7 @@ Zeek is a network analysis framework that generates rich protocol-level logs: `c
 | Suricata overlap | Suricata's EVE JSON already produces connection, HTTP, DNS, and TLS logs. Zeek's primary value add is covered at ~80% |
 | PA-220 overlap | The Palo Alto firewall already performs App-ID deep packet inspection at the network edge |
 | RISC-V incompatible | rv2 (the designated network sensor) has no official Zeek build for RISC-V. Running Zeek on pi2 would require moving it off the wire |
-| Resource cost | Zeek requires a dedicated log pipeline and storage backend. ELK was already dropped for RAM constraints — Zeek has the same problem |
+| Resource cost | Zeek requires a dedicated log pipeline and storage backend. ELK was already dropped for RAM constraints, Zeek has the same problem |
 | Complexity-to-value ratio | For a team of four with a March 3 deadline, the setup time doesn't justify the incremental coverage |
 
 **Recommendation:** Do not deploy Zeek. Revisit post-capstone if dedicated network forensics becomes a requirement and a higher-powered sensor is available.
@@ -67,21 +67,21 @@ Zeek is a network analysis framework that generates rich protocol-level logs: `c
 
 #### What It Does
 
-Falco monitors Linux kernel syscalls in real time using eBPF. It detects anomalous behavior inside running containers — shells spawned inside pods, writes to sensitive paths, unexpected network connections, privilege escalation attempts. Suricata watches the wire; Falco watches inside the container. These are complementary, non-overlapping layers.
+Falco monitors Linux kernel syscalls in real time using eBPF. It detects anomalous behavior inside running containers, shells spawned inside pods, writes to sensitive paths, unexpected network connections, privilege escalation attempts. Suricata watches the wire; Falco watches inside the container. These are complementary, non-overlapping layers.
 
 #### Pros
 
 - Fills the one gap Suricata and Wazuh cannot cover: **in-container runtime behavior**
-- Deploys as a Kubernetes DaemonSet — fits naturally into the existing K3s setup on pi2
-- ARM64 compatible — official images available for Raspberry Pi
+- Deploys as a Kubernetes DaemonSet, fits naturally into the existing K3s setup on pi2
+- ARM64 compatible, official images available for Raspberry Pi
 - Ships with 100+ default rules covering MITRE ATT&CK techniques
 - Native Grafana/Prometheus integration via Falco exporter
 - Alerts can forward to Loki via Vector, keeping the existing log pipeline intact
-- Active CNCF project — well maintained, strong community
+- Active CNCF project, well maintained, strong community
 
 #### Cons
 
-- Requires kernel headers on pi2 (or eBPF probe compilation) — one-time setup complexity
+- Requires kernel headers on pi2 (or eBPF probe compilation), one-time setup complexity
 - eBPF probe may need recompilation after kernel updates
 - Default ruleset generates noise; tuning takes time
 - Resource overhead is non-trivial on a Pi (see below)
@@ -94,7 +94,7 @@ Falco monitors Linux kernel syscalls in real time using eBPF. It detects anomalo
 | CPU | 5–15% per core under load (eBPF probe) |
 | RAM | ~100–200 MB (Falco daemon + userspace) |
 | Disk | Negligible (logs forwarded, not stored locally) |
-| Network | Minimal — alert forwarding only |
+| Network | Minimal, alert forwarding only |
 
 #### Trade-offs Summary
 
@@ -102,7 +102,7 @@ Falco monitors Linux kernel syscalls in real time using eBPF. It detects anomalo
 |--|--|
 | **Adds** | Syscall-level container visibility, MITRE ATT&CK coverage inside K3s |
 | **Costs** | ~200 MB RAM on pi2, kernel header dependency, rule tuning time |
-| **Replaces** | Nothing — fills a gap no current tool covers |
+| **Replaces** | Nothing, fills a gap no current tool covers |
 
 ---
 
@@ -114,26 +114,26 @@ Falco monitors Linux kernel syscalls in real time using eBPF. It detects anomalo
 
 #### What It Does
 
-Trivy scans container images, filesystems, and IaC configs for known CVEs, misconfigurations, and exposed secrets before they reach production. It integrates into the CI pipeline — every image build gets scanned before deployment to K3s.
+Trivy scans container images, filesystems, and IaC configs for known CVEs, misconfigurations, and exposed secrets before they reach production. It integrates into the CI pipeline, every image build gets scanned before deployment to K3s.
 
 #### Pros
 
-- **Zero runtime overhead** — runs in CI, not on the cluster
+- **Zero runtime overhead**, runs in CI, not on the cluster
 - Covers OS packages, language dependencies (npm, pip, bun), and Kubernetes manifests in one tool
 - Catches secrets accidentally baked into images (complements Finding #2 from the audit)
-- Fast — a typical image scan completes in 15–30 seconds
+- Fast, a typical image scan completes in 15–30 seconds
 - ARM64 binary available, runs natively on the pi2 self-hosted runner
 - SARIF output integrates with GitHub Security tab for free
 - Actively maintained by Aqua Security, part of the CNCF ecosystem
-- One GitHub Actions step — minimal integration effort
+- One GitHub Actions step, minimal integration effort
 
 #### Cons
 
-- Only catches known CVEs (relies on NVD, OS advisories) — zero-days will pass through
+- Only catches known CVEs (relies on NVD, OS advisories), zero-days will pass through
 - Can produce false positives on vendored or forked packages
 - Requires internet access from the CI runner to pull vulnerability databases
-- High-severity findings may block deployments until triaged — needs a policy decision on severity thresholds
-- Does not scan running containers — only images at build time
+- High-severity findings may block deployments until triaged, needs a policy decision on severity thresholds
+- Does not scan running containers, only images at build time
 
 #### Resource Usage
 
@@ -162,24 +162,24 @@ Trivy scans container images, filesystems, and IaC configs for known CVEs, misco
 
 #### What It Does
 
-CrowdSec is a modern IPS that parses logs, detects attack patterns, and shares attacker IPs with a global community blocklist. Unlike Fail2ban, it separates detection (the agent, which reads logs) from enforcement (the bouncer, which blocks). It actively bans IPs that are brute-forcing SSH, hammering the API, or scraping for vulnerabilities — and benefits from crowd-sourced threat intelligence.
+CrowdSec is a modern IPS that parses logs, detects attack patterns, and shares attacker IPs with a global community blocklist. Unlike Fail2ban, it separates detection (the agent, which reads logs) from enforcement (the bouncer, which blocks). It actively bans IPs that are brute-forcing SSH, hammering the API, or scraping for vulnerabilities, and benefits from crowd-sourced threat intelligence.
 
 #### Pros
 
-- **Active blocking** — fills the gap Wazuh leaves (Wazuh detects; CrowdSec blocks)
-- Community threat feed provides real-time blocklists from hundreds of thousands of nodes worldwide — you get threat intel without building it yourself
-- Log parsers exist for nginx, sshd, and custom app logs — covers GuardQuote API patterns
+- **Active blocking**, fills the gap Wazuh leaves (Wazuh detects; CrowdSec blocks)
+- Community threat feed provides real-time blocklists from hundreds of thousands of nodes worldwide, you get threat intel without building it yourself
+- Log parsers exist for nginx, sshd, and custom app logs, covers GuardQuote API patterns
 - Lightweight agent; bouncer is a simple iptables/nftables rule applier
 - ARM64 compatible
-- Prometheus metrics exporter built in — plugs directly into existing Grafana dashboards
+- Prometheus metrics exporter built in, plugs directly into existing Grafana dashboards
 - Decisions (blocks) are logged and auditable
-- Open source, self-hostable — no forced cloud dependency
+- Open source, self-hostable, no forced cloud dependency
 
 #### Cons
 
 - Requires a CrowdSec account to access the community blocklist (free tier available)
 - Two-component model (agent + bouncer) adds operational complexity vs. Fail2ban's simplicity
-- False positive risk — community blocklists occasionally flag legitimate IPs (CDN egress, Cloudflare ranges)
+- False positive risk, community blocklists occasionally flag legitimate IPs (CDN egress, Cloudflare ranges)
 - Sharing your log metadata with the CrowdSec network is opt-in but worth reviewing for a production environment
 - Bouncer needs careful integration on hosts behind Cloudflare Tunnel to avoid blocking Cloudflare's own IPs
 
@@ -198,7 +198,7 @@ CrowdSec is a modern IPS that parses logs, detects attack patterns, and shares a
 |--|--|
 | **Adds** | Active IP blocking, community threat intelligence, Prometheus metrics |
 | **Costs** | Two-component setup, false-positive risk on Cloudflare egress IPs, CrowdSec account |
-| **Replaces** | The blocking half of what Wazuh active response could do — cleaner separation of concerns |
+| **Replaces** | The blocking half of what Wazuh active response could do, cleaner separation of concerns |
 
 ---
 
@@ -212,25 +212,25 @@ CrowdSec is a modern IPS that parses logs, detects attack patterns, and shares a
 
 Nuclei is a fast, template-driven vulnerability scanner from ProjectDiscovery. It runs over 9,000 community templates covering OWASP Top 10, CVEs, misconfigurations, exposed panels, and subdomain takeover. Point it at `guardquote.vandine.us` and it probes the live application for the classes of vulnerability we identified in the audit (CORS, auth issues, endpoint enumeration).
 
-This tool is central to **issue #124 (Kali pen testing — real attack data for SIEM showcase)**. Running Nuclei against the live app generates real Suricata and Wazuh alerts, which makes the SIEM demo visually compelling.
+This tool is central to **issue #124 (Kali pen testing, real attack data for SIEM showcase)**. Running Nuclei against the live app generates real Suricata and Wazuh alerts, which makes the SIEM demo visually compelling.
 
 #### Pros
 
 - 9,000+ templates maintained by the community, updated frequently
 - Covers exactly the vulnerabilities found in the audit: CORS misconfig, auth bypass, rate limit evasion
-- Fast — full web scan completes in minutes
+- Fast, full web scan completes in minutes
 - SARIF and JSON output integrates with GitHub Security and custom dashboards
 - Can run from Kali or the bastion without installing on any Pi
-- The scan traffic generates authentic Suricata/Wazuh alerts — real data for the demo
+- The scan traffic generates authentic Suricata/Wazuh alerts, real data for the demo
 - Template-based: easy to write custom rules for GuardQuote-specific endpoints
 
 #### Cons
 
-- **Must only be run against infrastructure you own** — not a "fire and forget" tool
-- Noisy scanner traffic will trigger alerts across the stack — coordinate scans with the team
-- Some templates can cause minor service disruption (DOS-adjacent probes) — use `-severity low,medium,high` to exclude destructive checks
+- **Must only be run against infrastructure you own**, not a "fire and forget" tool
+- Noisy scanner traffic will trigger alerts across the stack, coordinate scans with the team
+- Some templates can cause minor service disruption (DOS-adjacent probes), use `-severity low,medium,high` to exclude destructive checks
 - Does not replace manual penetration testing for a thorough security assessment
-- Requires rate limiting awareness — may trigger your own CrowdSec/rate limiter if not tuned
+- Requires rate limiting awareness, may trigger your own CrowdSec/rate limiter if not tuned
 
 #### Resource Usage
 
@@ -239,7 +239,7 @@ This tool is central to **issue #124 (Kali pen testing — real attack data for 
 | CPU | High burst on scanner host during scan |
 | RAM | ~100–200 MB on scanner host |
 | Disk | ~50 MB (templates cache) |
-| Target load | Moderate — comparable to normal traffic spike |
+| Target load | Moderate, comparable to normal traffic spike |
 
 #### Trade-offs Summary
 
@@ -247,36 +247,36 @@ This tool is central to **issue #124 (Kali pen testing — real attack data for 
 |--|--|
 | **Adds** | OWASP Top 10 coverage against live app, real SIEM alert data, feeds issue #124 |
 | **Costs** | Requires controlled execution, can generate false-positive alerts in monitoring |
-| **Replaces** | Ad-hoc manual testing — not a replacement for a full pentest |
+| **Replaces** | Ad-hoc manual testing, not a replacement for a full pentest |
 
 ---
 
 ### 3.5 Semgrep
 
-**Category:** Static Application Security Testing (SAST) — CI/CD
+**Category:** Static Application Security Testing (SAST), CI/CD
 **Deployment Target:** GitHub Actions
 **Priority:** Medium
 
 #### What It Does
 
-Semgrep runs pattern-based static analysis against source code on every pull request. It catches security vulnerabilities at the code level before they reach production — exactly the type of issues found in the audit (timing attack on `s2s-auth.ts`, IP spoofing on `rate-limit.ts`). It supports TypeScript, Python, and every language in the GuardQuote stack.
+Semgrep runs pattern-based static analysis against source code on every pull request. It catches security vulnerabilities at the code level before they reach production, exactly the type of issues found in the audit (timing attack on `s2s-auth.ts`, IP spoofing on `rate-limit.ts`). It supports TypeScript, Python, and every language in the GuardQuote stack.
 
 #### Pros
 
 - Would have caught **three of the four findings** in `SECOPS-FINDINGS-2026-03-01.md` automatically
-- Zero runtime footprint — runs in CI only
+- Zero runtime footprint, runs in CI only
 - Free tier covers open-source and private repos up to a reasonable limit
 - Community ruleset (`p/typescript`, `p/python`, `p/owasp-top-ten`) requires no custom rule writing to get started
-- Results post directly as PR comments — developers see findings before merge
+- Results post directly as PR comments, developers see findings before merge
 - Custom rules can be written in YAML to flag GuardQuote-specific anti-patterns
 - Integrates with GitHub Advanced Security for free on public repos
 
 #### Cons
 
-- Static analysis only — cannot catch runtime or configuration vulnerabilities
+- Static analysis only, cannot catch runtime or configuration vulnerabilities
 - Can produce false positives, especially on complex type-narrowing patterns in TypeScript
 - Free tier has scan rate limits; large repos may hit them
-- Requires developer buy-in — findings need to be triaged and acted on, or alert fatigue sets in
+- Requires developer buy-in, findings need to be triaged and acted on, or alert fatigue sets in
 - Does not replace code review; supplements it
 
 #### Resource Usage
@@ -286,7 +286,7 @@ Semgrep runs pattern-based static analysis against source code on every pull req
 | CPU | CI runner spike during scan (~30–90s per PR) |
 | RAM | ~500 MB–1 GB during scan on CI runner |
 | Disk | Negligible |
-| Network | Minimal — results sent to Semgrep cloud (or self-hosted) |
+| Network | Minimal, results sent to Semgrep cloud (or self-hosted) |
 
 #### Trade-offs Summary
 
@@ -310,21 +310,21 @@ Lynis is an open-source system auditing tool that performs a scored hardening as
 
 #### Pros
 
-- **Zero ongoing overhead** — run on demand, not a daemon
+- **Zero ongoing overhead**, run on demand, not a daemon
 - No installation required on target (can run from a tarball)
-- Produces a concrete, scored baseline for each host — good documentation artifact for the capstone
+- Produces a concrete, scored baseline for each host, good documentation artifact for the capstone
 - Finds low-hanging hardening wins (SSH `PermitRootLogin`, `MaxAuthTries`, kernel `net.ipv4.tcp_syncookies`, etc.)
 - Output is human-readable and easily converted into a remediation checklist
-- ARM64 compatible, pure shell script — runs on any Debian-based host
+- ARM64 compatible, pure shell script, runs on any Debian-based host
 - Free, open source, widely used in compliance frameworks (CIS Benchmarks alignment)
 
 #### Cons
 
-- Point-in-time snapshot only — needs to be re-run after system changes
+- Point-in-time snapshot only, needs to be re-run after system changes
 - Does not monitor continuously (not a replacement for Wazuh FIM)
 - Some suggestions require kernel-level changes that may conflict with K3s requirements on pi2
-- Output is verbose — requires interpretation to prioritize findings
-- Not automated — relies on someone remembering to run it
+- Output is verbose, requires interpretation to prioritize findings
+- Not automated, relies on someone remembering to run it
 
 #### Resource Usage
 
@@ -333,7 +333,7 @@ Lynis is an open-source system auditing tool that performs a scored hardening as
 | CPU | Minimal spike during audit (~1–5 minutes) |
 | RAM | < 50 MB during scan |
 | Disk | ~5 MB (tool) + report output |
-| Network | None — runs entirely locally |
+| Network | None, runs entirely locally |
 
 #### Trade-offs Summary
 
@@ -341,7 +341,7 @@ Lynis is an open-source system auditing tool that performs a scored hardening as
 |--|--|
 | **Adds** | Scored hardening baseline for all hosts, compliance-aligned audit evidence |
 | **Costs** | Manual execution, verbose output needs interpretation |
-| **Replaces** | Ad-hoc hardening checks — gives them structure and a score |
+| **Replaces** | Ad-hoc hardening checks, gives them structure and a score |
 
 ---
 
@@ -351,9 +351,9 @@ How proposed tools map to security layers and current gaps:
 
 | Layer | Current Coverage | Proposed Addition |
 |-------|-----------------|-------------------|
-| Network (wire) | Suricata, PA-220 | — (covered) |
+| Network (wire) | Suricata, PA-220 |, (covered) |
 | Network (blocking) | PA-220 rules only | **CrowdSec** |
-| Host (detection) | Wazuh | — (covered) |
+| Host (detection) | Wazuh |, (covered) |
 | Host (hardening) | None | **Lynis** |
 | Container (runtime) | None | **Falco** |
 | Container (images) | None | **Trivy** |
@@ -389,11 +389,11 @@ These can be added quickly and directly support open issues:
 
 | Tool | Effort | Rationale |
 |------|--------|-----------|
-| Lynis | 1–2 hours | Run against all three Pis, document scores — good demo material, zero risk |
+| Lynis | 1–2 hours | Run against all three Pis, document scores, good demo material, zero risk |
 | Semgrep | 2–3 hours | One GitHub Actions step, catches the audit findings automatically from now on |
-| Nuclei | 2–4 hours | Feeds issue #124 directly — run against guardquote.vandine.us, generate real SIEM data |
+| Nuclei | 2–4 hours | Feeds issue #124 directly, run against guardquote.vandine.us, generate real SIEM data |
 
-### Phase 2 — Sprint 3 (March 3–14)
+### Phase 2, Sprint 3 (March 3–14)
 Core infrastructure additions with moderate setup time:
 
 | Tool | Effort | Rationale |
@@ -401,7 +401,7 @@ Core infrastructure additions with moderate setup time:
 | Trivy | 3–5 hours | CI integration, image scanning before K3s deployment |
 | CrowdSec | 4–6 hours | Agent on pi0/pi1, bouncer on pi2, Grafana dashboard |
 
-### Phase 3 — Sprint 4 (March 24 – April 4)
+### Phase 3, Sprint 4 (March 24 – April 4)
 Highest value but most setup complexity:
 
 | Tool | Effort | Rationale |
@@ -412,19 +412,19 @@ Highest value but most setup complexity:
 
 ## 7. Recommendation
 
-Deploy all six proposed tools across two phases. Skip Zeek — it adds no coverage that Suricata and the PA-220 don't already provide, at significant cost in complexity and RAM.
+Deploy all six proposed tools across two phases. Skip Zeek, it adds no coverage that Suricata and the PA-220 don't already provide, at significant cost in complexity and RAM.
 
 The highest-priority additions for the capstone demo are:
 
-1. **Nuclei** — generates real attack traffic for the SIEM showcase (issue #124)
-2. **Lynis** — produces a hardening report that demonstrates security maturity
-3. **Semgrep** — closes the code-level gap found in the audit, effective immediately
+1. **Nuclei**, generates real attack traffic for the SIEM showcase (issue #124)
+2. **Lynis**, produces a hardening report that demonstrates security maturity
+3. **Semgrep**, closes the code-level gap found in the audit, effective immediately
 
 The highest-priority additions for long-term infrastructure security are:
 
-1. **Falco** — the only tool that covers container runtime behavior
-2. **CrowdSec** — the only tool that actively blocks threats (not just detects them)
-3. **Trivy** — prevents vulnerable images from reaching the cluster
+1. **Falco**, the only tool that covers container runtime behavior
+2. **CrowdSec**, the only tool that actively blocks threats (not just detects them)
+3. **Trivy**, prevents vulnerable images from reaching the cluster
 
 ---
 

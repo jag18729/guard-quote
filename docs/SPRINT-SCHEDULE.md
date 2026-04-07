@@ -1,12 +1,12 @@
 # GuardQuote Sprint Schedule
 
-**Project Duration:** Feb 6 - April 27, 2026  
-**Spring Break:** March 16-22, 2026  
+**Project Duration:** Feb 6 - April 27, 2026
+**Spring Break:** March 16-22, 2026
 **Final Presentation:** Last weekend of April (April 25-26)
 
 ---
 
-## 📅 Bi-Weekly Sprint Overview
+## Bi-Weekly Sprint Overview
 
 | Sprint | Dates | Focus | Deliverables |
 |--------|-------|-------|--------------|
@@ -20,7 +20,7 @@
 
 ---
 
-## 🏃 Sprint 1: SIEM Integration
+## Sprint 1: SIEM Integration
 **Feb 6-14 (Current)**
 
 ### Standup: Friday Feb 7 @ 3 PM
@@ -31,9 +31,9 @@
 ### Deliverables by Feb 14
 | Owner | Deliverable | Status |
 |-------|-------------|--------|
-| Rafa | Infrastructure complete | ✅ Done |
-| Rafa | Monitoring stack live | ✅ Done |
-| Rafa | Data flow diagram | ✅ Done |
+| Rafa | Infrastructure complete | Done |
+| Rafa | Monitoring stack live | Done |
+| Rafa | Data flow diagram | Done |
 | Isaiah | Wazuh manager deployed | ⏳ |
 | Isaiah | Agent keys generated | ⏳ |
 | Milkias | Site review feedback | ⏳ |
@@ -46,7 +46,7 @@
 
 ---
 
-## 🏃 Sprint 2: Security & Testing
+## Sprint 2: Security & Testing
 **Feb 17-28**
 
 ### Standup: Friday Feb 21
@@ -79,7 +79,7 @@
 
 ---
 
-## 🏃 Sprint 3: Documentation
+## Sprint 3: Documentation
 **Mar 3-14**
 
 ### Standup: Friday Mar 7
@@ -109,14 +109,14 @@
 
 ---
 
-## 🌴 Spring Break
+## Spring Break
 **Mar 16-22**
 
 No meetings. Optional async work if desired.
 
 ---
 
-## 🏃 Sprint 4: Polish & ML
+## Sprint 4: Polish & ML
 **Mar 24 - Apr 4**
 
 ### Standup: Friday Mar 28
@@ -136,7 +136,7 @@ No meetings. Optional async work if desired.
 
 ---
 
-## 🏃 Sprint 5: Final Testing
+## Sprint 5: Final Testing
 **Apr 7-18**
 
 ### Standup: Friday Apr 11
@@ -161,7 +161,7 @@ No meetings. Optional async work if desired.
 
 ---
 
-## 🏃 Sprint 6: Presentation
+## Sprint 6: Presentation
 **Apr 21-27**
 
 ### Standup: Wednesday Apr 23
@@ -181,14 +181,14 @@ No meetings. Optional async work if desired.
 - Final rehearsal
 - Last-minute fixes
 
-### 🎯 Final Presentation: Apr 25-26
+### Final Presentation: Apr 25-26
 - Live demo
 - Team presentation
 - Q&A
 
 ---
 
-## 📊 Milestone Summary
+## Milestone Summary
 
 | Date | Milestone | Type |
 |------|-----------|------|
@@ -205,11 +205,11 @@ No meetings. Optional async work if desired.
 | Apr 11 | Final Testing Check | Standup |
 | Apr 18 | Dry Run #1 | Rehearsal |
 | Apr 23 | Dry Run #2 | Rehearsal |
-| **Apr 25-26** | **Final Presentation** | 🎯 |
+| **Apr 25-26** | **Final Presentation** | |
 
 ---
 
-## 🔄 Standup Format
+## Standup Format
 
 Every Friday (except breaks):
 1. **What's done** since last standup
@@ -221,7 +221,7 @@ Duration: 30-45 minutes
 
 ---
 
-## 📝 Definition of Done
+## Definition of Done
 
 ### For Code
 - [ ] Code reviewed

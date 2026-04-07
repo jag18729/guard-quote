@@ -4,10 +4,10 @@
 
 GuardQuote uses gRPC for internal communication between the backend API and the ML engine. This provides:
 
-- **Binary serialization** — Faster than JSON REST
-- **Strong typing** — Code generation from proto definitions
-- **Streaming** — Batch quote processing support
-- **Low latency** — Connection pooling, HTTP/2
+- **Binary serialization**, Faster than JSON REST
+- **Strong typing**, Code generation from proto definitions
+- **Streaming**, Batch quote processing support
+- **Low latency**, Connection pooling, HTTP/2
 
 ## Architecture
 
@@ -49,19 +49,19 @@ GuardQuote uses gRPC for internal communication between the backend API and the 
 ### ML Engine (Python)
 
 **Files:**
-- `ml-engine/src/grpc_servicer.py` — Service implementations
-- `ml-engine/src/server.py` — Dual server (FastAPI + gRPC)
-- `ml-engine/src/grpc_generated/` — Generated Python stubs
+- `ml-engine/src/grpc_servicer.py`, Service implementations
+- `ml-engine/src/server.py`, Dual server (FastAPI + gRPC)
+- `ml-engine/src/grpc_generated/`, Generated Python stubs
 
 **Ports:**
-- `:8000` — FastAPI REST (legacy, for direct access)
-- `:50051` — gRPC (internal, for backend)
+- `:8000`, FastAPI REST (legacy, for direct access)
+- `:50051`, gRPC (internal, for backend)
 
 ### Backend (TypeScript)
 
 **Files:**
-- `backend/src/services/ml-client.ts` — gRPC client
-- `backend/src/services/quote-calculator.ts` — ML-first with fallback
+- `backend/src/services/ml-client.ts`, gRPC client
+- `backend/src/services/quote-calculator.ts`, ML-first with fallback
 
 **Strategy:**
 1. Try ML engine via gRPC
@@ -189,10 +189,10 @@ When ML engine is available:
 ## Monitoring
 
 Metrics to track:
-- `ml_grpc_requests_total` — Total gRPC calls
-- `ml_grpc_latency_ms` — Response time
-- `ml_fallback_rate` — % of requests using fallback
-- `ml_engine_healthy` — Health check status
+- `ml_grpc_requests_total`, Total gRPC calls
+- `ml_grpc_latency_ms`, Response time
+- `ml_fallback_rate`, % of requests using fallback
+- `ml_engine_healthy`, Health check status
 
 ## Troubleshooting
 

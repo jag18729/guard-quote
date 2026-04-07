@@ -4,7 +4,7 @@ Welcome to the GuardQuote admin team! This guide will get you up and running.
 
 ---
 
-## 🔐 Getting Access
+## Getting Access
 
 ### 1. Cloudflare Access Authorization
 GuardQuote admin pages are protected by Cloudflare Zero Trust. To get access:
@@ -20,7 +20,7 @@ Once authorized in CF Access, Rafa will create your admin account:
 
 ---
 
-## 🖥️ Dashboard Overview
+## Dashboard Overview
 
 ### Main Sections
 
@@ -43,7 +43,7 @@ Once authorized in CF Access, Rafa will create your admin account:
 
 ---
 
-## 📝 Common Tasks
+## Common Tasks
 
 ### Creating a Blog Post
 1. Navigate to **Blog** section
@@ -64,7 +64,7 @@ Once authorized in CF Access, Rafa will create your admin account:
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
@@ -75,7 +75,7 @@ Once authorized in CF Access, Rafa will create your admin account:
 
 ---
 
-## 📞 Support
+## Support
 
 | Issue Type | Contact |
 |------------|---------|
@@ -85,7 +85,7 @@ Once authorized in CF Access, Rafa will create your admin account:
 
 ---
 
-## 🔗 Quick Links
+## Quick Links
 
 - **Site**: https://guardquote.vandine.us
 - **Admin**: https://guardquote.vandine.us/admin

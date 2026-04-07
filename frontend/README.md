@@ -149,18 +149,18 @@ GitHub Actions runs on every push:
 ## Key Features
 
 ### For Clients (Public)
-- 🏠 Landing page with orange/black theme
-- 📝 Quote wizard
-- 💰 Instant price estimates
+- Landing page with teal accent over black
+- Quote wizard
+- Instant price estimates
 
 ### For Admins
-- 📊 Dashboard with stats
-- 👥 User management (RBAC)
-- ✍️ Blog with comments
-- 🗳️ Feature requests with voting + GitHub sync
-- 🌐 Network topology diagram
-- 📈 Interactive data pipeline visualization
-- 🔧 Service monitoring
+- Dashboard with stats
+- User management (RBAC)
+- Blog with comments
+- Feature requests with voting and GitHub sync
+- Network topology diagram
+- Interactive data pipeline visualization
+- Service monitoring
 
 ---
 

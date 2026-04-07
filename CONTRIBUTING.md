@@ -36,15 +36,24 @@ npm run dev
 # Opens at http://localhost:5173
 ```
 
-### 4. Backend Setup (Deno)
+### 4. Backend Setup
 
-The backend runs on pi1. For local development:
+The backend runs on Hono. Local development uses Node + tsx for hot reload; production builds with Bun and ships to K3s on Pi2 via CI/CD on every push to main.
 
 ```bash
-cd backend  # If exists, or work directly on pi1
-deno run -A server.ts
+cd backend
+npm install
+npm run dev
 # API at http://localhost:3002
 ```
+
+Type-check before committing:
+
+```bash
+npm run typecheck
+```
+
+You do not need to deploy by hand. Pushing to `main` triggers the GitHub Actions self-hosted runner on Pi2, which builds the Bun container image and rolls the K3s deployment.
 
 ## 📁 Project Structure
 
@@ -119,7 +128,8 @@ Then create a Pull Request on GitHub.
 
 | Service | Host | Port | Purpose |
 |---------|------|------|---------|
-| GuardQuote API | pi1 | 3002 | Backend API |
+| GuardQuote API (dev) | localhost | 3002 | Backend API for local dev |
+| GuardQuote API (prod) | Pi2 K3s | internal | Bun container, ingressed via cloudflared |
 | Grafana | pi1 | 3000 | Metrics dashboards |
 | Prometheus | pi1 | 9090 | Metrics storage |
 | Loki | pi1 | 3100 | Log aggregation |

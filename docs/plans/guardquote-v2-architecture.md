@@ -2,7 +2,7 @@
 
 > **Role**: Architect (documentation only — no implementation code)
 > **Status**: Proposed changes with examples, rationale, and recommendations
-> **Last updated**: 2026-02-18
+> **Last updated**: 2026-04-07
 
 ---
 

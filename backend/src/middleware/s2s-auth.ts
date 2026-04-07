@@ -6,10 +6,15 @@
  */
 
 import type { Context, Next } from "hono";
+import { timingSafeEqual } from "node:crypto";
 
 // Environment-based secret (should be in .env)
 const ML_ENGINE_SECRET = process.env.ML_ENGINE_SECRET;
 if (!ML_ENGINE_SECRET) throw new Error("ML_ENGINE_SECRET environment variable is required");
+// Pre-encode the secret once at module load. timingSafeEqual requires
+// equal-length buffers, so the request handler length-checks first to
+// avoid the throw. The length itself is not the secret.
+const ML_ENGINE_SECRET_BUF = Buffer.from(ML_ENGINE_SECRET, "utf8");
 const S2S_HEADER = "X-Internal-Secret";
 
 /**
@@ -23,7 +28,12 @@ export function requireS2SAuth() {
       return c.json({ error: "S2S authentication required", code: "MISSING_S2S_AUTH" }, 401);
     }
 
-    if (secret !== ML_ENGINE_SECRET) {
+    // Constant-time comparison to defeat timing attacks (audit finding #1).
+    const providedBuf = Buffer.from(secret, "utf8");
+    if (
+      providedBuf.length !== ML_ENGINE_SECRET_BUF.length ||
+      !timingSafeEqual(providedBuf, ML_ENGINE_SECRET_BUF)
+    ) {
       return c.json({ error: "Invalid S2S credentials", code: "INVALID_S2S_AUTH" }, 403);
     }
 

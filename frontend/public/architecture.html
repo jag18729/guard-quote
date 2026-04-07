@@ -437,7 +437,7 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
 <rect width="1380" height="970" fill="#ffffff"/>
 
 <!-- ── ZONES ── -->
-<rect x="15"  y="10"  width="945" height="108" class="zr zi"/>
+<rect x="15"  y="10"  width="525" height="108" class="zr zi"/>
 <text x="30"  y="30"  class="zl" fill="#3b82f6">Internet</text>
 <rect x="15"  y="128" width="1410" height="662" rx="10" class="zr zs"/>
 <text x="30"  y="148" class="zl" fill="#475569">Rafael's Studio</text>
@@ -518,10 +518,10 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
 <line x1="1200" y1="394" x2="1200" y2="282" stroke="#64748b" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#ad)"/>
 <text x="1225" y="346" font-size="9" fill="#64748b">Analysis</text>
 
-<!-- 19–21. pi1 → Graf / Prom / Loki  [staggered y=795,806,817 buses] (yellow dashed) -->
-<path d="M430,406 L430,795 L360,795 L360,855" fill="none" stroke="#ca8a04" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
-<path d="M415,406 L415,806 L220,806 L220,855" fill="none" stroke="#ca8a04" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
-<path d="M400,406 L400,817 L90,817 L90,855" fill="none" stroke="#ca8a04" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
+<!-- 19, 20, 21. pi1 to Grafana / Prometheus / Loki. Exit pi1 left, route through dmz gap x=340, fan out at staggered y (yellow dashed) -->
+<path d="M355,382 L340,382 L340,830 L360,830 L360,855" fill="none" stroke="#ca8a04" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
+<path d="M355,382 L340,382 L340,820 L220,820 L220,855" fill="none" stroke="#ca8a04" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
+<path d="M355,382 L340,382 L340,810 L90,810 L90,855" fill="none" stroke="#ca8a04" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
 
 <!-- 22. SentinelNet → Wazuh Alerts  [y=568 bus] (gray dashed) -->
 <path d="M920,292 L920,568 L470,568 L470,855" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="5,4" stroke-linejoin="round" marker-end="url(#ad)"/>
@@ -567,24 +567,98 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
     </section>
 
     <section>
-      <h2>Network Mesh</h2>
+      <h2>Network</h2>
       <div class="cards">
         <div class="card">
           <div class="card-header">
-            <div class="card-icon" style="background: rgba(6, 182, 212, 0.15);">📡</div>
+            <div class="card-icon" style="background: rgba(234, 88, 12, 0.1); color: #ea580c;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6.01 18H6"/><path d="M10.01 18H10"/><path d="M15 10v4"/><path d="M17.84 7.17a4 4 0 0 0-5.66 0"/><path d="M20.66 4.34a8 8 0 0 0-11.31 0"/></svg>
+            </div>
             <div>
-              <div class="card-title">Tailscale Mesh</div>
-              <div class="card-subtitle">Zero-Trust Network</div>
+              <div class="card-title">UniFi UDM</div>
+              <div class="card-subtitle">Edge Gateway and Switch Fabric</div>
             </div>
           </div>
           <div class="card-body">
-            WireGuard-based mesh VPN connecting all infrastructure nodes and remote team members.
+            Ubiquiti Dream Machine handling the WAN uplink and inside-LAN switching for the matrix VLAN. Forwards traffic to PA-220 for inspection, then back out via untrust uplink.
             <ul>
-              <li>pi0: 100.114.94.18</li>
-              <li>pi1: 100.77.26.41</li>
-              <li>pi2: 100.111.113.35</li>
-              <li>rv2: 100.118.229.114</li>
-              <li>ThinkStation: 100.108.70.68</li>
+              <li>WAN ingress and DHCP</li>
+              <li>Matrix VLAN switching</li>
+              <li>SNMP polled by Prometheus</li>
+              <li>Direct K3s pod egress via Pi2 eth2</li>
+            </ul>
+            <div class="tech-stack">
+              <span class="tech-tag">UDM</span>
+              <span class="tech-tag">SNMP</span>
+              <span class="tech-tag">VLAN</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon" style="background: rgba(202, 138, 4, 0.1); color: #ca8a04;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"/></svg>
+            </div>
+            <div>
+              <div class="card-title">PA-220 Firewall</div>
+              <div class="card-subtitle">reveal-fw, PAN-OS 10.2.10-h7</div>
+            </div>
+          </div>
+          <div class="card-body">
+            Palo Alto next-gen firewall enforcing four security zones with App-ID, threat prevention, and traffic logging.
+            <table class="zone-table">
+              <tr>
+                <th>Zone</th>
+                <th>Interface</th>
+                <th>Subnet</th>
+              </tr>
+              <tr>
+                <td><span class="zone-badge zone-untrust">untrust</span></td>
+                <td>eth1/7</td>
+                <td>UDM uplink</td>
+              </tr>
+              <tr>
+                <td><span class="zone-badge zone-mgmt">dmz-mgmt</span></td>
+                <td>eth1/1</td>
+                <td>192.168.21.0/24</td>
+              </tr>
+              <tr>
+                <td><span class="zone-badge zone-services">dmz-services</span></td>
+                <td>eth1/6</td>
+                <td>192.168.20.0/24</td>
+              </tr>
+              <tr>
+                <td><span class="zone-badge zone-security">dmz-security</span></td>
+                <td>eth1/2, eth1/5</td>
+                <td>192.168.22.0/24</td>
+              </tr>
+            </table>
+            <div class="tech-stack">
+              <span class="tech-tag">App-ID</span>
+              <span class="tech-tag">Threat Prevention</span>
+              <span class="tech-tag">Syslog to Vector</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon" style="background: rgba(8, 145, 178, 0.1); color: #0891b2;">
+              <svg width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M24 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm-9 9a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm0-9a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm6-6a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM3 24a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm18 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM6 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm9-9a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6 3a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg>
+            </div>
+            <div>
+              <div class="card-title">Tailscale Mesh</div>
+              <div class="card-subtitle">Zero-Trust Overlay</div>
+            </div>
+          </div>
+          <div class="card-body">
+            WireGuard-based mesh VPN connecting all hosts across the four security zones. Used for cross-zone traffic that PA-220 blocks by default.
+            <ul>
+              <li>Pi0, Pi1, Pi2, RV2, ThinkStation</li>
+              <li>MagicDNS for hostname routing</li>
+              <li>ACL-controlled access</li>
+              <li>Bypasses cross-zone PA-220 rules</li>
             </ul>
             <div class="tech-stack">
               <span class="tech-tag">WireGuard</span>
@@ -677,52 +751,6 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
     <section>
       <h2>Security Infrastructure</h2>
       <div class="two-col">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-icon firewall">🔥</div>
-            <div>
-              <div class="card-title">PA-220 Firewall</div>
-              <div class="card-subtitle">reveal-fw, PAN-OS 10.2.10-h7</div>
-            </div>
-          </div>
-          <div class="card-body">
-            Palo Alto Networks next-gen firewall providing zone-based security, application visibility, and threat prevention.
-            <table class="zone-table">
-              <tr>
-                <th>Zone</th>
-                <th>Interface</th>
-                <th>Subnet</th>
-              </tr>
-              <tr>
-                <td><span class="zone-badge zone-untrust">untrust</span></td>
-                <td>eth1/7</td>
-                <td>Uplink to UDM</td>
-              </tr>
-              <tr>
-                <td><span class="zone-badge zone-mgmt">dmz-mgmt</span></td>
-                <td>eth1/1</td>
-                <td>192.168.21.0/24</td>
-              </tr>
-              <tr>
-                <td><span class="zone-badge zone-services">dmz-services</span></td>
-                <td>eth1/6</td>
-                <td>192.168.20.0/24</td>
-              </tr>
-              <tr>
-                <td><span class="zone-badge zone-security">dmz-security</span></td>
-                <td>eth1/2, eth1/5</td>
-                <td>192.168.22.0/24</td>
-              </tr>
-            </table>
-            <div class="tech-stack">
-              <span class="tech-tag">App-ID</span>
-              <span class="tech-tag">Threat Prevention</span>
-              <span class="tech-tag">URL Filtering</span>
-              <span class="tech-tag">Syslog → Vector</span>
-            </div>
-          </div>
-        </div>
-
         <div class="card">
           <div class="card-header">
             <div class="card-icon security">🛡️</div>

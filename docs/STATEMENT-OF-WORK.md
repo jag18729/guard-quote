@@ -164,8 +164,8 @@ GuardQuote is a secure web application platform enabling businesses to request n
 | UAT Round 2 | Feb 28 | 🔄 In Progress |
 | CI/CD Auto-Deploy | Feb 28 | ✅ Done |
 | IAM + LDAP + Bastion | Feb 28 | ✅ Done |
-| Presentation Ready | Mar 3 | 🔄 In Progress |
-| SDPS Demo | Mar 3 | 📅 Scheduled |
+| Presentation Ready | Apr 12 | In Progress |
+| CIT 480 Final Demo | Apr 18 | Scheduled |
 
 ---
 
@@ -291,11 +291,10 @@ GuardQuote is a secure web application platform enabling businesses to request n
 
 ## Project Closure
 
-- [ ] Final demo to stakeholders (SDPS — Mar 3)
+- [ ] Final demo to stakeholders (CIT 480, Apr 18)
 - [ ] UAT sign-off documented (#55, #56, #57)
 - [x] All code in repository (GitHub jag18729/guard-quote)
 - [ ] Documentation complete (#28)
-- [x] Lessons learned captured (SDPS presentation draft)
 - [x] Deployment runbook ready (GUARDQUOTE-V2-DEPLOYMENT.md)
 
 ---

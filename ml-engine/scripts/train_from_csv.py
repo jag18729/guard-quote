@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Train ML models from CSV file (no database required).
-Fast training for SDPS demo.
+Fast training for demo and CI runs.
 """
 import os
 import pickle

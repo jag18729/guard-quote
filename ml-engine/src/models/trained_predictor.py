@@ -30,14 +30,14 @@ class TrainedPredictor:
                 with open(MODEL_PATH, 'rb') as f:
                     self.models = pickle.load(f)
                 self.loaded = True
-                print(f"✓ Loaded trained models from {MODEL_PATH}")
-                print(f"  Price model: {self.models.get('price_model_name', 'Unknown')}")
-                print(f"  Trained at: {self.models.get('trained_at', 'Unknown')}")
+                print(f"[ok] Loaded trained models from {MODEL_PATH}")
+                print(f"     Price model: {self.models.get('price_model_name', 'Unknown')}")
+                print(f"     Trained at: {self.models.get('trained_at', 'Unknown')}")
             except Exception as e:
-                print(f"✗ Error loading models: {e}")
+                print(f"[fail] Error loading models: {e}")
                 self.loaded = False
         else:
-            print(f"✗ Model file not found: {MODEL_PATH}")
+            print(f"[fail] Model file not found: {MODEL_PATH}")
             self.loaded = False
 
     def _encode_event_type(self, event_type: str) -> int:

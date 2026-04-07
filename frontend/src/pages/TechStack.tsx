@@ -32,66 +32,26 @@ mermaid.initialize({
 });
 
 const architectureDiagram = `
-flowchart TD
-    subgraph Internet["CLOUDFLARE EDGE"]
-        direction LR
-        User([Users])
-        CF[CDN + WAF]
-    end
+flowchart LR
+    User([Users]) --> CF[Cloudflare]
+    CF --> FW[PA-220 NGFW]
+    FW --> K3s[K3s on Pi2]
+    K3s -->|Tailscale| DB[(PostgreSQL 17 · Pi1)]
+    K3s -.-> Obs[Grafana · Prom · Loki · Pi1]
+    FW --> RV2[Suricata IDS · RV2]
+    RV2 -.-> Obs
 
-    subgraph DC["HOMELAB: PA-220 NGFW (4 zones)"]
-        direction LR
-
-        subgraph MGMT["dmz-mgmt · Pi0"]
-            DNS[AdGuard DNS]
-            LDAP[OpenLDAP]
-            Bastion[Admin Bastion]
-        end
-
-        subgraph Services["dmz-services · Pi1"]
-            direction TB
-            DB[(PostgreSQL 17)]
-            Graf[Grafana]
-            Prom[Prometheus]
-            Loki[Loki]
-        end
-
-        subgraph Security["dmz-security · Pi2 + RV2"]
-            direction TB
-            Tunnel[cloudflared Tunnel]
-            subgraph K3s["K3s on Pi2"]
-                FE[Frontend]
-                BE[Backend]
-                ML[ML Engine]
-            end
-            Wazuh[Wazuh HIDS]
-            IDS[Suricata IDS, 74k rules]
-        end
-    end
-
-    User --> CF --> Tunnel
-    Tunnel --> FE
-    FE --> BE
-    BE --> ML
-    BE -->|Tailscale| DB
-    BE -.-> DNS
-
-    IDS -.->|EVE JSON| Loki
-    Wazuh -.-> Loki
-    BE -.-> Loki
-    Graf --- Prom
-
-    classDef internet fill:#5e81ac,stroke:#4c566a,color:#eceff4
-    classDef infra fill:#d08770,stroke:#4c566a,color:#2e3440
+    classDef edge fill:#5e81ac,stroke:#4c566a,color:#eceff4
+    classDef fw fill:#bf616a,stroke:#4c566a,color:#eceff4
     classDef app fill:#a3be8c,stroke:#4c566a,color:#2e3440
-    classDef security fill:#bf616a,stroke:#4c566a,color:#eceff4
     classDef data fill:#b48ead,stroke:#4c566a,color:#2e3440
+    classDef obs fill:#ebcb8b,stroke:#4c566a,color:#2e3440
 
-    class User,CF internet
-    class DNS,LDAP,Tunnel,Graf,Prom,Loki infra
-    class FE,BE,ML,Wazuh app
-    class IDS security
+    class User,CF edge
+    class FW fw
+    class K3s app
     class DB data
+    class Obs,RV2 obs
 `;
 
 function ArchitectureDiagram() {

@@ -26,7 +26,7 @@ export async function sendQuoteEmail(data: QuoteEmailData): Promise<boolean> {
   const html = `
     <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 32px; border-radius: 12px 12px 0 0;">
-        <h1 style="color: #f8fafc; margin: 0; font-size: 24px;">🛡️ Your GuardQuote</h1>
+        <h1 style="color: #f8fafc; margin: 0; font-size: 24px;">Your GuardQuote</h1>
         <p style="color: #94a3b8; margin: 8px 0 0 0;">Quote #${data.quoteId}</p>
       </div>
       

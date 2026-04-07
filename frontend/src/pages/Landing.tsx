@@ -101,7 +101,7 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="relative pt-20 pb-16 px-6 overflow-hidden">
-        {/* Concentric arc lines — top right */}
+        {/* Concentric arc lines, top right */}
         <svg className="arc-lines-tr" viewBox="0 0 400 400" fill="none">
           {[160, 200, 240, 280, 320].map((r, i) => (
             <circle key={i} cx="400" cy="0" r={r} stroke="rgba(20,184,166,0.12)" strokeWidth="0.75" />
@@ -109,7 +109,7 @@ export default function Landing() {
         </svg>
 
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 relative z-10">
-          {/* Left — text */}
+          {/* Left, text */}
           <div className="flex-1 text-center md:text-left">
             <div className="inline-block mb-6 px-4 py-1.5 bg-accent/10 border border-accent/20 rounded text-accent text-xs font-mono font-medium tracking-wider">
               AI-POWERED SECURITY PRICING
@@ -155,7 +155,7 @@ export default function Landing() {
             )}
           </div>
 
-          {/* Right — 3D shield from Figma */}
+          {/* Right, 3D shield from Figma */}
           <div className="hidden md:flex items-center justify-end flex-1 relative -mr-6 lg:-mr-12">
             <div className="absolute inset-0 bg-teal-500/[0.06] blur-[80px] rounded-full" />
             <img
@@ -254,7 +254,7 @@ export default function Landing() {
 
       {/* Who it's for */}
       <section className="relative py-20 px-6 overflow-hidden">
-        {/* Concentric arc lines — bottom left */}
+        {/* Concentric arc lines, bottom left */}
         <svg className="arc-lines-bl" viewBox="0 0 400 400" fill="none">
           {[160, 200, 240, 280, 320].map((r, i) => (
             <circle key={i} cx="0" cy="400" r={r} stroke="rgba(20,184,166,0.08)" strokeWidth="0.75" />
@@ -304,7 +304,7 @@ export default function Landing() {
 
       {/* How it works - simplified */}
       <section className="relative py-20 px-6 bg-zinc-900/30 border-y border-zinc-800 overflow-hidden">
-        {/* Concentric arc lines — top right */}
+        {/* Concentric arc lines, top right */}
         <svg className="arc-lines-tr" viewBox="0 0 400 400" fill="none">
           {[180, 220, 260, 300].map((r, i) => (
             <circle key={i} cx="400" cy="0" r={r} stroke="rgba(20,184,166,0.06)" strokeWidth="0.75" />
@@ -379,12 +379,12 @@ export default function Landing() {
                 </div>
                 <h3 className="text-2xl font-bold mb-3">See How We Built It</h3>
                 <p className="text-zinc-400 mb-6">
-                  GuardQuote uses machine learning to analyze risk factors and generate accurate pricing. 
-                  Our GradientBoost model achieves 93% accuracy on historical security data. Built with 
-                  modern infrastructure: Deno, Hono, React, and a distributed monitoring stack.
+                  GuardQuote uses machine learning to analyze risk factors and generate accurate pricing.
+                  Our GradientBoost model achieves 93% accuracy on historical security data. Built with
+                  modern infrastructure: Bun, Hono, React, and a distributed monitoring stack.
                 </p>
                 <div className="flex flex-wrap gap-2 mb-6">
-                  {["React 18", "Deno 2.6", "Hono", "PostgreSQL 17", "K3s", "Prometheus", "Grafana"].map((tech) => (
+                  {["React 18", "Bun 1.3", "Hono", "PostgreSQL 17", "K3s", "Prometheus", "Grafana"].map((tech) => (
                     <span key={tech} className="px-3 py-1 bg-zinc-800 border border-zinc-700 rounded-full text-xs text-zinc-300">
                       {tech}
                     </span>
@@ -506,7 +506,7 @@ export default function Landing() {
 
       {/* Final CTA */}
       <section className="relative py-20 px-6 bg-gradient-to-b from-zinc-900/50 to-zinc-950 overflow-hidden">
-        {/* Concentric arc lines — bottom right */}
+        {/* Concentric arc lines, bottom right */}
         <svg className="absolute bottom-[-80px] right-[-80px] w-[300px] h-[300px] pointer-events-none" viewBox="0 0 300 300" fill="none">
           {[120, 150, 180, 210].map((r, i) => (
             <circle key={i} cx="300" cy="300" r={r} stroke="rgba(20,184,166,0.08)" strokeWidth="0.75" />

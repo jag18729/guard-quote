@@ -436,10 +436,8 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
 <rect width="1380" height="970" fill="#ffffff"/>
 
 <!-- ── ZONES ── -->
-<rect x="15"  y="10"  width="595" height="108" class="zr zi"/>
+<rect x="15"  y="10"  width="945" height="108" class="zr zi"/>
 <text x="30"  y="30"  class="zl" fill="#3b82f6">Internet</text>
-<rect x="655" y="10"  width="305" height="108" class="zr zc"/>
-<text x="670" y="30"  class="zl" fill="#0891b2">Isaiah's Site</text>
 <rect x="15"  y="128" width="1410" height="662" rx="10" class="zr zs"/>
 <text x="30"  y="148" class="zl" fill="#475569">Rafael's Studio</text>
 <rect x="30"  y="155" width="315" height="125" rx="8" class="zr zm"/>
@@ -469,21 +467,6 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
 <!-- 2. CF → Tunnel  [y=128 bus, x=405 drop] (blue) -->
 <path d="M80,87 L80,128 L405,128 L405,446" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ab)"/>
 <text x="240" y="122" font-size="9" fill="#60a5fa" text-anchor="middle">CDN ingress</text>
-
-<!-- 3. IsaiahBastion → IsaiahTS (cyan solid) -->
-<line x1="785" y1="63" x2="833" y2="63" stroke="#0891b2" stroke-width="1.5" marker-end="url(#ac)"/>
-
-<!-- 4a. IsaiahTS T-jxn → Tunnel  [y=109 bus, x=425 drop — offset from CF] (cyan dashed) -->
-<path d="M885,87 L885,109 L425,109 L425,446" fill="none" stroke="#0891b2" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ac)"/>
-<text x="655" y="104" font-size="9" fill="#22d3ee" text-anchor="middle">Tailscale Mesh</text>
-
-<!-- 4b. IsaiahTS T-jxn → Suricata  [same y=109, rightward branch] (cyan dashed) -->
-<path d="M885,109 L1180,109 L1180,234" fill="none" stroke="#0891b2" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ac)"/>
-<text x="1045" y="104" font-size="9" fill="#22d3ee" text-anchor="middle">Alert Triage</text>
-
-<!-- 5. IsaiahTS → Grafana SIEM  [right perimeter x=1025, bottom y=960] (cyan dashed) -->
-<path d="M937,63 L1025,63 L1025,960 L360,960 L360,899" fill="none" stroke="#0891b2" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ac)"/>
-<text x="695" y="954" font-size="9" fill="#22d3ee" text-anchor="middle">SIEM access</text>
 
 <!-- 6. Tunnel → BastionAdmin  [left exit, y=305 gap bus, x=340 vertical] (gray) -->
 <path d="M360,470 L340,470 L340,305 L240,305 L240,456" fill="none" stroke="#475569" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
@@ -549,9 +532,6 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
 <g transform="translate(215,63)"><ellipse rx="36" ry="23" class="ni"/><use href="#i-user" x="-7" y="-18" width="14" height="14" color="#3b82f6"/><text y="8" class="t1" fill="#3b82f6">User</text></g>
 <g transform="translate(335,63)"><ellipse rx="36" ry="23" class="ni"/><use href="#i-user-cog" x="-7" y="-18" width="14" height="14" color="#3b82f6"/><text y="8" class="t1" fill="#3b82f6">Admin</text></g>
 <g transform="translate(460,63)"><ellipse rx="40" ry="23" class="ni"/><use href="#i-shield" x="-7" y="-18" width="14" height="14" color="#3b82f6"/><text y="8" class="t1" fill="#3b82f6">SecOps</text></g>
-<!-- Isaiah's Site -->
-<g transform="translate(720,63)"><rect x="-65" y="-24" width="130" height="48" class="nr nc"/><use href="#i-shield-check" x="-8.5" y="-22" width="17" height="17" color="#0891b2"/><text y="5" class="t1" fill="#0891b2">Isaiah Bastion</text><text y="17" class="t2" fill="#22d3ee">Security Analysis</text></g>
-<g transform="translate(885,63)"><rect x="-52" y="-24" width="104" height="48" class="nr nc"/><use href="#i-tailscale" x="-8.5" y="-22" width="17" height="17" color="#0891b2"/><text y="5" class="t1" fill="#0891b2">Tailscale</text><text y="17" class="t2" fill="#22d3ee">Mesh Node</text></g>
 <!-- Matrix -->
 <g transform="translate(115,218)"><rect x="-55" y="-24" width="110" height="48" class="nr nf"/><use href="#i-router" x="-8.5" y="-22" width="17" height="17" color="#ea580c"/><text y="5" class="t1" fill="#ea580c">UniFi UDM</text><text y="17" class="t2" fill="#f97316">Gateway</text></g>
 <g transform="translate(280,218)"><rect x="-60" y="-24" width="120" height="48" class="nr nf"/><use href="#i-monitor" x="-8.5" y="-22" width="17" height="17" color="#ea580c"/><text y="5" class="t1" fill="#ea580c">ThinkStation</text><text y="17" class="t2" fill="#f97316">OpenClaw</text></g>
@@ -586,33 +566,8 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
     </section>
 
     <section>
-      <h2>Remote Sites</h2>
+      <h2>Network Mesh</h2>
       <div class="cards">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-icon" style="background: rgba(6, 182, 212, 0.15);">🏠</div>
-            <div>
-              <div class="card-title">Isaiah's Site</div>
-              <div class="card-subtitle">Remote Security Operations</div>
-            </div>
-          </div>
-          <div class="card-body">
-            Isaiah's remote bastion connects to the studio infrastructure via Tailscale mesh for security operations and SIEM access.
-            <ul>
-              <li>Tailscale mesh connectivity</li>
-              <li>Direct access to Grafana dashboards</li>
-              <li>Suricata alert investigation</li>
-              <li>Wazuh SIEM monitoring</li>
-              <li>Network admin privileges (approved 2026-02-18)</li>
-            </ul>
-            <div class="tech-stack">
-              <span class="tech-tag">Tailscale</span>
-              <span class="tech-tag">SecOps</span>
-              <span class="tech-tag">Remote</span>
-            </div>
-          </div>
-        </div>
-
         <div class="card">
           <div class="card-header">
             <div class="card-icon" style="background: rgba(6, 182, 212, 0.15);">📡</div>

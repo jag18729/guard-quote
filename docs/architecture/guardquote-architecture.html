@@ -14,7 +14,7 @@
     --bg: #fafafa;
     --surface: #ffffff;
     --surface2: #f4f4f5;
-    --diagram-bg: #0b1120;
+    --diagram-bg: #ffffff;
     --border: #e4e4e7;
     --border-strong: #d4d4d8;
     --text: #18181b;
@@ -369,13 +369,13 @@
       <div class="diagram-container" style="padding:1rem;overflow-x:auto;">
         <svg id="arch-svg" viewBox="0 0 1440 980" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:960px;font-family:'JetBrains Mono','SF Mono',Consolas,monospace;">
 <defs>
-  <marker id="a"  markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#64748b"/></marker>
-  <marker id="ab" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#38bdf8"/></marker>
-  <marker id="ag" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#4ade80"/></marker>
-  <marker id="ar" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#fb7185"/></marker>
-  <marker id="ay" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#facc15"/></marker>
-  <marker id="ac" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#06b6d4"/></marker>
-  <marker id="ad" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#94a3b8"/></marker>
+  <marker id="a"  markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#475569"/></marker>
+  <marker id="ab" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#3b82f6"/></marker>
+  <marker id="ag" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#16a34a"/></marker>
+  <marker id="ar" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#e11d48"/></marker>
+  <marker id="ay" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#ca8a04"/></marker>
+  <marker id="ac" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#0891b2"/></marker>
+  <marker id="ad" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#64748b"/></marker>
   <!-- Brand icons (Simple Icons, MIT) — single fill path -->
   <symbol id="i-cloudflare" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5088 16.8447c.1475-.5068.0908-.9707-.1553-1.3154-.2246-.3164-.6045-.499-1.0615-.5205l-8.6592-.1123a.1559.1559 0 0 1-.1333-.0713c-.0283-.042-.0351-.0986-.021-.1553.0278-.084.1123-.1484.2036-.1562l8.7359-.1123c1.0351-.0489 2.1601-.8868 2.5537-1.9136l.499-1.3013c.0215-.0561.0293-.1128.0147-.168-.5625-2.5463-2.835-4.4453-5.5499-4.4453-2.5039 0-4.6284 1.6177-5.3876 3.8614-.4927-.3658-1.1187-.5625-1.794-.499-1.2026.119-2.1665 1.083-2.2861 2.2856-.0283.31-.0069.6128.0635.894C1.5683 13.171 0 14.7754 0 16.752c0 .1748.0142.3515.0352.5273.0141.083.0844.1475.1689.1475h15.9814c.0909 0 .1758-.0645.2032-.1553l.12-.4268zm2.7568-5.5634c-.0771 0-.1611 0-.2383.0112-.0566 0-.1054.0415-.127.0976l-.3378 1.1744c-.1475.5068-.0918.9707.1543 1.3164.2256.3164.6055.498 1.0625.5195l1.8437.1133c.0557 0 .1055.0263.1329.0703.0283.043.0351.1074.0214.1562-.0283.084-.1132.1485-.204.1553l-1.921.1123c-1.041.0488-2.1582.8867-2.5527 1.914l-.1406.3585c-.0283.0713.0215.1416.0986.1416h6.5977c.0771 0 .1474-.0489.169-.126.1122-.4082.1757-.837.1757-1.2803 0-2.6025-2.125-4.727-4.7344-4.727"/></symbol>
   <symbol id="i-tailscale" viewBox="0 0 24 24"><path fill="currentColor" d="M24 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm-9 9a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm0-9a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm6-6a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM3 24a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm18 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM6 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm9-9a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6 3a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></symbol>
@@ -407,180 +407,180 @@
 <style>
 text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
 .zr{stroke-width:1.5;stroke-dasharray:6,3;fill:none;rx:9}
-.zi{stroke:#38bdf8;fill:rgba(56,189,248,.09)}
-.zc{stroke:#06b6d4;fill:rgba(6,182,212,.09)}
-.zs{stroke:#475569;fill:rgba(255,255,255,.02);stroke-dasharray:none}
-.zm{stroke:#fb923c;fill:rgba(251,146,60,.09)}
-.zp{stroke:#facc15;fill:rgba(250,204,21,.09)}
-.zdm{stroke:#38bdf8;fill:rgba(56,189,248,.07)}
-.zdv{stroke:#4ade80;fill:rgba(74,222,128,.07)}
-.zds{stroke:#fb7185;fill:rgba(251,113,133,.07)}
-.zk{stroke:#4ade80;fill:rgba(74,222,128,.08);stroke-dasharray:4,3}
-.zrv{stroke:#fb7185;fill:rgba(251,113,133,.1);stroke-dasharray:4,3}
-.zo{stroke:#facc15;fill:rgba(250,204,21,.08)}
+.zi{stroke:#3b82f6;fill:rgba(59,130,246,.04)}
+.zc{stroke:#0891b2;fill:rgba(8,145,178,.04)}
+.zs{stroke:#cbd5e1;fill:rgba(0,0,0,.015);stroke-dasharray:none}
+.zm{stroke:#ea580c;fill:rgba(234,88,12,.04)}
+.zp{stroke:#ca8a04;fill:rgba(202,138,4,.05)}
+.zdm{stroke:#3b82f6;fill:rgba(59,130,246,.03)}
+.zdv{stroke:#16a34a;fill:rgba(22,163,74,.03)}
+.zds{stroke:#e11d48;fill:rgba(225,29,72,.03)}
+.zk{stroke:#16a34a;fill:rgba(22,163,74,.04);stroke-dasharray:4,3}
+.zrv{stroke:#e11d48;fill:rgba(225,29,72,.04);stroke-dasharray:4,3}
+.zo{stroke:#ca8a04;fill:rgba(202,138,4,.04)}
 .zl{font-size:11px;font-weight:600}
 .nr{rx:8}
-.ni{fill:#0c2440;stroke:#38bdf8;stroke-width:1.5}
-.nc{fill:#072030;stroke:#06b6d4;stroke-width:1.5}
-.nf{fill:#3a1200;stroke:#fb923c;stroke-width:1.5}
-.np{fill:#3a2000;stroke:#facc15;stroke-width:1.5}
-.na{fill:#022714;stroke:#4ade80;stroke-width:1.5}
-.nd{fill:#160d3a;stroke:#a78bfa;stroke-width:1.5}
-.ns{fill:#3d0515;stroke:#fb7185;stroke-width:1.5}
-.no{fill:#3a2000;stroke:#facc15;stroke-width:1.5}
-.nb{fill:#25084a;stroke:#c084fc;stroke-width:1.5}
+.ni{fill:#eff6ff;stroke:#3b82f6;stroke-width:1.5}
+.nc{fill:#ecfeff;stroke:#0891b2;stroke-width:1.5}
+.nf{fill:#fff7ed;stroke:#ea580c;stroke-width:1.5}
+.np{fill:#fefce8;stroke:#ca8a04;stroke-width:1.5}
+.na{fill:#f0fdf4;stroke:#16a34a;stroke-width:1.5}
+.nd{fill:#faf5ff;stroke:#7c3aed;stroke-width:1.5}
+.ns{fill:#fff1f2;stroke:#e11d48;stroke-width:1.5}
+.no{fill:#fefce8;stroke:#ca8a04;stroke-width:1.5}
+.nb{fill:#f5f3ff;stroke:#9333ea;stroke-width:1.5}
 .t1{font-size:10px;font-weight:600;text-anchor:middle}
 .t2{font-size:9px;text-anchor:middle}
 </style>
 <!-- bg -->
-<rect width="1380" height="970" fill="#0b1120"/>
+<rect width="1380" height="970" fill="#ffffff"/>
 
 <!-- ── ZONES ── -->
 <rect x="15"  y="10"  width="595" height="108" class="zr zi"/>
-<text x="30"  y="30"  class="zl" fill="#38bdf8">Internet</text>
+<text x="30"  y="30"  class="zl" fill="#3b82f6">Internet</text>
 <rect x="655" y="10"  width="305" height="108" class="zr zc"/>
-<text x="670" y="30"  class="zl" fill="#06b6d4">Isaiah's Site</text>
+<text x="670" y="30"  class="zl" fill="#0891b2">Isaiah's Site</text>
 <rect x="15"  y="128" width="1410" height="662" rx="10" class="zr zs"/>
-<text x="30"  y="148" class="zl" fill="#64748b">Rafael's Studio</text>
+<text x="30"  y="148" class="zl" fill="#475569">Rafael's Studio</text>
 <rect x="30"  y="155" width="315" height="125" rx="8" class="zr zm"/>
-<text x="45"  y="173" class="zl" fill="#fb923c">matrix</text>
+<text x="45"  y="173" class="zl" fill="#ea580c">matrix</text>
 <rect x="355" y="155" width="270" height="125" rx="8" class="zr zp"/>
-<text x="370" y="173" class="zl" fill="#facc15">PA-220 Firewall</text>
+<text x="370" y="173" class="zl" fill="#ca8a04">PA-220 Firewall</text>
 <rect x="30"  y="320" width="298" height="222" rx="8" class="zr zdm"/>
-<text x="45"  y="338" class="zl" fill="#38bdf8">dmz-mgmt</text>
+<text x="45"  y="338" class="zl" fill="#3b82f6">dmz-mgmt</text>
 <rect x="350" y="320" width="300" height="222" rx="8" class="zr zdv"/>
-<text x="365" y="338" class="zl" fill="#4ade80">dmz-services</text>
+<text x="365" y="338" class="zl" fill="#16a34a">dmz-services</text>
 <rect x="660" y="155" width="750" height="625" rx="8" class="zr zds"/>
-<text x="675" y="173" class="zl" fill="#fb7185">dmz-security</text>
+<text x="675" y="173" class="zl" fill="#e11d48">dmz-security</text>
 <rect x="680" y="182" width="360" height="295" rx="8" class="zr zk"/>
-<text x="695" y="200" class="zl" fill="#4ade80" style="font-size:10px">K3s Cluster (pi2)</text>
+<text x="695" y="200" class="zl" fill="#16a34a" style="font-size:10px">K3s Cluster (pi2)</text>
 <rect x="1075" y="182" width="305" height="295" rx="8" class="zr zrv"/>
-<text x="1090" y="200" class="zl" fill="#fb7185" style="font-size:10px">Orange Pi RV2</text>
+<text x="1090" y="200" class="zl" fill="#e11d48" style="font-size:10px">Orange Pi RV2</text>
 <rect x="15"  y="804" width="510" height="148" rx="10" class="zr zo"/>
-<text x="30"  y="824" class="zl" fill="#facc15">Observability</text>
+<text x="30"  y="824" class="zl" fill="#ca8a04">Observability</text>
 
 <!-- ── EDGES — clean orthogonal routing, dedicated lane per path group ── -->
 
 <!-- 1. User / Admin / SecOps → CF (blue) -->
-<line x1="179" y1="63" x2="137" y2="63" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#ab)"/>
-<line x1="299" y1="63" x2="137" y2="63" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#ab)"/>
-<line x1="420" y1="63" x2="137" y2="63" stroke="#38bdf8" stroke-width="1.5" marker-end="url(#ab)"/>
+<line x1="179" y1="63" x2="137" y2="63" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+<line x1="299" y1="63" x2="137" y2="63" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+<line x1="420" y1="63" x2="137" y2="63" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
 
 <!-- 2. CF → Tunnel  [y=128 bus, x=405 drop] (blue) -->
-<path d="M80,87 L80,128 L405,128 L405,446" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ab)"/>
-<text x="240" y="122" font-size="9" fill="#7dd3fc" text-anchor="middle">CDN ingress</text>
+<path d="M80,87 L80,128 L405,128 L405,446" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ab)"/>
+<text x="240" y="122" font-size="9" fill="#60a5fa" text-anchor="middle">CDN ingress</text>
 
 <!-- 3. IsaiahBastion → IsaiahTS (cyan solid) -->
-<line x1="785" y1="63" x2="833" y2="63" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#ac)"/>
+<line x1="785" y1="63" x2="833" y2="63" stroke="#0891b2" stroke-width="1.5" marker-end="url(#ac)"/>
 
 <!-- 4a. IsaiahTS T-jxn → Tunnel  [y=109 bus, x=425 drop — offset from CF] (cyan dashed) -->
-<path d="M885,87 L885,109 L425,109 L425,446" fill="none" stroke="#06b6d4" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ac)"/>
-<text x="655" y="104" font-size="9" fill="#67e8f9" text-anchor="middle">Tailscale Mesh</text>
+<path d="M885,87 L885,109 L425,109 L425,446" fill="none" stroke="#0891b2" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ac)"/>
+<text x="655" y="104" font-size="9" fill="#22d3ee" text-anchor="middle">Tailscale Mesh</text>
 
 <!-- 4b. IsaiahTS T-jxn → Suricata  [same y=109, rightward branch] (cyan dashed) -->
-<path d="M885,109 L1180,109 L1180,234" fill="none" stroke="#06b6d4" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ac)"/>
-<text x="1045" y="104" font-size="9" fill="#67e8f9" text-anchor="middle">Alert Triage</text>
+<path d="M885,109 L1180,109 L1180,234" fill="none" stroke="#0891b2" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ac)"/>
+<text x="1045" y="104" font-size="9" fill="#22d3ee" text-anchor="middle">Alert Triage</text>
 
 <!-- 5. IsaiahTS → Grafana SIEM  [right perimeter x=1025, bottom y=960] (cyan dashed) -->
-<path d="M937,63 L1025,63 L1025,960 L360,960 L360,899" fill="none" stroke="#06b6d4" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ac)"/>
-<text x="695" y="954" font-size="9" fill="#67e8f9" text-anchor="middle">SIEM access</text>
+<path d="M937,63 L1025,63 L1025,960 L360,960 L360,899" fill="none" stroke="#0891b2" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ac)"/>
+<text x="695" y="954" font-size="9" fill="#22d3ee" text-anchor="middle">SIEM access</text>
 
 <!-- 6. Tunnel → BastionAdmin  [left exit, y=305 gap bus, x=340 vertical] (gray) -->
-<path d="M360,470 L340,470 L340,305 L240,305 L240,456" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
-<text x="287" y="299" font-size="9" fill="#94a3b8" text-anchor="middle">Admin</text>
+<path d="M360,470 L340,470 L340,305 L240,305 L240,456" fill="none" stroke="#475569" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
+<text x="287" y="299" font-size="9" fill="#64748b" text-anchor="middle">Admin</text>
 
 <!-- 7. Tunnel → Frontend  [right exit y=470, x=645 vertical, up to FE] (gray) -->
-<path d="M470,470 L645,470 L645,268 L703,268" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
-<text x="558" y="464" font-size="9" fill="#94a3b8" text-anchor="middle">Tailscale</text>
+<path d="M470,470 L645,470 L645,268 L703,268" fill="none" stroke="#475569" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
+<text x="558" y="464" font-size="9" fill="#64748b" text-anchor="middle">Tailscale</text>
 
 <!-- 8. Tunnel → BastionUser  [bottom-right exit y=494, x=495 vertical] (gray) -->
-<path d="M430,494 L495,494 L495,470" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
+<path d="M430,494 L495,494 L495,470" fill="none" stroke="#475569" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
 
 <!-- 9. Tunnel → BastionThreat  [bottom-left exit y=510 bus] (gray) -->
-<path d="M395,494 L395,510 L1180,510 L1180,442" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
-<text x="790" y="504" font-size="9" fill="#94a3b8" text-anchor="middle">Threat Analysis</text>
+<path d="M395,494 L395,510 L1180,510 L1180,442" fill="none" stroke="#475569" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#a)"/>
+<text x="790" y="504" font-size="9" fill="#64748b" text-anchor="middle">Threat Analysis</text>
 
 <!-- 10. Frontend → Backend (green) -->
-<line x1="760" y1="292" x2="760" y2="324" stroke="#4ade80" stroke-width="1.5" marker-end="url(#ag)"/>
-<text x="778" y="312" font-size="9" fill="#86efac">/api/*</text>
+<line x1="760" y1="292" x2="760" y2="324" stroke="#16a34a" stroke-width="1.5" marker-end="url(#ag)"/>
+<text x="778" y="312" font-size="9" fill="#22c55e">/api/*</text>
 
 <!-- 11. Backend → ML Engine (green) -->
-<line x1="760" y1="372" x2="760" y2="404" stroke="#4ade80" stroke-width="1.5" marker-end="url(#ag)"/>
-<text x="778" y="392" font-size="9" fill="#86efac">gRPC</text>
+<line x1="760" y1="372" x2="760" y2="404" stroke="#16a34a" stroke-width="1.5" marker-end="url(#ag)"/>
+<text x="778" y="392" font-size="9" fill="#22c55e">gRPC</text>
 
 <!-- 12. Backend → PostgreSQL  [x=655 boundary vertical] (purple) -->
-<path d="M703,348 L655,348 L655,384 L617,384" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ad)"/>
+<path d="M703,348 L655,348 L655,384 L617,384" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ad)"/>
 
 <!-- 13. BastionUser → NetTools  [y=530 sub-zone bus, x=920 vertical] (gray dashed) -->
-<path d="M560,494 L560,530 L920,530 L920,324" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#a)"/>
+<path d="M560,494 L560,530 L920,530 L920,324" fill="none" stroke="#475569" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#a)"/>
 
 <!-- 14. PA-220 → pi0 Traffic Logs  [via PA-220 bottom, y=290 inter-zone gap bus] (yellow) -->
-<path d="M490,242 L490,290 L175,290 L175,368" fill="none" stroke="#facc15" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ay)"/>
-<text x="333" y="284" font-size="9" fill="#fde68a" text-anchor="middle">Traffic Logs</text>
+<path d="M490,242 L490,290 L175,290 L175,368" fill="none" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ay)"/>
+<text x="333" y="284" font-size="9" fill="#eab308" text-anchor="middle">Traffic Logs</text>
 
 <!-- 15. pi0 → Loki Vector  [pi0 left exit, x=90 vertical to Loki] (blue) -->
-<path d="M115,392 L90,392 L90,855" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ab)"/>
-<text x="72" y="624" font-size="9" fill="#7dd3fc" text-anchor="middle" transform="rotate(-90,72,624)">Vector</text>
+<path d="M115,392 L90,392 L90,855" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#ab)"/>
+<text x="72" y="624" font-size="9" fill="#60a5fa" text-anchor="middle" transform="rotate(-90,72,624)">Vector</text>
 
 <!-- 16. Suricata → pi0 EVE JSON  [y=143 top bus, x=260 vertical, enters pi0 right] (rose dashed) -->
-<path d="M1180,234 L1180,143 L260,143 L260,392 L235,392" fill="none" stroke="#fb7185" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ar)"/>
-<text x="725" y="137" font-size="9" fill="#fda4af" text-anchor="middle">EVE JSON → pi0</text>
+<path d="M1180,234 L1180,143 L260,143 L260,392 L235,392" fill="none" stroke="#e11d48" stroke-width="1" stroke-dasharray="5,3" stroke-linejoin="round" marker-end="url(#ar)"/>
+<text x="725" y="137" font-size="9" fill="#f43f5e" text-anchor="middle">EVE JSON → pi0</text>
 
 <!-- 17. LLM → Suricata Triage  [left lane x=1160] (rose) -->
-<line x1="1160" y1="314" x2="1160" y2="282" stroke="#fb7185" stroke-width="1.5" marker-end="url(#ar)"/>
-<text x="1135" y="302" font-size="9" fill="#fda4af" text-anchor="end">Triage</text>
+<line x1="1160" y1="314" x2="1160" y2="282" stroke="#e11d48" stroke-width="1.5" marker-end="url(#ar)"/>
+<text x="1135" y="302" font-size="9" fill="#f43f5e" text-anchor="end">Triage</text>
 
 <!-- 18. BastionThreat → Suricata Analysis  [right lane x=1200] (gray dashed) -->
-<line x1="1200" y1="394" x2="1200" y2="282" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#ad)"/>
-<text x="1225" y="346" font-size="9" fill="#94a3b8">Analysis</text>
+<line x1="1200" y1="394" x2="1200" y2="282" stroke="#64748b" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#ad)"/>
+<text x="1225" y="346" font-size="9" fill="#64748b">Analysis</text>
 
 <!-- 19–21. pi1 → Graf / Prom / Loki  [staggered y=795,806,817 buses] (yellow dashed) -->
-<path d="M430,406 L430,795 L360,795 L360,855" fill="none" stroke="#facc15" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
-<path d="M415,406 L415,806 L220,806 L220,855" fill="none" stroke="#facc15" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
-<path d="M400,406 L400,817 L90,817 L90,855" fill="none" stroke="#facc15" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
+<path d="M430,406 L430,795 L360,795 L360,855" fill="none" stroke="#ca8a04" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
+<path d="M415,406 L415,806 L220,806 L220,855" fill="none" stroke="#ca8a04" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
+<path d="M400,406 L400,817 L90,817 L90,855" fill="none" stroke="#ca8a04" stroke-width="1" stroke-dasharray="4,3" stroke-linejoin="round" marker-end="url(#ay)"/>
 
 <!-- 22. SentinelNet → Wazuh Alerts  [y=568 bus] (gray dashed) -->
-<path d="M920,292 L920,568 L470,568 L470,855" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,4" stroke-linejoin="round" marker-end="url(#ad)"/>
-<text x="700" y="562" font-size="9" fill="#94a3b8" text-anchor="middle">Alerts</text>
+<path d="M920,292 L920,568 L470,568 L470,855" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="5,4" stroke-linejoin="round" marker-end="url(#ad)"/>
+<text x="700" y="562" font-size="9" fill="#64748b" text-anchor="middle">Alerts</text>
 
 <!-- ── NODES ── -->
 <!-- Internet -->
-<g transform="translate(80,63)"><rect x="-57" y="-24" width="114" height="48" class="nr ni"/><use href="#i-cloudflare" x="-8.5" y="-22" width="17" height="17" color="#38bdf8"/><text y="5" class="t1" fill="#38bdf8">Cloudflare</text><text y="17" class="t2" fill="#7dd3fc">CDN + WAF</text></g>
-<g transform="translate(215,63)"><ellipse rx="36" ry="23" class="ni"/><use href="#i-user" x="-7" y="-18" width="14" height="14" color="#38bdf8"/><text y="8" class="t1" fill="#38bdf8">User</text></g>
-<g transform="translate(335,63)"><ellipse rx="36" ry="23" class="ni"/><use href="#i-user-cog" x="-7" y="-18" width="14" height="14" color="#38bdf8"/><text y="8" class="t1" fill="#38bdf8">Admin</text></g>
-<g transform="translate(460,63)"><ellipse rx="40" ry="23" class="ni"/><use href="#i-shield" x="-7" y="-18" width="14" height="14" color="#38bdf8"/><text y="8" class="t1" fill="#38bdf8">SecOps</text></g>
+<g transform="translate(80,63)"><rect x="-57" y="-24" width="114" height="48" class="nr ni"/><use href="#i-cloudflare" x="-8.5" y="-22" width="17" height="17" color="#3b82f6"/><text y="5" class="t1" fill="#3b82f6">Cloudflare</text><text y="17" class="t2" fill="#60a5fa">CDN + WAF</text></g>
+<g transform="translate(215,63)"><ellipse rx="36" ry="23" class="ni"/><use href="#i-user" x="-7" y="-18" width="14" height="14" color="#3b82f6"/><text y="8" class="t1" fill="#3b82f6">User</text></g>
+<g transform="translate(335,63)"><ellipse rx="36" ry="23" class="ni"/><use href="#i-user-cog" x="-7" y="-18" width="14" height="14" color="#3b82f6"/><text y="8" class="t1" fill="#3b82f6">Admin</text></g>
+<g transform="translate(460,63)"><ellipse rx="40" ry="23" class="ni"/><use href="#i-shield" x="-7" y="-18" width="14" height="14" color="#3b82f6"/><text y="8" class="t1" fill="#3b82f6">SecOps</text></g>
 <!-- Isaiah's Site -->
-<g transform="translate(720,63)"><rect x="-65" y="-24" width="130" height="48" class="nr nc"/><use href="#i-shield-check" x="-8.5" y="-22" width="17" height="17" color="#06b6d4"/><text y="5" class="t1" fill="#06b6d4">Isaiah Bastion</text><text y="17" class="t2" fill="#67e8f9">Security Analysis</text></g>
-<g transform="translate(885,63)"><rect x="-52" y="-24" width="104" height="48" class="nr nc"/><use href="#i-tailscale" x="-8.5" y="-22" width="17" height="17" color="#06b6d4"/><text y="5" class="t1" fill="#06b6d4">Tailscale</text><text y="17" class="t2" fill="#67e8f9">Mesh Node</text></g>
+<g transform="translate(720,63)"><rect x="-65" y="-24" width="130" height="48" class="nr nc"/><use href="#i-shield-check" x="-8.5" y="-22" width="17" height="17" color="#0891b2"/><text y="5" class="t1" fill="#0891b2">Isaiah Bastion</text><text y="17" class="t2" fill="#22d3ee">Security Analysis</text></g>
+<g transform="translate(885,63)"><rect x="-52" y="-24" width="104" height="48" class="nr nc"/><use href="#i-tailscale" x="-8.5" y="-22" width="17" height="17" color="#0891b2"/><text y="5" class="t1" fill="#0891b2">Tailscale</text><text y="17" class="t2" fill="#22d3ee">Mesh Node</text></g>
 <!-- Matrix -->
-<g transform="translate(115,218)"><rect x="-55" y="-24" width="110" height="48" class="nr nf"/><use href="#i-router" x="-8.5" y="-22" width="17" height="17" color="#fb923c"/><text y="5" class="t1" fill="#fb923c">UniFi UDM</text><text y="17" class="t2" fill="#fdba74">Gateway</text></g>
-<g transform="translate(280,218)"><rect x="-60" y="-24" width="120" height="48" class="nr nf"/><use href="#i-monitor" x="-8.5" y="-22" width="17" height="17" color="#fb923c"/><text y="5" class="t1" fill="#fb923c">ThinkStation</text><text y="17" class="t2" fill="#fdba74">OpenClaw</text></g>
+<g transform="translate(115,218)"><rect x="-55" y="-24" width="110" height="48" class="nr nf"/><use href="#i-router" x="-8.5" y="-22" width="17" height="17" color="#ea580c"/><text y="5" class="t1" fill="#ea580c">UniFi UDM</text><text y="17" class="t2" fill="#f97316">Gateway</text></g>
+<g transform="translate(280,218)"><rect x="-60" y="-24" width="120" height="48" class="nr nf"/><use href="#i-monitor" x="-8.5" y="-22" width="17" height="17" color="#ea580c"/><text y="5" class="t1" fill="#ea580c">ThinkStation</text><text y="17" class="t2" fill="#f97316">OpenClaw</text></g>
 <!-- PA-220 -->
-<g transform="translate(490,218)"><rect x="-68" y="-24" width="136" height="48" class="nr np"/><use href="#i-flame" x="-8.5" y="-22" width="17" height="17" color="#facc15"/><text y="5" class="t1" fill="#facc15">PA-220</text><text y="17" class="t2" fill="#fde68a">PAN-OS 10.2 · 4 Zones</text></g>
+<g transform="translate(490,218)"><rect x="-68" y="-24" width="136" height="48" class="nr np"/><use href="#i-flame" x="-8.5" y="-22" width="17" height="17" color="#ca8a04"/><text y="5" class="t1" fill="#ca8a04">PA-220</text><text y="17" class="t2" fill="#eab308">PAN-OS 10.2 · 4 Zones</text></g>
 <!-- dmz-mgmt -->
-<g transform="translate(175,392)"><rect x="-60" y="-24" width="120" height="48" class="nr" style="fill:#0c2440;stroke:#38bdf8;stroke-width:1.5"/><use href="#i-raspberrypi" x="-8.5" y="-22" width="17" height="17" color="#38bdf8"/><text y="5" class="t1" fill="#38bdf8">pi0</text><text y="17" class="t2" fill="#7dd3fc">DNS / LDAP / Vector</text></g>
-<g transform="translate(175,480)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><use href="#i-lock" x="-8.5" y="-22" width="17" height="17" color="#c084fc"/><text y="5" class="t1" fill="#c084fc">Admin Bastion</text><text y="17" class="t2" fill="#d8b4fe">bastion.vandine.us</text></g>
+<g transform="translate(175,392)"><rect x="-60" y="-24" width="120" height="48" class="nr" style="fill:#eff6ff;stroke:#3b82f6;stroke-width:1.5"/><use href="#i-raspberrypi" x="-8.5" y="-22" width="17" height="17" color="#3b82f6"/><text y="5" class="t1" fill="#3b82f6">pi0</text><text y="17" class="t2" fill="#60a5fa">DNS / LDAP / Vector</text></g>
+<g transform="translate(175,480)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><use href="#i-lock" x="-8.5" y="-22" width="17" height="17" color="#9333ea"/><text y="5" class="t1" fill="#9333ea">Admin Bastion</text><text y="17" class="t2" fill="#a855f7">bastion.vandine.us</text></g>
 <!-- dmz-services  (2×2 grid: top row pi1/DB, bottom row Tunnel/BastionUser) -->
-<g transform="translate(415,382)"><rect x="-60" y="-24" width="120" height="48" class="nr na"/><use href="#i-raspberrypi" x="-8.5" y="-22" width="17" height="17" color="#4ade80"/><text y="5" class="t1" fill="#4ade80">pi1</text><text y="17" class="t2" fill="#86efac">Grafana / Prom / Loki</text></g>
-<g transform="translate(560,382)"><rect x="-57" y="-24" width="114" height="48" class="nr nd"/><use href="#i-postgresql" x="-8.5" y="-22" width="17" height="17" color="#a78bfa"/><text y="5" class="t1" fill="#a78bfa">PostgreSQL</text><text y="17" class="t2" fill="#c4b5fd">pi1</text></g>
-<g transform="translate(415,470)"><rect x="-55" y="-24" width="110" height="48" class="nr" style="fill:#022714;stroke:#4ade80;stroke-width:1.5"/><use href="#i-cloudflare" x="-8.5" y="-22" width="17" height="17" color="#4ade80"/><text y="5" class="t1" fill="#4ade80">cloudflared</text><text y="17" class="t2" fill="#86efac">Tunnel Ingress</text></g>
-<g transform="translate(560,470)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><use href="#i-terminal" x="-8.5" y="-22" width="17" height="17" color="#c084fc"/><text y="5" class="t1" fill="#c084fc">User Bastion</text><text y="17" class="t2" fill="#d8b4fe">nettools.vandine.us</text></g>
+<g transform="translate(415,382)"><rect x="-60" y="-24" width="120" height="48" class="nr na"/><use href="#i-raspberrypi" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">pi1</text><text y="17" class="t2" fill="#22c55e">Grafana / Prom / Loki</text></g>
+<g transform="translate(560,382)"><rect x="-57" y="-24" width="114" height="48" class="nr nd"/><use href="#i-postgresql" x="-8.5" y="-22" width="17" height="17" color="#7c3aed"/><text y="5" class="t1" fill="#7c3aed">PostgreSQL</text><text y="17" class="t2" fill="#8b5cf6">pi1</text></g>
+<g transform="translate(415,470)"><rect x="-55" y="-24" width="110" height="48" class="nr" style="fill:#f0fdf4;stroke:#16a34a;stroke-width:1.5"/><use href="#i-cloudflare" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">cloudflared</text><text y="17" class="t2" fill="#22c55e">Tunnel Ingress</text></g>
+<g transform="translate(560,470)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><use href="#i-terminal" x="-8.5" y="-22" width="17" height="17" color="#9333ea"/><text y="5" class="t1" fill="#9333ea">User Bastion</text><text y="17" class="t2" fill="#a855f7">nettools.vandine.us</text></g>
 <!-- K3s — left column -->
-<g transform="translate(760,268)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-react" x="-8.5" y="-22" width="17" height="17" color="#4ade80"/><text y="5" class="t1" fill="#4ade80">Frontend</text><text y="17" class="t2" fill="#86efac">React + nginx</text></g>
-<g transform="translate(760,348)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-bun" x="-8.5" y="-22" width="17" height="17" color="#4ade80"/><text y="5" class="t1" fill="#4ade80">Backend</text><text y="17" class="t2" fill="#86efac">Bun + Hono</text></g>
-<g transform="translate(760,428)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-brain" x="-8.5" y="-22" width="17" height="17" color="#4ade80"/><text y="5" class="t1" fill="#4ade80">ML Engine</text><text y="17" class="t2" fill="#86efac">FastAPI + XGBoost</text></g>
+<g transform="translate(760,268)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-react" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">Frontend</text><text y="17" class="t2" fill="#22c55e">React + nginx</text></g>
+<g transform="translate(760,348)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-bun" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">Backend</text><text y="17" class="t2" fill="#22c55e">Bun + Hono</text></g>
+<g transform="translate(760,428)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-brain" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">ML Engine</text><text y="17" class="t2" fill="#22c55e">FastAPI + XGBoost</text></g>
 <!-- K3s — right column -->
-<g transform="translate(920,268)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-eye" x="-8.5" y="-22" width="17" height="17" color="#4ade80"/><text y="5" class="t1" fill="#4ade80">SentinelNet</text><text y="17" class="t2" fill="#86efac">Exfil Detection</text></g>
-<g transform="translate(920,348)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-network" x="-8.5" y="-22" width="17" height="17" color="#4ade80"/><text y="5" class="t1" fill="#4ade80">NetTools API</text><text y="17" class="t2" fill="#86efac">Network Tooling</text></g>
+<g transform="translate(920,268)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-eye" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">SentinelNet</text><text y="17" class="t2" fill="#22c55e">Exfil Detection</text></g>
+<g transform="translate(920,348)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-network" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">NetTools API</text><text y="17" class="t2" fill="#22c55e">Network Tooling</text></g>
 <!-- RV2 — stacked -->
-<g transform="translate(1180,258)"><rect x="-65" y="-24" width="130" height="48" class="nr ns"/><use href="#i-radar" x="-8.5" y="-22" width="17" height="17" color="#fb7185"/><text y="5" class="t1" fill="#fb7185">Suricata IDS</text><text y="17" class="t2" fill="#fda4af">74,096 Rules</text></g>
-<g transform="translate(1180,338)"><rect x="-65" y="-24" width="130" height="48" class="nr ns"/><use href="#i-bot" x="-8.5" y="-22" width="17" height="17" color="#fb7185"/><text y="5" class="t1" fill="#fb7185">Qwen2 LLM</text><text y="17" class="t2" fill="#fda4af">Alert Triage</text></g>
-<g transform="translate(1180,418)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><use href="#i-shield-alert" x="-8.5" y="-22" width="17" height="17" color="#c084fc"/><text y="5" class="t1" fill="#c084fc">Threat Bastion</text><text y="17" class="t2" fill="#d8b4fe">Isolated Analysis</text></g>
+<g transform="translate(1180,258)"><rect x="-65" y="-24" width="130" height="48" class="nr ns"/><use href="#i-radar" x="-8.5" y="-22" width="17" height="17" color="#e11d48"/><text y="5" class="t1" fill="#e11d48">Suricata IDS</text><text y="17" class="t2" fill="#f43f5e">74,096 Rules</text></g>
+<g transform="translate(1180,338)"><rect x="-65" y="-24" width="130" height="48" class="nr ns"/><use href="#i-bot" x="-8.5" y="-22" width="17" height="17" color="#e11d48"/><text y="5" class="t1" fill="#e11d48">Qwen2 LLM</text><text y="17" class="t2" fill="#f43f5e">Alert Triage</text></g>
+<g transform="translate(1180,418)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><use href="#i-shield-alert" x="-8.5" y="-22" width="17" height="17" color="#9333ea"/><text y="5" class="t1" fill="#9333ea">Threat Bastion</text><text y="17" class="t2" fill="#a855f7">Isolated Analysis</text></g>
 <!-- Observability -->
-<g transform="translate(90,877)"><rect x="-45" y="-22" width="90" height="44" class="nr no"/><use href="#i-file" x="-7" y="-20" width="14" height="14" color="#facc15"/><text y="4" class="t1" fill="#facc15">Loki</text><text y="15" class="t2" fill="#fde68a">Logs</text></g>
-<g transform="translate(220,877)"><rect x="-50" y="-22" width="100" height="44" class="nr no"/><use href="#i-prometheus" x="-7" y="-20" width="14" height="14" color="#facc15"/><text y="4" class="t1" fill="#facc15">Prometheus</text><text y="15" class="t2" fill="#fde68a">Metrics</text></g>
-<g transform="translate(360,877)"><rect x="-45" y="-22" width="90" height="44" class="nr no"/><use href="#i-grafana" x="-7" y="-20" width="14" height="14" color="#facc15"/><text y="4" class="t1" fill="#facc15">Grafana</text><text y="15" class="t2" fill="#fde68a">Dashboards</text></g>
-<g transform="translate(470,877)"><rect x="-40" y="-22" width="80" height="44" class="nr ns"/><use href="#i-siren" x="-7" y="-20" width="14" height="14" color="#fb7185"/><text y="4" class="t1" fill="#fb7185">Wazuh</text><text y="15" class="t2" fill="#fda4af">SIEM</text></g>
+<g transform="translate(90,877)"><rect x="-45" y="-22" width="90" height="44" class="nr no"/><use href="#i-file" x="-7" y="-20" width="14" height="14" color="#ca8a04"/><text y="4" class="t1" fill="#ca8a04">Loki</text><text y="15" class="t2" fill="#eab308">Logs</text></g>
+<g transform="translate(220,877)"><rect x="-50" y="-22" width="100" height="44" class="nr no"/><use href="#i-prometheus" x="-7" y="-20" width="14" height="14" color="#ca8a04"/><text y="4" class="t1" fill="#ca8a04">Prometheus</text><text y="15" class="t2" fill="#eab308">Metrics</text></g>
+<g transform="translate(360,877)"><rect x="-45" y="-22" width="90" height="44" class="nr no"/><use href="#i-grafana" x="-7" y="-20" width="14" height="14" color="#ca8a04"/><text y="4" class="t1" fill="#ca8a04">Grafana</text><text y="15" class="t2" fill="#eab308">Dashboards</text></g>
+<g transform="translate(470,877)"><rect x="-40" y="-22" width="80" height="44" class="nr ns"/><use href="#i-siren" x="-7" y="-20" width="14" height="14" color="#e11d48"/><text y="4" class="t1" fill="#e11d48">Wazuh</text><text y="15" class="t2" fill="#f43f5e">SIEM</text></g>
         </svg>
       </div>
     </section>

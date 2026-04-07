@@ -33,13 +33,13 @@ mermaid.initialize({
 
 const architectureDiagram = `
 flowchart TD
-    subgraph Internet["☁️ CLOUDFLARE EDGE"]
+    subgraph Internet["CLOUDFLARE EDGE"]
         direction LR
-        User([👤 Users])
+        User([Users])
         CF[CDN + WAF]
     end
 
-    subgraph DC["🏢 HOMELAB — PA-220 NGFW (4 DMZ Zones)"]
+    subgraph DC["HOMELAB: PA-220 NGFW (4 DMZ Zones)"]
         direction LR
 
         subgraph MGMT["DMZ-MGMT · Pi0"]
@@ -50,12 +50,12 @@ flowchart TD
         subgraph Apps["DMZ-APPS · Pi2"]
             direction TB
             Tunnel[cloudflared Tunnel]
-            subgraph K3s["☸️ K3s"]
-                FE[📱 Frontend]
-                BE[⚡ Backend]
-                ML[🧠 ML Engine]
+            subgraph K3s["K3s"]
+                FE[Frontend]
+                BE[Backend]
+                ML[ML Engine]
             end
-            Wazuh[🛡️ Wazuh HIDS]
+            Wazuh[Wazuh HIDS]
         end
 
         subgraph Services["DMZ-SERVICES · Pi1"]
@@ -223,7 +223,6 @@ const bunBenchmarks = {
     data: [
       { name: "Bun 1.3", value: 12, color: "bg-emerald-500", highlight: true },
       { name: "Node.js 22", value: 89, color: "bg-blue-500" },
-      { name: "Deno 2.x", value: 45, color: "bg-purple-500" },
     ]
   },
   requests: {
@@ -233,7 +232,6 @@ const bunBenchmarks = {
     data: [
       { name: "Bun 1.3", value: 142000, color: "bg-emerald-500", highlight: true },
       { name: "Node.js 22", value: 67000, color: "bg-blue-500" },
-      { name: "Deno 2.x", value: 98000, color: "bg-purple-500" },
     ]
   },
   memory: {
@@ -243,7 +241,6 @@ const bunBenchmarks = {
     data: [
       { name: "Bun 1.3", value: 34, color: "bg-emerald-500", highlight: true },
       { name: "Node.js 22", value: 78, color: "bg-blue-500" },
-      { name: "Deno 2.x", value: 52, color: "bg-purple-500" },
     ]
   },
   latency: {
@@ -253,7 +250,6 @@ const bunBenchmarks = {
     data: [
       { name: "Bun 1.3", value: 2.1, color: "bg-emerald-500", highlight: true },
       { name: "Node.js 22", value: 8.4, color: "bg-blue-500" },
-      { name: "Deno 2.x", value: 4.7, color: "bg-purple-500" },
     ]
   },
 };
@@ -277,7 +273,7 @@ const bunFeatures = [
   {
     icon: Network,
     title: "Fewer Moving Parts",
-    desc: "HTTP + WebSocket in a single Bun.serve() call. One process, one port — less to configure, less to break."
+    desc: "HTTP + WebSocket in a single Bun.serve() call. One process, one port, less to configure and less to break."
   },
 ];
 
@@ -423,7 +419,7 @@ export default function TechStack() {
                       <ArrowRight className="w-3 h-3 text-zinc-600 mt-1 flex-shrink-0" />
                       <div>
                         <span className="text-zinc-300">{item.name}</span>
-                        <span className="text-zinc-600 text-xs ml-1">— {item.desc}</span>
+                        <span className="text-zinc-600 text-xs ml-1">{item.desc}</span>
                       </div>
                     </li>
                   ))}
@@ -591,7 +587,7 @@ export default function TechStack() {
         {/* Footer */}
         <div className="mt-12 text-center text-sm text-zinc-600">
           <p>
-            Designed from need. Built to demonstrate. <span className="text-accent">GuardQuote</span> — security architecture by example.
+            Designed from need. Built to demonstrate. <span className="text-accent">GuardQuote</span>: security architecture by example.
           </p>
           <p className="mt-1">
             California State University, Northridge · CIT 480 Senior Design · 2026

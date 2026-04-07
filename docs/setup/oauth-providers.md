@@ -10,9 +10,9 @@ This guide covers setting up OAuth authentication for GuardQuote with Microsoft,
 2. Navigate to **Microsoft Entra ID** → **App registrations**
 3. Click **New registration**
 4. Configure:
-   - **Name:** `GuardQuote`
-   - **Supported account types:** `Accounts in any organizational directory and personal Microsoft accounts`
-   - **Redirect URI:** `Web` → `https://guardquote.vandine.us/api/auth/callback/microsoft`
+  - **Name:** `GuardQuote`
+  - **Supported account types:** `Accounts in any organizational directory and personal Microsoft accounts`
+  - **Redirect URI:** `Web` → `https://guardquote.vandine.us/api/auth/callback/microsoft`
 5. Click **Register**
 
 ### 2. Configure Authentication
@@ -20,8 +20,8 @@ This guide covers setting up OAuth authentication for GuardQuote with Microsoft,
 1. Go to **Authentication** in left sidebar
 2. Under **Platform configurations**, verify redirect URI is correct
 3. Under **Implicit grant and hybrid flows**:
-   - ✅ Access tokens
-   - ✅ ID tokens
+  - Access tokens
+  - ID tokens
 4. Click **Save**
 
 ### 3. Get Credentials
@@ -30,8 +30,8 @@ This guide covers setting up OAuth authentication for GuardQuote with Microsoft,
 2. Copy **Application (client) ID** → `MICROSOFT_CLIENT_ID`
 3. Go to **Certificates & secrets** → **Client secrets**
 4. Click **New client secret**
-   - Description: `GuardQuote Production`
-   - Expires: `24 months`
+  - Description: `GuardQuote Production`
+  - Expires: `24 months`
 5. Copy the **Value** (not Secret ID) → `MICROSOFT_CLIENT_SECRET`
 
 ### 4. Configure API Permissions
@@ -39,10 +39,10 @@ This guide covers setting up OAuth authentication for GuardQuote with Microsoft,
 1. Go to **API permissions**
 2. Click **Add a permission** → **Microsoft Graph** → **Delegated permissions**
 3. Add:
-   - `email`
-   - `openid`
-   - `profile`
-   - `User.Read`
+  - `email`
+  - `openid`
+  - `profile`
+  - `User.Read`
 4. Click **Grant admin consent for [tenant]** (if you have admin rights)
 
 ### 5. Environment Variables
@@ -64,14 +64,14 @@ BASE_URL=https://guardquote.vandine.us
 3. Navigate to **APIs & Services** → **Credentials**
 4. Click **Create Credentials** → **OAuth client ID**
 5. Configure consent screen if prompted:
-   - User Type: `External`
-   - App name: `GuardQuote`
-   - User support email: your email
-   - Developer contact: your email
+  - User Type: `External`
+  - App name: `GuardQuote`
+  - User support email: your email
+  - Developer contact: your email
 6. Create OAuth client:
-   - Application type: `Web application`
-   - Name: `GuardQuote`
-   - Authorized redirect URIs: `https://guardquote.vandine.us/api/auth/callback/google`
+  - Application type: `Web application`
+  - Name: `GuardQuote`
+  - Authorized redirect URIs: `https://guardquote.vandine.us/api/auth/callback/google`
 
 ### 2. Get Credentials
 
@@ -100,9 +100,9 @@ BASE_URL=https://guardquote.vandine.us
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
 2. Click **OAuth Apps** → **New OAuth App**
 3. Configure:
-   - **Application name:** `GuardQuote`
-   - **Homepage URL:** `https://guardquote.vandine.us`
-   - **Authorization callback URL:** `https://guardquote.vandine.us/api/auth/callback/github`
+  - **Application name:** `GuardQuote`
+  - **Homepage URL:** `https://guardquote.vandine.us`
+  - **Authorization callback URL:** `https://guardquote.vandine.us/api/auth/callback/github`
 4. Click **Register application**
 
 ### 2. Get Credentials

@@ -2,7 +2,7 @@
 
 **Meeting:** Saturday 2/7 at 3 PM (Isaiah at 1 PM)
 
-## 🏗️ Stack Overview (Updated)
+## Stack Overview (Updated)
 
 We moved **off AWS entirely**. New architecture:
 
@@ -16,13 +16,13 @@ We moved **off AWS entirely**. New architecture:
 | **Monitoring** | Grafana + Prometheus (self-hosted) | $0 |
 | **DNS** | Cloudflare (guardquote.ai) | $0 |
 
-**Total Operational Cost: $0/month** ✨
+**Total Operational Cost: $0/month**
 
 ---
 
-## 👥 Team Roles
+## Team Roles
 
-### Rafa ([@jag18729](https://github.com/jag18729)) — Infrastructure & Development
+### Rafa ([@jag18729](https://github.com/jag18729)), Infrastructure & Development
 - App development (frontend + backend)
 - CI/CD pipelines
 - ML model integration
@@ -30,7 +30,7 @@ We moved **off AWS entirely**. New architecture:
 - Networking & infrastructure
 - Review and consolidate all deliverables
 
-### Milkias ([@Malachizirgod](https://github.com/Malachizirgod)) — ICAM & Project Management
+### Milkias ([@Malachizirgod](https://github.com/Malachizirgod)), ICAM & Project Management
 - **ICAM Review:** Security audit of auth/RBAC implementation
 - Verify password hashing, JWT handling, session security
 - Certify best practices compliance (OWASP ASVS)
@@ -38,16 +38,16 @@ We moved **off AWS entirely**. New architecture:
 - Project management (GitHub Projects)
 - IAM procedure writeups
 
-### Isaiah ([@ibernal1815](https://github.com/ibernal1815)) — Security Operations
-- SIEM setup (Elastic Stack — Elasticsearch, Logstash, Kibana)
+### Isaiah ([@ibernal1815](https://github.com/ibernal1815)), Security Operations
+- SIEM setup (Elastic Stack, Elasticsearch, Logstash, Kibana)
 - Bastion host (his own infrastructure)
 - Detection rules & alerts
 - Security dashboards
 - IDS/IPS integration
 
-### Xavier ([@xan942](https://github.com/xan942)) — UX Lead & UAT Driver
+### Xavier ([@xan942](https://github.com/xan942)), UX Lead & UAT Driver
 - **UX/UI Champion:** User experience, design feedback, "does this feel right?"
-- **User Acceptance Testing:** Drives UAT — tests like a real user, not a developer
+- **User Acceptance Testing:** Drives UAT, tests like a real user, not a developer
 - **Presentations:** Slide decks, demos, making us look good
 - **Documentation:** User-facing docs, flow diagrams, cost analysis
 - Represents the customer perspective in all decisions
@@ -55,7 +55,7 @@ We moved **off AWS entirely**. New architecture:
 
 ---
 
-## ✅ Tasks Before Saturday (2/7)
+## Tasks Before Saturday (2/7)
 
 ### Milkias
 - [ ] Review client site: https://guardquote.vandine.us/
@@ -77,7 +77,7 @@ We moved **off AWS entirely**. New architecture:
 
 ---
 
-## 🔧 Technical Details
+## Technical Details
 
 ### Sites to Review
 
@@ -120,7 +120,7 @@ pi0/pi1 → Wazuh Agent → Tailscale → Isaiah's Wazuh Manager
 
 ---
 
-## 📊 Presentation Updates Needed
+## Presentation Updates Needed
 
 The current presentation is AWS-focused. Need to update:
 
@@ -133,7 +133,7 @@ The current presentation is AWS-focused. Need to update:
 
 ---
 
-## 📅 Timeline
+## Timeline
 
 | Date | Milestone |
 |------|-----------|
@@ -144,7 +144,7 @@ The current presentation is AWS-focused. Need to update:
 
 ---
 
-## 💬 Communication
+## Communication
 
 - **GitHub Issues:** For tasks and bugs
 - **Slack/Discord:** Quick questions

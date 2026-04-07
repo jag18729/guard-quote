@@ -12,8 +12,8 @@
 
 ## Prerequisites
 
-- ML engine gRPC server implemented (✅ Done: `ml-engine/src/grpc_servicer.py`)
-- Proto definitions available (✅ Done: `ml-engine/proto/ml_engine.proto`)
+- ML engine gRPC server implemented ( Done: `ml-engine/src/grpc_servicer.py`)
+- Proto definitions available ( Done: `ml-engine/proto/ml_engine.proto`)
 
 ---
 

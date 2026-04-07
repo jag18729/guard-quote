@@ -1,9 +1,9 @@
-# SecOps Findings — 2026-03-01
+# SecOps Findings, 2026-03-01
 
 **Analyst:** Isaiah Bernal (@ibernal1815)
 **Role:** Security Operations
 **Scope:** Grey-hat review of GuardQuote backend, middleware, infrastructure docs
-**Status:** Initial findings — remediation in progress
+**Status:** Initial findings, remediation in progress
 
 ---
 
@@ -21,7 +21,7 @@ Performed an initial walkthrough of the codebase and infrastructure docs as part
 
 ---
 
-## Finding 1 — Timing Attack in S2S Auth
+## Finding 1, Timing Attack in S2S Auth
 
 **Severity:** High
 **File:** `backend/src/middleware/s2s-auth.ts`
@@ -36,7 +36,7 @@ if (secret !== ML_ENGINE_SECRET) {
 }
 ```
 
-String comparison in JS short-circuits — it returns `false` the moment it finds a mismatched character. An attacker with enough requests can measure response-time deltas to guess the secret one byte at a time (classic timing oracle attack).
+String comparison in JS short-circuits, it returns `false` the moment it finds a mismatched character. An attacker with enough requests can measure response-time deltas to guess the secret one byte at a time (classic timing oracle attack).
 
 ### Fix
 
@@ -56,11 +56,11 @@ if (
 }
 ```
 
-Alternatively, use `crypto.subtle` HMAC comparison if staying Web API native. Either way — no `===` on secrets.
+Alternatively, use `crypto.subtle` HMAC comparison if staying Web API native. Either way, no `===` on secrets.
 
 ---
 
-## Finding 2 — Plaintext Credentials Committed to Repo
+## Finding 2, Plaintext Credentials Committed to Repo
 
 **Severity:** High
 **File:** `docs/BASTION.md`
@@ -85,7 +85,7 @@ These are LDAP credentials for a live bastion with SSH access to pi0 and pi1. An
 
 ---
 
-## Finding 3 — IP Spoofing via X-Forwarded-For
+## Finding 3, IP Spoofing via X-Forwarded-For
 
 **Severity:** Medium
 **File:** `backend/src/middleware/rate-limit.ts`
@@ -109,7 +109,7 @@ The backend should only trust `X-Forwarded-For` when it's behind a known proxy. 
 - Strip all but the **rightmost** IP (the last hop the proxy appended, which can't be spoofed)
 - Or whitelist the known proxy CIDR (Cloudflare's published ranges) and reject requests outside it
 
-Since Cloudflare sits in front, using the `CF-Connecting-IP` header is more reliable here — Cloudflare sets it, clients can't override it.
+Since Cloudflare sits in front, using the `CF-Connecting-IP` header is more reliable here, Cloudflare sets it, clients can't override it.
 
 ```ts
 const cfIP = c.req.header("CF-Connecting-IP");
@@ -118,7 +118,7 @@ if (cfIP) return cfIP;
 
 ---
 
-## Finding 4 — Overly Permissive CORS
+## Finding 4, Overly Permissive CORS
 
 **Severity:** Medium
 **File:** `backend/src/index.ts`, line 36
@@ -152,7 +152,7 @@ app.use("*", cors({
 
 ---
 
-## Finding 5 — SIEM Ingest Endpoint Missing
+## Finding 5, SIEM Ingest Endpoint Missing
 
 **Severity:** Gap (not a vulnerability)
 **File:** `scripts/siem/log-shipper.py`
@@ -170,17 +170,17 @@ Add a `/api/siem/ingest` endpoint that:
 2. Parses and stores the log batch (or forwards to Loki/Elasticsearch)
 3. Returns 202 Accepted
 
-This is the next SecOps build task — will open a separate issue for it.
+This is the next SecOps build task, will open a separate issue for it.
 
 ---
 
 ## Next Steps
 
-- [ ] Fix Finding 1 (`timingSafeEqual`) — low effort, high value
-- [ ] Fix Finding 2 (rotate creds, scrub doc) — needs Rafa + team
-- [ ] Fix Finding 3 (CF-Connecting-IP) — one-liner swap
-- [ ] Fix Finding 4 (CORS allowlist) — quick config change
-- [ ] Build SIEM ingest endpoint — tracked separately
+- [ ] Fix Finding 1 (`timingSafeEqual`), low effort, high value
+- [ ] Fix Finding 2 (rotate creds, scrub doc), needs Rafa + team
+- [ ] Fix Finding 3 (CF-Connecting-IP), one-liner swap
+- [ ] Fix Finding 4 (CORS allowlist), quick config change
+- [ ] Build SIEM ingest endpoint, tracked separately
 
 ---
 

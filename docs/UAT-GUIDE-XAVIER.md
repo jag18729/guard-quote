@@ -1,14 +1,14 @@
 # User Acceptance Testing (UAT) Guide
 
-**Owner:** Xavier Nguyen  
-**Role:** User Testing & Customer Liaison  
+**Owner:** Xavier Nguyen
+**Role:** User Testing & Customer Liaison
 **Last Updated:** 2026-04-07
 
 ---
 
 ## Your Mission
 
-You're the **voice of the customer**. Your job is to use GuardQuote like a real user would — find what's confusing, what breaks, and what could be better. You're not looking for code bugs (that's dev work) — you're testing the *experience*.
+You're the **voice of the customer**. Your job is to use GuardQuote like a real user would, find what's confusing, what breaks, and what could be better. You're not looking for code bugs (that's dev work), you're testing the *experience*.
 
 ---
 
@@ -35,12 +35,12 @@ Test on **at least 3 browsers** to catch rendering/JS differences:
 
 | Browser | Priority | Download |
 |---------|----------|----------|
-| Chrome | 🔴 High | Most users have this |
-| Firefox | 🔴 High | Different rendering engine |
-| Safari | 🟡 Medium | Mac/iOS users |
-| Edge | 🟡 Medium | Windows default |
-| Mobile Chrome | 🔴 High | Use phone or DevTools |
-| Mobile Safari | 🟡 Medium | iPhone users |
+| Chrome | High | Most users have this |
+| Firefox | High | Different rendering engine |
+| Safari | Medium | Mac/iOS users |
+| Edge | Medium | Windows default |
+| Mobile Chrome | High | Use phone or DevTools |
+| Mobile Safari | Medium | iPhone users |
 
 #### How to Test Mobile on Desktop
 1. Open Chrome DevTools (F12 or Cmd+Opt+I)
@@ -63,7 +63,7 @@ For each browser, check:
 #### Scenario A: New Customer Quote Request
 ```
 1. Open landing page (incognito/private mode)
-2. Read the page — is the value proposition clear?
+2. Read the page, is the value proposition clear?
 3. Click "Get Quote"
 4. Fill out the form with realistic data:
    - Name: John Smith
@@ -93,7 +93,7 @@ For each browser, check:
 3. Check if data loads
 4. Try using the search (if available)
 5. Check if charts/graphs render
-6. Log out — does it redirect properly?
+6. Log out, does it redirect properly?
 ```
 
 #### Scenario D: Mobile Usability
@@ -260,10 +260,10 @@ Example:
 
 | Level | Definition | Example |
 |-------|------------|---------|
-| 🔴 **Critical** | Blocks core functionality | Can't submit quotes at all |
-| 🟠 **High** | Major feature broken | Mobile layout unusable |
-| 🟡 **Medium** | Feature works but has issues | Validation missing |
-| 🟢 **Low** | Minor/cosmetic | Typo, alignment off |
+| **Critical** | Blocks core functionality | Can't submit quotes at all |
+| **High** | Major feature broken | Mobile layout unusable |
+| **Medium** | Feature works but has issues | Validation missing |
+| **Low** | Minor/cosmetic | Typo, alignment off |
 
 ---
 

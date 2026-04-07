@@ -76,9 +76,9 @@ GuardQuote is a secure web application platform enabling businesses to request n
 
 ---
 
-## Schedule (8 Weeks)
+## Schedule (10 Weeks)
 
-### Phase 1: Weeks 1-2 ✅ COMPLETE
+### Phase 1: Weeks 1-2 COMPLETE
 - [x] Pi cluster infrastructure setup
 - [x] Cloudflare Tunnel + Zero Trust
 - [x] Tailscale mesh VPN
@@ -86,7 +86,7 @@ GuardQuote is a secure web application platform enabling businesses to request n
 - [x] Backend API (Deno + Hono)
 - [x] CI/CD pipeline (GitHub Actions)
 
-### Phase 2: Weeks 2-3 ✅ COMPLETE
+### Phase 2: Weeks 2-3 COMPLETE
 - [x] React frontend with Vite
 - [x] Admin dashboard with RBAC
 - [x] User management system
@@ -94,30 +94,30 @@ GuardQuote is a secure web application platform enabling businesses to request n
 - [x] ML Engine controls page
 - [x] Network operations visualization
 
-### Phase 3: Weeks 3-4 ✅ COMPLETE
+### Phase 3: Weeks 3-4 COMPLETE
 - [x] Prometheus + Grafana monitoring
 - [x] SNMP monitoring (UDM + PA-220)
 - [x] Loki log aggregation
 - [x] Wazuh SIEM integration
 - [x] Bastion host setup (LDAP + pi0)
-- [x] IDS/IPS detection rules (Suricata — 48,687 rules)
+- [x] IDS/IPS detection rules (Suricata, 48,687 rules)
 
-### Phase 4: Weeks 4-5 ✅ COMPLETE
+### Phase 4: Weeks 4-5 COMPLETE
 - [x] LDAP authentication integration (OpenLDAP on pi0)
 - [x] ML engine deployed (XGBoost + FastAPI + gRPC on K3s)
-- [x] OAuth SSO — GitHub, Google, Microsoft (all 3 validated by team)
+- [x] OAuth SSO, GitHub, Google, Microsoft (all 3 validated by team)
 - [x] IAM role system (admin, iam, sec-ops, developer, user)
 - [x] Security dashboard creation
 
-### Phase 5: Weeks 5-7 ✅ COMPLETE
-- [x] UAT Round 1 — Functional testing
-- [x] UAT Round 2 — Security testing (in progress, #55/#56/#57)
+### Phase 5: Weeks 5-7 COMPLETE
+- [x] UAT Round 1, Functional testing
+- [x] UAT Round 2, Security testing (in progress, #55/#56/#57)
 - [x] CI/CD auto-deploy pipeline (GitHub Actions → K3s)
 - [x] 21 new backend endpoints (Services, ML, Blog, Features)
 - [x] Mobile responsive admin panel
 - [x] Documentation updates
 
-### Phase 6: Weeks 7-8 🔄 IN PROGRESS
+### Phase 6: Weeks 7-8 IN PROGRESS
 - [x] Final deployment verification
 - [x] Demo environment (DEMO_MODE) working
 - [ ] Presentation materials complete (#38)
@@ -128,7 +128,7 @@ GuardQuote is a secure web application platform enabling businesses to request n
 
 ## Deliverables
 
-### Completed ✅
+### Completed
 - **Infrastructure:** 4-node Pi cluster with PA-220 firewall, 4 security zones
 - **Backend API:** Bun 1.3 + Hono, 40+ endpoints, RBAC, deployed on K3s
 - **Frontend:** React admin dashboard, responsive design, mobile sidebar
@@ -141,7 +141,7 @@ GuardQuote is a secure web application platform enabling businesses to request n
 - **SIEM:** Auth event logging, auto-lockout, Wazuh integration
 - **Documentation:** Architecture docs, deployment runbook, setup guides
 
-### In Progress 🔄
+### In Progress
 - **UAT Round 2:** Team validation (#55, #56, #57)
 - **Presentation:** Final slides & diagrams (#38)
 - **Documentation:** SOW updates, peer review (#28)
@@ -152,18 +152,18 @@ GuardQuote is a secure web application platform enabling businesses to request n
 
 | Milestone | Date | Status |
 |-----------|------|--------|
-| Infrastructure Complete | Feb 5 | ✅ Done |
-| Admin Dashboard Deployed | Feb 6 | ✅ Done |
-| Monitoring Stack Live | Feb 6 | ✅ Done |
-| Team Meeting | Feb 7 | ✅ Done |
-| SIEM Integration | Feb 14 | ✅ Done |
-| UAT Round 1 | Feb 14 | ✅ Done |
-| v2 Backend (Bun + K3s) | Feb 18 | ✅ Done |
-| OAuth SSO Live | Feb 19 | ✅ Done |
-| ML Engine Deployed | Feb 25 | ✅ Done |
-| UAT Round 2 | Feb 28 | 🔄 In Progress |
-| CI/CD Auto-Deploy | Feb 28 | ✅ Done |
-| IAM + LDAP + Bastion | Feb 28 | ✅ Done |
+| Infrastructure Complete | Feb 5 | Done |
+| Admin Dashboard Deployed | Feb 6 | Done |
+| Monitoring Stack Live | Feb 6 | Done |
+| Team Meeting | Feb 7 | Done |
+| SIEM Integration | Feb 14 | Done |
+| UAT Round 1 | Feb 14 | Done |
+| v2 Backend (Bun + K3s) | Feb 18 | Done |
+| OAuth SSO Live | Feb 19 | Done |
+| ML Engine Deployed | Feb 25 | Done |
+| UAT Round 2 | Feb 28 | In Progress |
+| CI/CD Auto-Deploy | Feb 28 | Done |
+| IAM + LDAP + Bastion | Feb 28 | Done |
 | Presentation Ready | Apr 12 | In Progress |
 | CIT 480 Final Demo | Apr 18 | Scheduled |
 
@@ -208,7 +208,7 @@ GuardQuote is a secure web application platform enabling businesses to request n
 
 ## Success Criteria
 
-### Functional ✅
+### Functional
 - [x] Quote request end-to-end workflow
 - [x] Admin management capabilities (9 pages, all working)
 - [x] 40+ API endpoints operational
@@ -216,7 +216,7 @@ GuardQuote is a secure web application platform enabling businesses to request n
 - [x] OAuth SSO (3 providers, all validated)
 - [x] ML-powered pricing predictions
 
-### Infrastructure ✅
+### Infrastructure
 - [x] Multi-host deployment (4-node Pi cluster)
 - [x] K3s orchestration with rolling updates
 - [x] Secure access (Cloudflare Zero Trust)
@@ -224,7 +224,7 @@ GuardQuote is a secure web application platform enabling businesses to request n
 - [x] SIEM collecting logs (35 auth event types)
 - [x] CI/CD auto-deploy (push to main → live)
 
-### Security ✅
+### Security
 - [x] HTTPS everywhere (Cloudflare)
 - [x] OAuth 2.0 with PKCE
 - [x] RBAC with IAM roles (admin, iam, sec-ops, developer, user)
@@ -233,7 +233,7 @@ GuardQuote is a secure web application platform enabling businesses to request n
 - [x] Auto-lockout after failed attempts
 - [x] PA-220 firewall with 4 security zones
 
-### Performance ✅
+### Performance
 - [x] Page load < 3 seconds
 - [x] API response < 50ms
 - [x] Backend memory: 20MB (Bun --smol)

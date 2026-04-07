@@ -6,7 +6,7 @@ Major infrastructure and documentation sprint. Completed SNMP monitoring, create
 
 ---
 
-## 🔒 Security & Authentication
+## Security & Authentication
 
 ### Cookie-Based Auth (#29)
 - Replaced localStorage JWT with HttpOnly cookies
@@ -17,13 +17,13 @@ Major infrastructure and documentation sprint. Completed SNMP monitoring, create
 
 ### Self-Service Profile (#30)
 - `GET /api/auth/me` - Current user info
-- `PATCH /api/auth/profile` - Update display name  
+- `PATCH /api/auth/profile` - Update display name
 - `POST /api/auth/change-password` - Password change
 - Profile page with inline editing
 
 ---
 
-## 📊 Monitoring & Observability
+## Monitoring & Observability
 
 ### SNMP Monitoring (Complete)
 - **SNMP Exporter** deployed on pi1:9116
@@ -41,14 +41,14 @@ Major infrastructure and documentation sprint. Completed SNMP monitoring, create
 
 ---
 
-## 👥 Team Role Documentation
+## Team Role Documentation
 
 ### Milkias - ICAM Lead
 - Created `docs/ICAM-REVIEW.md` - Full security audit checklist
 - GitHub Issue #33 - ICAM Security Review
 - Obsidian note: ICAM Review.md
 
-### Xavier - User Testing & Customer Liaison  
+### Xavier - User Testing & Customer Liaison
 - Created `docs/UAT-GUIDE-XAVIER.md` - Comprehensive testing guide
 - Multi-browser testing methodology
 - Screenshot best practices
@@ -63,12 +63,12 @@ Major infrastructure and documentation sprint. Completed SNMP monitoring, create
 
 ---
 
-## 🖥️ Frontend Updates
+## Frontend Updates
 
 ### Network Page Enhancements
 - Added nettools to pi0 services
 - Added SNMP Exporter to pi1 services
-- Updated PA-220 status (SNMP now green ✓)
+- Updated PA-220 status (SNMP now green )
 - Added Nettools Bastion section with tool list
 - Updated SNMP data flow diagram (now shows working)
 - Added nettools.vandine.us to service URLs
@@ -79,25 +79,25 @@ Major infrastructure and documentation sprint. Completed SNMP monitoring, create
 
 ---
 
-## 🔧 CI/CD Fixes
+## CI/CD Fixes
 
 ### Workflow Repair
 - Regenerated `backend/package-lock.json`
 - CI now passing (was failing on npm ci)
-- All recent commits: ✅ Success
+- All recent commits: Success
 
 ---
 
-## 📋 GitHub Project Updates
+## GitHub Project Updates
 
 ### Issues Created
 - #33: ICAM Security Review (Milkias)
 - #34: UAT Workflow Validation (Xavier)
 
 ### Issues Closed
-- #29: Cookie authentication ✅
-- #30: Self-service profile ✅  
-- #31: Favicon ✅
+- #29: Cookie authentication
+- #30: Self-service profile
+- #31: Favicon
 
 ### Milestones
 - UAT Round 1: Feb 14
@@ -106,7 +106,7 @@ Major infrastructure and documentation sprint. Completed SNMP monitoring, create
 
 ---
 
-## 📁 Files Created/Modified
+## Files Created/Modified
 
 ### New Files
 ```
@@ -136,25 +136,25 @@ backend/package-lock.json              # Regenerated for CI
 
 ---
 
-## 🌐 Infrastructure Status
+## Infrastructure Status
 
 | Component | Status | Details |
 |-----------|--------|---------|
-| Frontend | ✅ | Deployed to CF Pages |
-| Backend API | ✅ | Deno on pi1:3002 |
-| PostgreSQL | ✅ | pi1:5432 |
-| Grafana | ✅ | pi1:3000 |
-| Prometheus | ✅ | pi1:9090, 16+ targets UP |
-| SNMP Exporter | ✅ | pi1:9116 |
-| Loki | ✅ | pi1:3100 |
-| Vector | ✅ | pi0 log collection |
-| Nettools | ✅ | pi0:7681 |
-| Wazuh | 🟡 | Pending Isaiah's manager |
-| CI/CD | ✅ | All builds passing |
+| Frontend | | Deployed to CF Pages |
+| Backend API | | Deno on pi1:3002 |
+| PostgreSQL | | pi1:5432 |
+| Grafana | | pi1:3000 |
+| Prometheus | | pi1:9090, 16+ targets UP |
+| SNMP Exporter | | pi1:9116 |
+| Loki | | pi1:3100 |
+| Vector | | pi0 log collection |
+| Nettools | | pi0:7681 |
+| Wazuh | | Pending Isaiah's manager |
+| CI/CD | | All builds passing |
 
 ---
 
-## 📅 Next Steps
+## Next Steps
 
 1. **Saturday 1 PM:** Isaiah SIEM handoff
 2. **Saturday 3 PM:** Full team status review
@@ -166,7 +166,7 @@ backend/package-lock.json              # Regenerated for CI
 
 ---
 
-## 🖥️ Nettools Bastion (Evening Session)
+## Nettools Bastion (Evening Session)
 
 ### Deployed: nettools.vandine.us
 - **Container:** nicolaka/netshoot:latest on pi0

@@ -5,7 +5,7 @@
 ## Overview
 
 Tailscale provides a WireGuard-based mesh VPN connecting all infrastructure nodes.
-It is the **primary cross-zone connectivity mechanism** — the PA-220 firewall blocks direct traffic between DMZ zones, so all cross-host connections (monitoring scrapes, DB connections, OAuth proxy) route through Tailscale.
+It is the **primary cross-zone connectivity mechanism**, the PA-220 firewall blocks direct traffic between DMZ zones, so all cross-host connections (monitoring scrapes, DB connections, OAuth proxy) route through Tailscale.
 
 ## Node IPs
 
@@ -23,18 +23,18 @@ PA-220 zones block direct cross-zone connections:
 
 | From | To | Status |
 |------|----|--------|
-| Pi1 (dmz-services) | Pi2 (dmz-security) | BLOCKED — all ports |
-| Pi1 (dmz-services) | Pi0 (dmz-mgmt) | BLOCKED — most ports (DNS :53 allowed) |
-| K3s pods (Pi2) | Pi1 (dmz-services) | BLOCKED — all ports incl. 5432 |
+| Pi1 (dmz-services) | Pi2 (dmz-security) | BLOCKED, all ports |
+| Pi1 (dmz-services) | Pi0 (dmz-mgmt) | BLOCKED, most ports (DNS :53 allowed) |
+| K3s pods (Pi2) | Pi1 (dmz-services) | BLOCKED, all ports incl. 5432 |
 
-Tailscale traffic routes via `tailscale0` on each host — bypasses PA-220 zone policy entirely.
+Tailscale traffic routes via `tailscale0` on each host, bypasses PA-220 zone policy entirely.
 
 ## Critical Tailscale-Routed Connections
 
 | Service | From | To (Tailscale IP) | Port |
 |---------|------|-------------------|------|
 | GuardQuote DATABASE_URL | K3s pods (Pi2) | Pi1: 100.77.26.41 | 5432 |
-| Internet egress (OAuth, etc.) | K3s pods (Pi2) | direct via eth2 → UDM 192.168.2.1 | — (proxy eliminated 2026-03-17) |
+| Internet egress (OAuth, etc.) | K3s pods (Pi2) | direct via eth2 → UDM 192.168.2.1 |, (proxy eliminated 2026-03-17) |
 | Prometheus → node-pi2 | Pi1 Docker | Pi2: 100.111.113.35 | 9100 |
 | Prometheus → Wazuh | Pi1 Docker | Pi2: 100.111.113.35 | 55000 |
 | Prometheus → SentinelNet | Pi1 Docker | Pi2: 100.111.113.35 | 30800 |
@@ -69,7 +69,7 @@ See `docs/infrastructure/monitoring/README.md` for the full IP mapping table.
 Also verify Pi1 `pg_hba.conf` has: `hostnossl all all 100.64.0.0/10 scram-sha-256`
 
 **OAuth failing ("Failed to complete login"):**
-Pi2 has direct internet egress via matrix network adapter — no proxy needed.
+Pi2 has direct internet egress via matrix network adapter, no proxy needed.
 Check backend logs: `kubectl logs -n guardquote deployment/guardquote-backend --since=5m | grep -i oauth`
 
 ## Installation

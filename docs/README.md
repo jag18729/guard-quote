@@ -2,7 +2,7 @@
 
 > Comprehensive documentation for the GuardQuote platform and infrastructure.
 
-## 📚 Documentation Index
+## Documentation Index
 
 ### Architecture
 - [System Overview](./architecture/OVERVIEW.md) - High-level system architecture
@@ -33,7 +33,7 @@
 
 ---
 
-## 🏗️ Infrastructure Overview
+## Infrastructure Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -67,7 +67,7 @@
          └──────────────────┘               └──────────────────┘
 ```
 
-## 🔐 Access Tiers
+## Access Tiers
 
 | Tier | Who | Method | What |
 |------|-----|--------|------|
@@ -76,7 +76,7 @@
 | **Admin** | Rafa only | Tailscale + SSH Key | Direct server access, database |
 | **SIEM** | Isaiah | Tailscale (restricted) | Syslog only (pi0:514) |
 
-## 📞 Quick Links
+## Quick Links
 
 - **Production:** https://guardquote.vandine.us
 - **Admin Dashboard:** https://guardquote.vandine.us/admin

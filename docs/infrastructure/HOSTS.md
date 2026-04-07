@@ -6,14 +6,14 @@ Server details, IPs, and access credentials are in the team `.env` file (shared 
 
 | Host | Role | Status |
 |------|------|--------|
-| pi0 | DNS, SNMP, log shipping, LDAP, NFS archive (30-day log store) | 🟢 Active |
-| pi1 | PostgreSQL 17, Grafana, Prometheus, Loki, monitoring stack | 🟢 Active |
-| pi2 | K3s workloads (GuardQuote v2), Wazuh HIDS host, Cloudflare Tunnel | 🟢 Active |
-| ThinkStation | Dev workstation (WSL2), OpenClaw, long-term log archive (M: drive) | 🟢 Active |
-| PA-220 | Palo Alto firewall — 4 DMZ zones (dmz-mgmt, dmz-security, dmz-services, untrust) | 🟢 Active |
-| UDM | UniFi gateway/router | 🟢 Active |
-| Orange Pi RV2 | Lab bastion, Suricata IDS (74k rules, ET Open), dmz-security zone | 🟢 Active |
-| pi3 | Off-site monitoring node (planned) | 🔜 Planned |
+| pi0 | DNS, SNMP, log shipping, LDAP, NFS archive (30-day log store) | Active |
+| pi1 | PostgreSQL 17, Grafana, Prometheus, Loki, monitoring stack | Active |
+| pi2 | K3s workloads (GuardQuote v2), Wazuh HIDS host, Cloudflare Tunnel | Active |
+| ThinkStation | Dev workstation (WSL2), OpenClaw, long-term log archive (M: drive) | Active |
+| PA-220 | Palo Alto firewall, 4 DMZ zones (dmz-mgmt, dmz-security, dmz-services, untrust) | Active |
+| UDM | UniFi gateway/router | Active |
+| Orange Pi RV2 | Lab bastion, Suricata IDS (74k rules, ET Open), dmz-security zone | Active |
+| pi3 | Off-site monitoring node (planned) | Planned |
 
 ## Networking Note
 

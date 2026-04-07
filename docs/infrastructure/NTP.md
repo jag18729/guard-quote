@@ -41,7 +41,7 @@ server time.cloudflare.com iburst prefer
 
 **Pi1 notes:**
 - Ubuntu 24.04 ships with NTS-enabled NTP pools in `/etc/chrony/sources.d/ubuntu-ntp-pools.sources`. NTS requires port 4460/tcp which is blocked by the PA-220, so these were replaced with plain NTP pools.
-- Had a `local-ntp.sources` file with `server 127.0.0.1 iburst prefer` (self-referencing loop) — removed.
+- Had a `local-ntp.sources` file with `server 127.0.0.1 iburst prefer` (self-referencing loop), removed.
 - Required `chronyd -q` one-shot sync to step a 720ms clock drift before chrony would select a source.
 
 ## Why Cloudflare First
@@ -50,7 +50,7 @@ Previously all hosts used `NTP=192.168.20.10` (pi1) as the sole primary NTP serv
 
 **Fix applied 2026-03-03:** Cloudflare is now the primary NTP source on all hosts. Pi1 remains in the pool as a local reference on timesyncd hosts, but the fleet no longer depends on it for time.
 
-**Pi1 fix (same day):** Pi1 uses chrony (Ubuntu 24.04), not timesyncd. Had three issues: (1) `local-ntp.sources` with `server 127.0.0.1 prefer` creating a self-referencing loop, (2) NTS pools failing because PA-220 blocks port 4460/tcp, (3) 720ms clock drift requiring a forced step via `chronyd -q`. All resolved — pi1 now syncs to Cloudflare as primary.
+**Pi1 fix (same day):** Pi1 uses chrony (Ubuntu 24.04), not timesyncd. Had three issues: (1) `local-ntp.sources` with `server 127.0.0.1 prefer` creating a self-referencing loop, (2) NTS pools failing because PA-220 blocks port 4460/tcp, (3) 720ms clock drift requiring a forced step via `chronyd -q`. All resolved, pi1 now syncs to Cloudflare as primary.
 
 ## Verification
 
@@ -82,8 +82,8 @@ The `siem-test noise` validation may show alerts from the first ~5 minutes after
 ## Maintenance
 
 - **Adding a new host:** Copy the `timesyncd.conf` above, restart `systemd-timesyncd`. For chrony hosts, add `server time.cloudflare.com iburst prefer` and disable NTS pools if behind PA-220.
-- **iperf3 on pi1:** Disabled permanently (`systemctl disable --now iperf3-server.service`) — was generating Wazuh rule 40704 noise alerts.
-- **Monitoring:** `NTPSynchronized=no` should be treated as a P2 alert — logs may be unreliable
+- **iperf3 on pi1:** Disabled permanently (`systemctl disable --now iperf3-server.service`), was generating Wazuh rule 40704 noise alerts.
+- **Monitoring:** `NTPSynchronized=no` should be treated as a P2 alert, logs may be unreliable
 
 ---
 

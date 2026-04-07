@@ -1,7 +1,7 @@
 # ICAM Review Checklist
 
-**Owner:** Milkias Kassa (@Malachizirgod)  
-**Status:** 🟡 Pending Review  
+**Owner:** Milkias Kassa (@Malachizirgod)
+**Status:** Pending Review
 **Last Updated:** 2026-04-07
 
 ## Overview
@@ -100,10 +100,10 @@ Request → Extract JWT from cookie
 CREATE TABLE user_activity (
   id UUID PRIMARY KEY,
   user_id UUID REFERENCES users(id),
-  action VARCHAR(50),      -- 'login', 'logout', 'password_change', etc.
-  details JSONB,           -- Additional context
-  ip_address VARCHAR(45),  -- IPv4 or IPv6
-  user_agent TEXT,         -- Browser/client info
+  action VARCHAR(50),     -- 'login', 'logout', 'password_change', etc.
+  details JSONB,          -- Additional context
+  ip_address VARCHAR(45), -- IPv4 or IPv6
+  user_agent TEXT,        -- Browser/client info
   created_at TIMESTAMPTZ
 );
 ```
@@ -120,7 +120,7 @@ CREATE TABLE user_activity (
 
 ## Review Checklist
 
-### ✅ Authentication
+### Authentication
 - [ ] Passwords hashed with bcrypt (verify salt rounds ≥10)
 - [ ] JWT secret is cryptographically random (≥256 bits)
 - [ ] JWT expiry is reasonable (8h default)
@@ -128,31 +128,31 @@ CREATE TABLE user_activity (
 - [ ] Secure flag enabled in production
 - [ ] SameSite attribute prevents CSRF
 
-### ✅ Authorization
+### Authorization
 - [ ] All protected routes check permissions
 - [ ] Role-permission mapping is least-privilege
 - [ ] No permission escalation vulnerabilities
 - [ ] Admin-only routes verified (users management)
 
-### ✅ Session Security
+### Session Security
 - [ ] Tokens cannot be forged (signature verified)
 - [ ] Expired tokens properly rejected
 - [ ] Logout clears all session cookies
 - [ ] Remember-me extends session safely
 
-### ✅ Credential Management
+### Credential Management
 - [ ] No plaintext passwords in logs
 - [ ] Password change requires current password
 - [ ] Password complexity rules enforced (TODO)
 - [ ] Account lockout after failed attempts (TODO)
 
-### ✅ Audit Trail
+### Audit Trail
 - [ ] All auth events logged
 - [ ] IP addresses captured
 - [ ] User agent captured
 - [ ] Logs protected from tampering
 
-### ✅ Best Practices
+### Best Practices
 - [ ] OWASP ASVS Level 1 compliance
 - [ ] No sensitive data in JWT payload
 - [ ] CSRF protection on state-changing requests
@@ -164,37 +164,37 @@ CREATE TABLE user_activity (
 
 ### High Priority
 1. **Add password complexity rules**
-   - Minimum 8 characters
-   - Mix of upper/lower/number/special
-   - Check against common passwords list
+  - Minimum 8 characters
+  - Mix of upper/lower/number/special
+  - Check against common passwords list
 
 2. **Implement account lockout**
-   - Lock after 5 failed attempts
-   - 15-minute lockout duration
-   - Log lockout events
+  - Lock after 5 failed attempts
+  - 15-minute lockout duration
+  - Log lockout events
 
 3. **Add rate limiting**
-   - 5 login attempts per minute per IP
-   - Use sliding window algorithm
+  - 5 login attempts per minute per IP
+  - Use sliding window algorithm
 
 ### Medium Priority
 4. **JWT refresh tokens**
-   - Short-lived access tokens (15m)
-   - Long-lived refresh tokens (7d)
-   - Rotate refresh on use
+  - Short-lived access tokens (15m)
+  - Long-lived refresh tokens (7d)
+  - Rotate refresh on use
 
 5. **Session revocation**
-   - Server-side session store (Redis)
-   - Ability to revoke all sessions
-   - "Log out everywhere" feature
+  - Server-side session store (Redis)
+  - Ability to revoke all sessions
+  - "Log out everywhere" feature
 
 ### Low Priority
 6. **MFA support**
-   - TOTP (Google Authenticator)
-   - Email OTP backup
+  - TOTP (Google Authenticator)
+  - Email OTP backup
 
 7. **Password history**
-   - Prevent reuse of last 5 passwords
+  - Prevent reuse of last 5 passwords
 
 ---
 

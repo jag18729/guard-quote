@@ -193,7 +193,7 @@ Pi1 hosts: **PostgreSQL 17** (GuardQuote DB) + **Grafana/Prometheus/Loki** (moni
    gunzip -c ~/guardquote-latest.sql.gz | sudo -u postgres psql -d guardquote
    ```
 
-4. **Critical: restore pg_hba.conf** — K3s pods on Pi2 connect via Tailscale masquerade:
+4. **Critical: restore pg_hba.conf**, K3s pods on Pi2 connect via Tailscale masquerade:
    ```bash
    echo 'hostnossl    all    all    100.64.0.0/10    scram-sha-256' | \
      sudo tee -a /etc/postgresql/17/main/pg_hba.conf

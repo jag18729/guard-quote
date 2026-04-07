@@ -6,18 +6,18 @@
 
 | Resource | Isaiah | Milkias | Xavier | Rafa |
 |----------|--------|---------|--------|------|
-| GuardQuote Dashboard | ✅ | ✅ | ✅ | ✅ |
-| GuardQuote Admin | ✅ | ✅ | ✅ | ✅ |
-| Grafana | ✅ | ✅ | ✅ | ✅ |
-| Prometheus | ✅ | ✅ | ✅ | ✅ |
-| Loki | ✅ | ✅ | ✅ | ✅ |
-| GitHub Repo | ✅ | ✅ | ✅ | ✅ |
-| GitHub Projects | ✅ | ✅ | ✅ | ✅ |
-| SSH to Servers | ❌ | ❌ | ❌ | ✅ |
-| Database Direct | ❌ | ❌ | ❌ | ✅ |
-| Tailscale VPN | 🟡 SIEM Only | ❌ | ❌ | ✅ |
+| GuardQuote Dashboard | | | | |
+| GuardQuote Admin | | | | |
+| Grafana | | | | |
+| Prometheus | | | | |
+| Loki | | | | |
+| GitHub Repo | | | | |
+| GitHub Projects | | | | |
+| SSH to Servers | | | | |
+| Database Direct | | | | |
+| Tailscale VPN | SIEM Only | | | |
 
-**Legend:** ✅ Full Access | 🟡 Restricted | ❌ No Access
+**Legend:** Full Access | Restricted | No Access
 
 ---
 

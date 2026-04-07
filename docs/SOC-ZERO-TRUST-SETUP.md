@@ -1,6 +1,6 @@
-# SOC Dashboard — Cloudflare Zero Trust Deployment
+# SOC Dashboard, Cloudflare Zero Trust Deployment
 
-**Author:** Isaiah Bernal (@ibernal1815) — Security Operations
+**Author:** Isaiah Bernal (@ibernal1815), Security Operations
 **URL:** https://soc.vandine.us
 **Status:** Pending deployment
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-The SOC dashboard is a standalone React app served by nginx inside a K3s pod on pi2. Access is controlled entirely by Cloudflare Zero Trust — no login UI, no app-level auth. Cloudflare handles identity at the edge before a single byte reaches the container.
+The SOC dashboard is a standalone React app served by nginx inside a K3s pod on pi2. Access is controlled entirely by Cloudflare Zero Trust, no login UI, no app-level auth. Cloudflare handles identity at the edge before a single byte reaches the container.
 
 ```
 Browser → Cloudflare Zero Trust Access (soc.vandine.us)
@@ -28,14 +28,14 @@ Browser → Cloudflare Zero Trust Access (soc.vandine.us)
 
 ## Why Cloudflare Zero Trust (not app-level auth)
 
-The SOC dashboard is a static frontend — all data is currently hardcoded for the capstone showcase. There is no backend to validate sessions against. Adding a login form would be security theater on a static site.
+The SOC dashboard is a static frontend, all data is currently hardcoded for the capstone showcase. There is no backend to validate sessions against. Adding a login form would be security theater on a static site.
 
 Cloudflare Zero Trust enforces authentication at the network edge before the request ever reaches the pod:
 
-- **No exposed ports** — the container is only reachable via the Cloudflare Tunnel
-- **Identity at the edge** — GitHub SSO or one-time email PIN before the page loads
-- **Audit log** — Cloudflare logs every access attempt with identity and timestamp
-- **Revoke in seconds** — remove a user from the Access policy and they're locked out instantly
+- **No exposed ports**, the container is only reachable via the Cloudflare Tunnel
+- **Identity at the edge**, GitHub SSO or one-time email PIN before the page loads
+- **Audit log**, Cloudflare logs every access attempt with identity and timestamp
+- **Revoke in seconds**, remove a user from the Access policy and they're locked out instantly
 
 This mirrors how `nettools.vandine.us` (bastion) and `grafana.vandine.us` are already protected.
 
@@ -64,7 +64,7 @@ After this, the CI pipeline (`deploy.yml`) handles all future deploys automatica
 
 ---
 
-### 2. Cloudflare Tunnel — Add Route
+### 2. Cloudflare Tunnel, Add Route
 
 In the Cloudflare dashboard (or via `cloudflared` config on pi1):
 
@@ -85,7 +85,7 @@ Or via the dashboard: **Zero Trust → Networks → Tunnels → vandine-tunnel �
 
 ---
 
-### 3. Cloudflare Zero Trust Access — Create Application
+### 3. Cloudflare Zero Trust Access, Create Application
 
 **Zero Trust → Access → Applications → Add an application → Self-hosted**
 
@@ -141,7 +141,7 @@ npm run dev
 # Opens at http://localhost:5173
 ```
 
-No environment variables needed — the dashboard is fully self-contained with no backend calls.
+No environment variables needed, the dashboard is fully self-contained with no backend calls.
 
 ---
 
@@ -156,7 +156,7 @@ The dashboard currently uses hardcoded static data. Future integration path:
 | Grafana metrics | Grafana HTTP API with service account token |
 | Agent status | Wazuh API (55000/tcp) via backend proxy |
 
-When live data is connected, the backend proxy endpoints should run through Cloudflare Zero Trust Service Auth (service tokens) — not hardcoded credentials.
+When live data is connected, the backend proxy endpoints should run through Cloudflare Zero Trust Service Auth (service tokens), not hardcoded credentials.
 
 ---
 

@@ -12,17 +12,17 @@
 1. [Overview](#1-overview)
 2. [Identity Model](#2-identity-model)
 3. [Authentication](#3-authentication)
-   - 3.1 [Password-Based Login](#31-password-based-login)
-   - 3.2 [OAuth 2.0 / SSO](#32-oauth-20--sso)
-   - 3.3 [Token Management](#33-token-management)
+  - 3.1 [Password-Based Login](#31-password-based-login)
+  - 3.2 [OAuth 2.0 / SSO](#32-oauth-20--sso)
+  - 3.3 [Token Management](#33-token-management)
 4. [Authorization (RBAC)](#4-authorization-rbac)
-   - 4.1 [Roles](#41-roles)
-   - 4.2 [Permission Matrix](#42-permission-matrix)
-   - 4.3 [Route Access Control](#43-route-access-control)
+  - 4.1 [Roles](#41-roles)
+  - 4.2 [Permission Matrix](#42-permission-matrix)
+  - 4.3 [Route Access Control](#43-route-access-control)
 5. [User Lifecycle](#5-user-lifecycle)
-   - 5.1 [Provisioning](#51-provisioning)
-   - 5.2 [Modification](#52-modification)
-   - 5.3 [Deprovisioning](#53-deprovisioning)
+  - 5.1 [Provisioning](#51-provisioning)
+  - 5.2 [Modification](#52-modification)
+  - 5.3 [Deprovisioning](#53-deprovisioning)
 6. [Service-to-Service Authentication](#6-service-to-service-authentication)
 7. [Rate Limiting & Brute Force Protection](#7-rate-limiting--brute-force-protection)
 8. [Audit Logging](#8-audit-logging)
@@ -53,10 +53,10 @@ GuardQuote implements a layered Identity and Access Management (IAM) system cove
 
 ### Guiding Principles
 
-- **Least privilege** — users receive only the permissions required for their role.
-- **Defense in depth** — authentication, authorization, rate limiting, and audit logging are independent layers.
-- **Stateless tokens** — JWTs enable horizontal scaling without shared session state.
-- **Immutable audit trail** — all security events are persisted to `audit_logs` and cannot be modified by application users.
+- **Least privilege**, users receive only the permissions required for their role.
+- **Defense in depth**, authentication, authorization, rate limiting, and audit logging are independent layers.
+- **Stateless tokens**, JWTs enable horizontal scaling without shared session state.
+- **Immutable audit trail**, all security events are persisted to `audit_logs` and cannot be modified by application users.
 
 ---
 
@@ -68,7 +68,7 @@ GuardQuote implements a layered Identity and Access Management (IAM) system cove
 CREATE TABLE users (
     id            SERIAL PRIMARY KEY,
     email         VARCHAR(255) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,          -- Argon2id
+    password_hash VARCHAR(255) NOT NULL,         -- Argon2id
     first_name    VARCHAR(100) NOT NULL,
     last_name     VARCHAR(100) NOT NULL,
     role          VARCHAR(20)  DEFAULT 'user'
@@ -86,8 +86,8 @@ CREATE TABLE users (
 CREATE TABLE oauth_accounts (
     id               SERIAL PRIMARY KEY,
     user_id          INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    provider         VARCHAR(50)  NOT NULL,   -- 'microsoft' | 'google' | 'github'
-    provider_id      VARCHAR(255) NOT NULL,   -- Provider-assigned unique ID
+    provider         VARCHAR(50)  NOT NULL,  -- 'microsoft' | 'google' | 'github'
+    provider_id      VARCHAR(255) NOT NULL,  -- Provider-assigned unique ID
     email            VARCHAR(255),
     access_token     TEXT,
     refresh_token    TEXT,
@@ -149,7 +149,7 @@ POST /api/auth/login
          b. Return 401 Unauthorized
 ```
 
-**Rate limit:** 10 requests / minute / IP (auth preset — see §7).
+**Rate limit:** 10 requests / minute / IP (auth preset, see §7).
 
 ---
 
@@ -254,20 +254,20 @@ GuardQuote uses a flat four-tier role hierarchy. Roles are stored in `users.role
 
 | Capability | admin | iam | manager | user |
 |-----------|:-----:|:---:|:-------:|:----:|
-| View own profile | ✅ | ✅ | ✅ | ✅ |
-| Change own password | ✅ | ✅ | ✅ | ✅ |
-| Create quotes | ✅ | ✅ | ✅ | ✅ |
-| View all quotes | ✅ | ✅ | ✅ | ✅ |
-| Update quotes | ✅ | ✅ | ✅ | ✅ |
-| View clients | ✅ | ✅ | ✅ | ✅ |
-| Create clients | ✅ | ✅ | ✅ | ✅ |
-| **List all users** | ✅ | ✅ | ❌ | ❌ |
-| **Create users** | ✅ | ✅ | ❌ | ❌ |
-| **Modify user roles** | ✅ | ✅ | ❌ | ❌ |
-| **Deactivate users** | ✅ | ✅ | ❌ | ❌ |
-| **View admin stats** | ✅ | ❌ | ❌ | ❌ |
-| **View all quote requests** | ✅ | ❌ | ❌ | ❌ |
-| **Approve quote requests** | ✅ | ❌ | ❌ | ❌ |
+| View own profile | | | | |
+| Change own password | | | | |
+| Create quotes | | | | |
+| View all quotes | | | | |
+| Update quotes | | | | |
+| View clients | | | | |
+| Create clients | | | | |
+| **List all users** | | | | |
+| **Create users** | | | | |
+| **Modify user roles** | | | | |
+| **Deactivate users** | | | | |
+| **View admin stats** | | | | |
+| **View all quote requests** | | | | |
+| **Approve quote requests** | | | | |
 
 ### 4.3 Route Access Control
 
@@ -307,7 +307,7 @@ const auth = await requireAdmin(c);
 | GET | `/api/auth/login/:provider` | Initiate OAuth |
 | GET | `/api/auth/callback/:provider` | OAuth callback |
 
-#### Authenticated Routes (Bearer Token Required — All Roles)
+#### Authenticated Routes (Bearer Token Required, All Roles)
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -441,7 +441,7 @@ The Backend and ML Engine communicate internally using a **Pre-Shared Key (PSK)*
 X-Internal-Secret: <ML_ENGINE_SECRET>
 ```
 
-### Middleware (ML Engine — FastAPI)
+### Middleware (ML Engine, FastAPI)
 
 The ML Engine validates every inbound request with `requireS2SAuth()`:
 
@@ -528,10 +528,10 @@ If Redis is unavailable, rate limiting is bypassed and a warning is logged. The 
 ```sql
 CREATE TABLE audit_logs (
     id         SERIAL PRIMARY KEY,
-    user_id    INT REFERENCES users(id),   -- NULL for unauthenticated events
+    user_id    INT REFERENCES users(id),  -- NULL for unauthenticated events
     action     VARCHAR(50),
-    details    JSONB,                       -- Structured event data
-    ip_address VARCHAR(45),                 -- IPv4 or IPv6
+    details    JSONB,                      -- Structured event data
+    ip_address VARCHAR(45),                -- IPv4 or IPv6
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
@@ -573,24 +573,24 @@ Audit records are insert-only. The application provides no API endpoint to updat
 
 ## 9. Infrastructure Access Control
 
-### Access Matrix — Team Members
+### Access Matrix, Team Members
 
 | Resource | Rafael (Admin) | Isaiah (SecOps) | Milkias (IAM) | Xavier (UX) |
 |----------|:--------------:|:---------------:|:-------------:|:-----------:|
-| GuardQuote Dashboard | ✅ | ✅ | ✅ | ✅ |
-| GuardQuote Admin Panel | ✅ | ✅ | ✅ | ✅ |
-| Grafana / Prometheus / Loki | ✅ | ✅ | ✅ | ✅ |
-| GitHub Repository | ✅ | ✅ | ✅ | ✅ |
-| Tailscale VPN | ✅ Full | ✅ SIEM only | ❌ | ❌ |
-| SSH to Pi0 / Pi1 / Pi2 | ✅ | ❌ | ❌ | ❌ |
-| PostgreSQL direct access | ✅ | ❌ | ❌ | ❌ |
-| K8s kubectl access | ✅ | ❌ | ❌ | ❌ |
+| GuardQuote Dashboard | | | | |
+| GuardQuote Admin Panel | | | | |
+| Grafana / Prometheus / Loki | | | | |
+| GitHub Repository | | | | |
+| Tailscale VPN | Full | SIEM only | | |
+| SSH to Pi0 / Pi1 / Pi2 | | | | |
+| PostgreSQL direct access | | | | |
+| K8s kubectl access | | | | |
 
 ### Access Methods
 
 #### GuardQuote Application (Email + Password)
 Used for the admin dashboard and API.
-Default initial password: `Welcome123!` — must be changed on first login.
+Default initial password: `Welcome123!`, must be changed on first login.
 
 #### Cloudflare Access (Email OTP)
 Used for: Grafana, Prometheus, Loki monitoring dashboards.
@@ -612,9 +612,9 @@ Isaiah's Tailscale ACL:
 
 #### SSH Access (Tailscale Required)
 ```bash
-ssh rafaeljg@pi0       # Pi0 — DNS/AdGuard/SNMP/rsyslog
-ssh johnmarston@pi1    # Pi1 — PostgreSQL/Monitoring
-ssh rafaeljg@100.111.113.35  # Pi2 — K3s workloads
+ssh rafaeljg@pi0       # Pi0, DNS/AdGuard/SNMP/rsyslog
+ssh johnmarston@pi1    # Pi1, PostgreSQL/Monitoring
+ssh rafaeljg@100.111.113.35  # Pi2, K3s workloads
 ```
 
 SSH keys are managed in `~/.ssh/authorized_keys` on each host.

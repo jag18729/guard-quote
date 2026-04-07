@@ -1,4 +1,4 @@
-# GuardQuote v2.0 — Planning Document
+# GuardQuote v2.0, Planning Document
 
 > **Status**: Codebase audit complete, proposed changes documented
 > **Target runtime**: Bun 1.3+ (see `docs/bun-reference.md`)
@@ -15,24 +15,24 @@
 
 | File | Lines | Purpose | v2 Status |
 |------|-------|---------|-----------|
-| `src/index.ts` | 1,450 | Monolithic Hono router — all CRUD, ML, admin, webhooks | **Split into route modules** |
+| `src/index.ts` | 1,450 | Monolithic Hono router, all CRUD, ML, admin, webhooks | **Split into route modules** |
 | `services/auth.ts` | 200 | Hand-rolled JWT (HMAC-SHA256), `Bun.password` argon2id | **Keep + add OAuth SSO** |
 | `services/quote-calculator.ts` | 200 | Rule-based pricing (multipliers, not ML) | **Replace with real ML engine** |
 | `services/websocket.ts` | 300 | Pub/sub channels, real-time price calc, admin commands | **Port to native Bun.serve WS** |
-| `services/infrastructure.ts` | 622 | SSH-based Pi cluster management | **Remove — OpenClaw handles infra** |
-| `services/monitor.ts` | 600 | Health monitoring for admin dashboard | **Simplify — Grafana/Prometheus exist** |
-| `services/pi-services.ts` | 696 | SSH into Pi, systemd control, demo mode | **Remove — out of scope for quote app** |
+| `services/infrastructure.ts` | 622 | SSH-based Pi cluster management | **Remove, OpenClaw handles infra** |
+| `services/monitor.ts` | 600 | Health monitoring for admin dashboard | **Simplify, Grafana/Prometheus exist** |
+| `services/pi-services.ts` | 696 | SSH into Pi, systemd control, demo mode | **Remove, out of scope for quote app** |
 | `services/cache.ts` | 448 | Redis + in-memory fallback | **Replace with native Bun Redis** |
-| `services/backup.ts` | 598 | pg_dump scheduler | **Simplify — K8s CronJob or OpenClaw cron** |
-| `services/logging.ts` | 438 | Syslog RFC 5424 | **Replace — Vector handles log shipping** |
+| `services/backup.ts` | 598 | pg_dump scheduler | **Simplify, K8s CronJob or OpenClaw cron** |
+| `services/logging.ts` | 438 | Syslog RFC 5424 | **Replace, Vector handles log shipping** |
 | `services/index.ts` | 179 | Barrel exports | Keep |
-| `middleware/rate-limit.ts` | 274 | Redis sliding window | **Port — use native Bun Redis** |
-| `middleware/s2s-auth.ts` | 105 | PSK for ML engine communication | **Keep — needed for ML microservice** |
-| `schemas/ingest.ts` | 276 | Zod transforms for AI-generated training data | **Keep — useful for data pipeline** |
+| `middleware/rate-limit.ts` | 274 | Redis sliding window | **Port, use native Bun Redis** |
+| `middleware/s2s-auth.ts` | 105 | PSK for ML engine communication | **Keep, needed for ML microservice** |
+| `schemas/ingest.ts` | 276 | Zod transforms for AI-generated training data | **Keep, useful for data pipeline** |
 | `db/connection.ts` | 29 | postgres.js connection | Keep (or evaluate `Bun.sql`) |
-| `db/schema.ts` | 253 | **DEAD CODE** — Drizzle/MySQL ORM, not used | **Delete** |
-| `db/schema.sql` | 170 | PostgreSQL DDL — the actual schema | **Keep as source of truth** |
-| `seed-training-data.ts` | — | Synthetic ML training data | **Expand for ML bootstrap** |
+| `db/schema.ts` | 253 | **DEAD CODE**, Drizzle/MySQL ORM, not used | **Delete** |
+| `db/schema.sql` | 170 | PostgreSQL DDL, the actual schema | **Keep as source of truth** |
+| `seed-training-data.ts` |, | Synthetic ML training data | **Expand for ML bootstrap** |
 
 ### Frontend (5,620 lines, 21 files)
 
@@ -40,16 +40,16 @@
 |----------------|---------|-----------|
 | `Landing.tsx` | Marketing page | Keep/refresh |
 | `Login.tsx` | Email/password auth | **Add OAuth buttons (GitHub, Google)** |
-| `QuoteForm.tsx` | Public quote request | Keep — core feature |
+| `QuoteForm.tsx` | Public quote request | Keep, core feature |
 | `TechStack.tsx` | Architecture showcase | Update for v2 stack |
 | `DataFlowDiagram.tsx` | xyflow visualization | Update for ML pipeline |
 | `admin/Dashboard.tsx` | Admin overview | Simplify (remove infra) |
-| `admin/ML.tsx` | ML training data management | **Expand — real model status/metrics** |
+| `admin/ML.tsx` | ML training data management | **Expand, real model status/metrics** |
 | `admin/Services.tsx` | Pi service management | **Remove or repurpose** |
-| `admin/Network.tsx` | Network status | **Remove — Grafana does this** |
+| `admin/Network.tsx` | Network status | **Remove, Grafana does this** |
 | `admin/Users.tsx` | User management | **Add SSO provider column** |
 | `admin/QuoteRequests.tsx` | Incoming quote requests | Keep |
-| `admin/Logs.tsx` | Log viewer | **Remove — Grafana/Loki does this** |
+| `admin/Logs.tsx` | Log viewer | **Remove, Grafana/Loki does this** |
 | `admin/Blog.tsx` | Blog management | Keep |
 | `admin/Features.tsx` | Feature flags | Keep |
 | `admin/Profile.tsx` | User profile | **Add linked SSO accounts** |
@@ -57,18 +57,18 @@
 
 ### Database Schema (PostgreSQL)
 
-11 tables — well-normalized (3NF):
-- `users` — auth, roles (admin/manager/user)
-- `locations` — zip, city, state, risk_zone, base_multiplier
-- `event_types` — code, base_hourly_rate, risk_weight
-- `service_options` — add-on pricing (armed, vehicle, K9, supervisor)
-- `clients` — company info, credit limits, payment terms
-- `quotes` — main header, event details, ML fields (risk_score, confidence_score)
-- `quote_line_items` — itemized breakdown
-- `quote_status_history` — audit trail
-- `ml_training_data` — denormalized features + targets (final_price, risk_score, was_accepted)
-- `webhooks` — event notification config
-- `webhook_logs` — delivery tracking
+11 tables, well-normalized (3NF):
+- `users`, auth, roles (admin/manager/user)
+- `locations`, zip, city, state, risk_zone, base_multiplier
+- `event_types`, code, base_hourly_rate, risk_weight
+- `service_options`, add-on pricing (armed, vehicle, K9, supervisor)
+- `clients`, company info, credit limits, payment terms
+- `quotes`, main header, event details, ML fields (risk_score, confidence_score)
+- `quote_line_items`, itemized breakdown
+- `quote_status_history`, audit trail
+- `ml_training_data`, denormalized features + targets (final_price, risk_score, was_accepted)
+- `webhooks`, event notification config
+- `webhook_logs`, delivery tracking
 
 **Schema changes for v2:**
 - Add `oauth_providers` table (user_id, provider, provider_user_id, access_token, refresh_token)
@@ -94,13 +94,13 @@
 - OAuth 2.0 / OIDC standard flows (authorization code grant)
 - Store provider tokens for API access if needed
 - Map provider roles → GuardQuote roles (or default to `user`)
-- No framework dependency — raw HTTP to OAuth endpoints from Bun
+- No framework dependency, raw HTTP to OAuth endpoints from Bun
 
 ### 2. Real ML Engine (HIGH PRIORITY)
 
 **Current state**: `quote-calculator.ts` is rule-based math pretending to be ML. The `ml_training_data` table exists but nothing trains on it.
 
-**Proposed architecture — 3-source intelligence**:
+**Proposed architecture, 3-source intelligence**:
 
 | Source | What | How |
 |--------|------|-----|
@@ -129,27 +129,27 @@
 
 ```
 src/
-  server.ts          — single Bun.serve() entry (HTTP + WS)
+  server.ts       , single Bun.serve() entry (HTTP + WS)
   routes/
-    auth.ts          — login, signup, OAuth callbacks, refresh
-    quotes.ts        — CRUD, calculate, status transitions
-    clients.ts       — CRUD
-    admin.ts         — dashboard, users, ML management
-    webhooks.ts      — CRUD + delivery
-    ml.ts            — predict, batch, retrain trigger
+    auth.ts       , login, signup, OAuth callbacks, refresh
+    quotes.ts     , CRUD, calculate, status transitions
+    clients.ts    , CRUD
+    admin.ts      , dashboard, users, ML management
+    webhooks.ts   , CRUD + delivery
+    ml.ts         , predict, batch, retrain trigger
   services/
-    auth.ts          — JWT, password hashing, OAuth token exchange
-    quote-calculator.ts — rule engine (one of 3 sources)
-    ml-client.ts     — HTTP client to Python ML service
-    cache.ts         — native Bun Redis
-    webhook.ts       — delivery + HMAC signing
+    auth.ts       , JWT, password hashing, OAuth token exchange
+    quote-calculator.ts, rule engine (one of 3 sources)
+    ml-client.ts  , HTTP client to Python ML service
+    cache.ts      , native Bun Redis
+    webhook.ts    , delivery + HMAC signing
   middleware/
-    auth.ts          — JWT verification
-    rate-limit.ts    — Redis sliding window
-    s2s.ts           — PSK for ML service
+    auth.ts       , JWT verification
+    rate-limit.ts , Redis sliding window
+    s2s.ts        , PSK for ML service
   db/
-    connection.ts    — postgres.js (or Bun.sql)
-    schema.sql       — DDL source of truth
+    connection.ts , postgres.js (or Bun.sql)
+    schema.sql    , DDL source of truth
 ```
 
 **Key changes**:
@@ -157,7 +157,7 @@ src/
 - Drop ~1,900 lines of infra/Pi management code (OpenClaw + Grafana handle this)
 - Drop custom syslog logging (Vector handles log shipping)
 - Native Bun Redis replaces custom Redis client
-- `Bun.password` argon2id already in use ✅
+- `Bun.password` argon2id already in use
 - `--smol` flag for Pi deployment
 - `perMessageDeflate` on WebSocket
 - `dns.prefetch` for external APIs at startup
@@ -168,13 +168,13 @@ src/
 
 | GuardQuote feature | Already handled by |
 |--------------------|--------------------|
-| `infrastructure.ts` (622L) — Pi cluster SSH monitoring | OpenClaw pi-fleet skill + Prometheus |
-| `monitor.ts` (600L) — service health checks | Prometheus blackbox + node_exporter |
-| `pi-services.ts` (696L) — systemd control via SSH | OpenClaw + direct SSH |
-| `logging.ts` (438L) — syslog shipping | Vector on pi0/pi2 → Loki |
-| `admin/Network.tsx` — network status | Grafana Network & Firewall dashboard |
-| `admin/Logs.tsx` — log viewer | Grafana + Loki |
-| `admin/Services.tsx` — Pi service control | OpenClaw |
+| `infrastructure.ts` (622L), Pi cluster SSH monitoring | OpenClaw pi-fleet skill + Prometheus |
+| `monitor.ts` (600L), service health checks | Prometheus blackbox + node_exporter |
+| `pi-services.ts` (696L), systemd control via SSH | OpenClaw + direct SSH |
+| `logging.ts` (438L), syslog shipping | Vector on pi0/pi2 → Loki |
+| `admin/Network.tsx`, network status | Grafana Network & Firewall dashboard |
+| `admin/Logs.tsx`, log viewer | Grafana + Loki |
+| `admin/Services.tsx`, Pi service control | OpenClaw |
 
 **~2,350 lines of backend + 3 admin pages removed.** GuardQuote focuses on what it does: quoting.
 
@@ -182,8 +182,8 @@ src/
 
 - **OAuth login buttons** (GitHub, Google) on Login page
 - **Linked accounts** section on Profile page
-- **ML dashboard** upgrade — real model metrics, training history, drift charts
-- **Remove infra pages** (Services, Network, Logs) — link to Grafana instead
+- **ML dashboard** upgrade, real model metrics, training history, drift charts
+- **Remove infra pages** (Services, Network, Logs), link to Grafana instead
 - **Update DataFlowDiagram** to show 3-source ML architecture
 - Keep React 18, React Router 7, Tailwind, framer-motion, xyflow
 
@@ -211,17 +211,17 @@ src/
 
 ## Pre-Planning Checklist
 
-- [x] **Codebase audit** — backend + frontend fully inventoried
-- [x] **API surface inventory** — all routes cataloged from `index.ts`
-- [x] **Data model review** — PostgreSQL schema documented, v2 changes proposed
-- [x] **ML assessment** — rule-based, not real ML. Real engine proposed.
-- [x] **Frontend audit** — 21 files, pages categorized
-- [x] **Dependency inventory** — Hono (drop), postgres (keep), bcrypt (Bun.password), resend (keep), zod (keep for ingest)
-- [x] **Deployment target** — pi2 K3s confirmed
-- [ ] **UAT findings** — pending full testing
-- [ ] **OAuth provider registration** — GitHub OAuth app, Google OAuth credentials
-- [ ] **External APIs for ML** — identify crime stats, weather, events APIs
-- [ ] **Training data volume** — how much is in `ml_training_data` currently?
+- [x] **Codebase audit**, backend + frontend fully inventoried
+- [x] **API surface inventory**, all routes cataloged from `index.ts`
+- [x] **Data model review**, PostgreSQL schema documented, v2 changes proposed
+- [x] **ML assessment**, rule-based, not real ML. Real engine proposed.
+- [x] **Frontend audit**, 21 files, pages categorized
+- [x] **Dependency inventory**, Hono (drop), postgres (keep), bcrypt (Bun.password), resend (keep), zod (keep for ingest)
+- [x] **Deployment target**, pi2 K3s confirmed
+- [ ] **UAT findings**, pending full testing
+- [ ] **OAuth provider registration**, GitHub OAuth app, Google OAuth credentials
+- [ ] **External APIs for ML**, identify crime stats, weather, events APIs
+- [ ] **Training data volume**, how much is in `ml_training_data` currently?
 
 ---
 
@@ -243,7 +243,7 @@ src/
 
 | Phase | Description | Dependencies |
 |-------|-------------|-------------|
-| 0 | ✅ Codebase audit + planning doc | — |
+| 0 | Codebase audit + planning doc |, |
 | 1 | OAuth provider setup (GitHub, Google apps) | Account access |
 | 2 | Design review (infra-brainstorming) | Phase 0 |
 | 3 | Task decomposition + implementation plan | Phase 2 approval |

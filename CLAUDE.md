@@ -38,7 +38,7 @@ ML-powered security service quoting platform. Self-hosted on Raspberry Pi cluste
 | Frontend | React 18 + TypeScript + Vite + Tailwind |
 | Backend | Bun 1.3 + Hono (K3s on Pi2) |
 | Database | PostgreSQL 17 (Pi1, accessed via Tailscale 100.77.26.41:5432) |
-| Auth | Argon2id + JWT + OAuth 2.0 (GitHub ✅ Google ✅ Microsoft ✅) |
+| Auth | Argon2id + JWT + OAuth 2.0 (GitHub, Google, Microsoft) |
 | ML Engine | Python FastAPI + XGBoost (K3s on Pi2) |
 | Hosting | Cloudflare Tunnel → K3s NodePort 30522 |
 | Monitoring | Grafana + Prometheus + Loki + Vector (Pi1) |
@@ -62,7 +62,7 @@ ML-powered security service quoting platform. Self-hosted on Raspberry Pi cluste
 ## Critical Infrastructure Notes
 
 ### DATABASE_URL
-Must use Pi1's Tailscale IP — PA-220 blocks direct Pi2→Pi1 cross-zone. Credentials in `.env`.
+Must use Pi1's Tailscale IP, PA-220 blocks direct Pi2→Pi1 cross-zone. Credentials in `.env`.
 Stored in K8s secret:
 ```bash
 kubectl get secret guardquote-secrets -n guardquote -o jsonpath='{.data.database-url}' | base64 -d
@@ -75,12 +75,12 @@ K3s pods have direct internet egress via Pi2's matrix network adapter (USB ether
 | Namespace | Workloads |
 |-----------|-----------|
 | `guardquote` | backend, frontend, ml-engine, soc-dashboard |
-| `sentinel` | sentinelnet-api (scaled to 0 — needs image rebuild), grafana |
-| `nettools` | nettools-api (scaled to 0 — needs image rebuild), nettools-db |
+| `sentinel` | sentinelnet-api (scaled to 0, needs image rebuild), grafana |
+| `nettools` | nettools-api (scaled to 0, needs image rebuild), nettools-db |
 
 ### Images Needing Rebuild
-- `sentinelnet:v0.4.0` — build on Pi2, `docker save | sudo k3s ctr images import -`
-- `nettools-api:v2` — same process
+- `sentinelnet:v0.4.0`, build on Pi2, `docker save | sudo k3s ctr images import -`
+- `nettools-api:v2`, same process
 
 ## API Endpoints
 
@@ -88,9 +88,9 @@ K3s pods have direct internet egress via Pi2's matrix network adapter (USB ether
 |--------|------|-------------|
 | GET | `/api/health` | Health check + DB status |
 | POST | `/api/auth/login` | Login (Argon2id) |
-| GET | `/auth/github` | OAuth — GitHub |
-| GET | `/auth/google` | OAuth — Google |
-| GET | `/auth/microsoft` | OAuth — Microsoft |
+| GET | `/auth/github` | OAuth, GitHub |
+| GET | `/auth/google` | OAuth, Google |
+| GET | `/auth/microsoft` | OAuth, Microsoft |
 | GET | `/api/quotes` | List quotes |
 | POST | `/api/quotes` | Create quote |
 | GET | `/api/features` | Feature requests |
@@ -167,16 +167,16 @@ Verify: `curl -s http://10.43.210.9:8000/health` should show `model_loaded: true
 
 | Member | GitHub | Role |
 |--------|--------|------|
-| Rafael Garcia | @jag18729 | Lead — CI/CD, ML, Data |
-| Milkias Kassa | @Malachizirgod | IAM — Identity & Access |
-| Isaiah Bernal | @ibernal1815 | SecOps — SIEM & Security |
-| Xavier Nguyen | @xan942 | UX — Design & Frontend |
+| Rafael Garcia | @jag18729 | Lead, CI/CD, ML, Data |
+| Milkias Kassa | @Malachizirgod | IAM, Identity & Access |
+| Isaiah Bernal | @ibernal1815 | SecOps, SIEM & Security |
+| Xavier Nguyen | @xan942 | UX, Design & Frontend |
 
 ## Milestones
 
 | Milestone | Date | Status |
 |-----------|------|--------|
-| v2.0 — Bun + ML + OAuth + SIEM | March 3, 2026 | ✅ Live |
+| v2.0, Bun + ML + OAuth + SIEM | March 3, 2026 | Live |
 
 ## Version
 - **Current:** v2.1 (production on K3s/Pi2)

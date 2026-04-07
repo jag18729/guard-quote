@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GuardQuote v2 Architecture — CIT 480</title>
+<title>GuardQuote v2 Architecture - CIT 480</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -133,8 +133,9 @@
 
   .cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 360px));
+    gap: 1.25rem;
+    justify-content: start;
   }
 
   .card {
@@ -360,7 +361,7 @@
       <div class="meta">
         <span class="badge badge-live">● Live</span>
         <span>CIT 480 Senior Design</span>
-        <span>CSUN — February 2026</span>
+        <span>CSUN, February 2026</span>
       </div>
     </header>
 
@@ -376,7 +377,7 @@
   <marker id="ay" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#ca8a04"/></marker>
   <marker id="ac" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#0891b2"/></marker>
   <marker id="ad" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#64748b"/></marker>
-  <!-- Brand icons (Simple Icons, MIT) — single fill path -->
+  <!-- Brand icons (Simple Icons, MIT) - single fill path -->
   <symbol id="i-cloudflare" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5088 16.8447c.1475-.5068.0908-.9707-.1553-1.3154-.2246-.3164-.6045-.499-1.0615-.5205l-8.6592-.1123a.1559.1559 0 0 1-.1333-.0713c-.0283-.042-.0351-.0986-.021-.1553.0278-.084.1123-.1484.2036-.1562l8.7359-.1123c1.0351-.0489 2.1601-.8868 2.5537-1.9136l.499-1.3013c.0215-.0561.0293-.1128.0147-.168-.5625-2.5463-2.835-4.4453-5.5499-4.4453-2.5039 0-4.6284 1.6177-5.3876 3.8614-.4927-.3658-1.1187-.5625-1.794-.499-1.2026.119-2.1665 1.083-2.2861 2.2856-.0283.31-.0069.6128.0635.894C1.5683 13.171 0 14.7754 0 16.752c0 .1748.0142.3515.0352.5273.0141.083.0844.1475.1689.1475h15.9814c.0909 0 .1758-.0645.2032-.1553l.12-.4268zm2.7568-5.5634c-.0771 0-.1611 0-.2383.0112-.0566 0-.1054.0415-.127.0976l-.3378 1.1744c-.1475.5068-.0918.9707.1543 1.3164.2256.3164.6055.498 1.0625.5195l1.8437.1133c.0557 0 .1055.0263.1329.0703.0283.043.0351.1074.0214.1562-.0283.084-.1132.1485-.204.1553l-1.921.1123c-1.041.0488-2.1582.8867-2.5527 1.914l-.1406.3585c-.0283.0713.0215.1416.0986.1416h6.5977c.0771 0 .1474-.0489.169-.126.1122-.4082.1757-.837.1757-1.2803 0-2.6025-2.125-4.727-4.7344-4.727"/></symbol>
   <symbol id="i-tailscale" viewBox="0 0 24 24"><path fill="currentColor" d="M24 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm-9 9a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm0-9a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm6-6a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM3 24a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm18 0a3 3 0 1 1 0-6 3 3 0 0 1 0 6zM6 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm9-9a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM6 3a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></symbol>
   <symbol id="i-raspberrypi" viewBox="0 0 24 24"><path fill="currentColor" d="M14.291 0c-.181.002-.38.017-.594.05-.61.092-.81.214-.81.214s.42-.024.92.292c0 0-.811.024-1.41.755 0 0 .54-.196.86-.121-.49.196-1.022.66-1.218 1.34 0 0 .272-.197.466-.197-.466.563-.762 1.243-.762 2.131 0 1.34.687 2.143.93 2.41-.394.292-1.046.852-1.5 1.726a4.5 4.5 0 0 0-.59 2.143c-.317-.317-.92-.756-1.654-.706C7.5 10.176 7.39 11.18 7.39 11.18s-.683-.586-1.61-.39c-1.025.196-1.586 1.218-1.586 2.166s.512 1.682 1.488 2.05c0 0-.732.732-.366 1.95.366 1.218 1.488 1.34 1.488 1.34s-.586 1.024.146 1.83c.732.806 1.708.488 1.708.488s.073 1.243 1.024 1.66c.952.415 1.83-.196 1.83-.196s.488 1.146 1.83 1.146 1.83-1.146 1.83-1.146.878.61 1.83.196.952-1.488.952-1.488 1.097.39 1.83-.439c.732-.829.146-1.879.146-1.879s1.122-.122 1.488-1.34c.366-1.218-.366-1.95-.366-1.95.952-.366 1.464-1.097 1.464-2.05 0-.952-.561-1.97-1.586-2.166-.927-.196-1.61.39-1.61.39s-.122-1.001-.927-1.05c-.732-.05-1.34.39-1.654.706-.024-.683-.196-1.488-.59-2.143-.464-.927-1.146-1.434-1.5-1.726.244-.268.93-1.07.93-2.41 0-.93-.323-1.617-.781-2.131.196 0 .461.196.461.196-.196-.683-.732-1.146-1.218-1.34.317-.075.86.121.86.121-.591-.732-1.41-.755-1.41-.755.488-.317.916-.292.916-.292S14.766 0 14.291 0z"/></symbol>
@@ -385,7 +386,7 @@
   <symbol id="i-bun" viewBox="0 0 24 24"><path fill="currentColor" d="M12 22.596c6.628 0 12-4.338 12-9.688 0-3.318-2.057-6.248-5.219-7.986-1.286-.715-2.297-1.357-3.139-1.89C14.058 2.025 13.08 1.404 12 1.404c-1.097 0-2.334.785-3.966 1.821a49.92 49.92 0 0 1-2.816 1.697C2.057 6.66 0 9.59 0 12.908c0 5.35 5.372 9.687 12 9.687v.001ZM10.599 4.715c.334-.759.503-1.58.498-2.409 0-.145.202-.187.23-.029.658 2.783-.902 4.162-2.057 4.624-.124.048-.199-.121-.103-.209a5.763 5.763 0 0 0 1.432-1.977Zm2.058-.102a5.82 5.82 0 0 0-.782-2.306v-.016c-.069-.123.086-.263.185-.172 1.962 2.111 1.307 4.067.556 5.051-.082.103-.23-.003-.189-.126a5.85 5.85 0 0 0 .23-2.431Zm1.776-.561a5.727 5.727 0 0 0-1.612-1.806v-.014c-.112-.085-.024-.274.114-.218 2.595 1.087 2.774 3.18 2.459 4.407a.116.116 0 0 1-.049.071.11.11 0 0 1-.153-.026.122.122 0 0 1-.022-.083a5.891 5.891 0 0 0-.737-2.331Zm-5.087.561c-.617.546-1.282.76-2.063 1-.117 0-.195-.078-.156-.181 1.752-.909 2.376-1.649 2.999-2.778 0 0 .155-.118.188.085 0 .304-.349 1.329-.968 1.874Zm4.945 11.237a2.957 2.957 0 0 1-.937 1.553c-.346.346-.8.565-1.286.62a2.178 2.178 0 0 1-1.327-.62 2.955 2.955 0 0 1-.925-1.553.244.244 0 0 1 .064-.198.234.234 0 0 1 .193-.069h3.965a.226.226 0 0 1 .19.07c.05.053.073.125.063.197Zm-5.458-2.176a1.862 1.862 0 0 1-2.384-.245 1.98 1.98 0 0 1-.233-2.447c.207-.319.503-.566.848-.713a1.84 1.84 0 0 1 1.092-.11c.366.075.703.261.967.531a1.98 1.98 0 0 1 .408 2.114 1.931 1.931 0 0 1-.698.869v.001Zm8.495.005a1.86 1.86 0 0 1-2.381-.253 1.964 1.964 0 0 1-.547-1.366c0-.384.11-.76.32-1.079.207-.319.503-.567.849-.713a1.844 1.844 0 0 1 1.093-.108c.367.076.704.262.968.534a1.98 1.98 0 0 1 .4 2.117 1.932 1.932 0 0 1-.702.868Z"/></symbol>
   <symbol id="i-grafana" viewBox="0 0 24 24"><path fill="currentColor" d="M23.02 10.59a8.578 8.578 0 0 0-.862-3.034 8.911 8.911 0 0 0-1.789-2.445c.337-1.342-.413-2.505-.413-2.505-1.292-.08-2.113.4-2.416.62-.052-.02-.102-.044-.154-.064-.22-.089-.446-.172-.677-.247-.231-.073-.47-.14-.711-.197a9.867 9.867 0 0 0-.875-.161C14.557.753 12.94 0 12.94 0c-1.804 1.145-2.147 2.744-2.147 2.744l-.018.093c-.098.029-.2.057-.298.088-.138.042-.275.094-.413.143-.138.055-.275.107-.41.166a8.869 8.869 0 0 0-1.557.87l-.063-.029c-2.497-.955-4.716.195-4.716.195-.203 2.658.996 4.33 1.235 4.636a11.608 11.608 0 0 0-.607 2.635C1.636 12.677.953 15.014.953 15.014c1.926 2.214 4.171 2.351 4.171 2.351.285.509.615.994.986 1.446.156.19.32.371.488.548-.704 2.009.099 3.68.099 3.68 2.144.08 3.553-.937 3.849-1.173a9.784 9.784 0 0 0 3.164.501l.183-.01.003.002c1.01 1.44 2.788 1.646 2.788 1.646 1.264-1.332 1.337-2.653 1.337-2.94v-.118c.265-.187.52-.387.758-.6a7.875 7.875 0 0 0 1.415-1.7c1.43.083 2.437-.885 2.437-.885-.236-1.49-1.085-2.216-1.264-2.354l-.034-.026.02-.27c.011-.162.016-.323.016-.48v-.351l-.013-.135-.018-.122a6.215 6.215 0 0 0-2.032-3.73 6.015 6.015 0 0 0-3.222-1.46 6.292 6.292 0 0 0-.914-.05l-.107.002h-.063l-.044.003-.104.008a4.777 4.777 0 0 0-3.335 1.695c-.332.4-.592.84-.768 1.297a4.594 4.594 0 0 0-.312 1.817l.003.091c.005.055.007.11.013.164a3.615 3.615 0 0 0 .698 1.82 3.53 3.53 0 0 0 1.827 1.282c.33.098.66.14.971.137l.114-.002.062-.003c.021 0 .042-.003.062-.003.034-.002.065-.007.099-.01l.028-.003.031-.005.06-.008c.038-.005.075-.012.112-.02.036-.008.072-.013.109-.024a2.634 2.634 0 0 0 .914-.415c.028-.02.056-.041.085-.065a.248.248 0 0 0 .039-.35.244.244 0 0 0-.309-.06l-.078.042c-.09.044-.184.083-.283.116a2.476 2.476 0 0 1-.475.096l-.083.006-.083.002-.08-.002-.102-.006h-.012l-.024.006c-.016-.003-.031-.003-.044-.006-.031-.002-.06-.007-.091-.01a2.59 2.59 0 0 1-.724-.213 2.557 2.557 0 0 1-.667-.438 2.52 2.52 0 0 1-.805-1.475 2.306 2.306 0 0 1-.029-.444l.006-.122v-.054c.003-.021.003-.04.005-.06a3.163 3.163 0 0 1 1.352-2.29 3.12 3.12 0 0 1 .937-.43 2.946 2.946 0 0 1 .776-.101h.06l.07.002.045.003h.026l.07.005a4.041 4.041 0 0 1 1.635.49 3.94 3.94 0 0 1 1.602 1.662 3.77 3.77 0 0 1 .397 1.414l.005.076.003.075c.002.026.002.05.002.075v.07l-.002.073-.008.174a6.195 6.195 0 0 1-.08.639 5.1 5.1 0 0 1-.267.927 5.31 5.31 0 0 1-.624 1.13 5.052 5.052 0 0 1-3.237 2.014 4.82 4.82 0 0 1-.649.066h-.326a6.607 6.607 0 0 1-1.716-.265 6.776 6.776 0 0 1-3.4-2.274 6.75 6.75 0 0 1-.746-1.15 6.616 6.616 0 0 1-.714-2.596l-.005-.083-.005-.149v-.273l.003-.163c.008-.22.026-.45.054-.678a8.707 8.707 0 0 1 .28-1.355c.128-.444.286-.872.473-1.277a7.04 7.04 0 0 1 1.456-2.1 5.925 5.925 0 0 1 .953-.763c.169-.111.343-.213.524-.306.089-.05.182-.091.273-.135l.138-.062a7.177 7.177 0 0 1 .714-.267l.145-.045.148-.041c.098-.029.197-.052.296-.076l.15-.033.15-.032.151-.028.151-.023.153-.024c.057-.01.114-.013.171-.023l.169-.021.179-.018.042-.002c.057-.003.114-.008.171-.01l.086-.006h.06l.182-.01a7.999 7.999 0 0 1 1.708.125 7.917 7.917 0 0 1 2.048.68 8.253 8.253 0 0 1 1.672 1.09l.179.155c.06.052.114.107.171.159.057.052.112.106.166.16l.159.164a8.671 8.671 0 0 1 1.41 1.978l.04.078.04.078.075.156.07.153.065.15a8.848 8.848 0 0 1 .45 1.34.19.19 0 0 0 .201.142.186.186 0 0 0 .172-.184c.01-.246.002-.532-.024-.856z"/></symbol>
   <symbol id="i-prometheus" viewBox="0 0 24 24"><path fill="currentColor" d="M12 0C5.373 0 0 5.372 0 12c0 6.627 5.373 12 12 12s12-5.373 12-12c0-6.628-5.373-12-12-12zm0 22.46c-1.885 0-3.414-1.26-3.414-2.814h6.828c0 1.553-1.528 2.813-3.414 2.813zm5.64-3.745H6.36v-2.046h11.28v2.046zm-.04-3.098H6.391c-.037-.043-.075-.086-.111-.13-1.155-1.401-1.427-2.133-1.69-2.879-.005-.025 1.4.287 2.395.511 0 0 .513.119 1.262.255-.72-.843-1.147-1.915-1.147-3.01 0-2.406 1.845-4.508 1.18-6.207.648.053 1.34 1.367 1.387 3.422.689-.951.977-2.69.977-3.755 0-1.103.727-2.385 1.454-2.429-.648 1.069.168 1.984.894 4.256.272.854.237 2.29.447 3.201.07-1.892.395-4.652 1.595-5.605-.529 1.2.079 2.702.494 3.424.671 1.164 1.078 2.047 1.078 3.716a4.642 4.642 0 0 1-1.11 2.996c.792-.149 1.34-.283 1.34-.283l2.573-.502s-.374 1.538-1.81 3.019z"/></symbol>
-  <!-- Lucide icons (MIT) — stroke-based -->
+  <!-- Lucide icons (MIT) - stroke-based -->
   <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
   <symbol id="i-shield-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
@@ -457,7 +458,7 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
 <rect x="15"  y="804" width="510" height="148" rx="10" class="zr zo"/>
 <text x="30"  y="824" class="zl" fill="#ca8a04">Observability</text>
 
-<!-- ── EDGES — clean orthogonal routing, dedicated lane per path group ── -->
+<!-- ── EDGES: clean orthogonal routing, dedicated lane per path group ── -->
 
 <!-- 1. User / Admin / SecOps → CF (blue) -->
 <line x1="179" y1="63" x2="137" y2="63" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
@@ -545,14 +546,14 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
 <g transform="translate(560,382)"><rect x="-57" y="-24" width="114" height="48" class="nr nd"/><use href="#i-postgresql" x="-8.5" y="-22" width="17" height="17" color="#7c3aed"/><text y="5" class="t1" fill="#7c3aed">PostgreSQL</text><text y="17" class="t2" fill="#8b5cf6">pi1</text></g>
 <g transform="translate(415,470)"><rect x="-55" y="-24" width="110" height="48" class="nr" style="fill:#f0fdf4;stroke:#16a34a;stroke-width:1.5"/><use href="#i-cloudflare" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">cloudflared</text><text y="17" class="t2" fill="#22c55e">Tunnel Ingress</text></g>
 <g transform="translate(560,470)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><use href="#i-terminal" x="-8.5" y="-22" width="17" height="17" color="#9333ea"/><text y="5" class="t1" fill="#9333ea">User Bastion</text><text y="17" class="t2" fill="#a855f7">nettools.vandine.us</text></g>
-<!-- K3s — left column -->
+<!-- K3s: left column -->
 <g transform="translate(760,268)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-react" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">Frontend</text><text y="17" class="t2" fill="#22c55e">React + nginx</text></g>
 <g transform="translate(760,348)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-bun" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">Backend</text><text y="17" class="t2" fill="#22c55e">Bun + Hono</text></g>
 <g transform="translate(760,428)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-brain" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">ML Engine</text><text y="17" class="t2" fill="#22c55e">FastAPI + XGBoost</text></g>
-<!-- K3s — right column -->
+<!-- K3s: right column -->
 <g transform="translate(920,268)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-eye" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">SentinelNet</text><text y="17" class="t2" fill="#22c55e">Exfil Detection</text></g>
 <g transform="translate(920,348)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-network" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">NetTools API</text><text y="17" class="t2" fill="#22c55e">Network Tooling</text></g>
-<!-- RV2 — stacked -->
+<!-- RV2: stacked -->
 <g transform="translate(1180,258)"><rect x="-65" y="-24" width="130" height="48" class="nr ns"/><use href="#i-radar" x="-8.5" y="-22" width="17" height="17" color="#e11d48"/><text y="5" class="t1" fill="#e11d48">Suricata IDS</text><text y="17" class="t2" fill="#f43f5e">74,096 Rules</text></g>
 <g transform="translate(1180,338)"><rect x="-65" y="-24" width="130" height="48" class="nr ns"/><use href="#i-bot" x="-8.5" y="-22" width="17" height="17" color="#e11d48"/><text y="5" class="t1" fill="#e11d48">Qwen2 LLM</text><text y="17" class="t2" fill="#f43f5e">Alert Triage</text></g>
 <g transform="translate(1180,418)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><use href="#i-shield-alert" x="-8.5" y="-22" width="17" height="17" color="#9333ea"/><text y="5" class="t1" fill="#9333ea">Threat Bastion</text><text y="17" class="t2" fill="#a855f7">Isolated Analysis</text></g>
@@ -612,7 +613,7 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
               <li>Network diagnostics (ping, traceroute, dig)</li>
               <li>API health checks</li>
               <li>Service status monitoring</li>
-              <li>Read-only access — no system changes</li>
+              <li>Read-only access, no system changes</li>
             </ul>
             <div class="tech-stack">
               <span class="tech-tag">K3s Pod</span>
@@ -681,7 +682,7 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
             <div class="card-icon firewall">🔥</div>
             <div>
               <div class="card-title">PA-220 Firewall</div>
-              <div class="card-subtitle">reveal-fw — PAN-OS 10.2.10-h7</div>
+              <div class="card-subtitle">reveal-fw, PAN-OS 10.2.10-h7</div>
             </div>
           </div>
           <div class="card-body">
@@ -727,7 +728,7 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
             <div class="card-icon security">🛡️</div>
             <div>
               <div class="card-title">Suricata IDS</div>
-              <div class="card-subtitle">Orange Pi RV2 — RISC-V Edge Sensor</div>
+              <div class="card-subtitle">Orange Pi RV2, RISC-V Edge Sensor</div>
             </div>
           </div>
           <div class="card-body">
@@ -753,7 +754,7 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
             <div class="card-icon security">🕵️</div>
             <div>
               <div class="card-title">SentinelNet</div>
-              <div class="card-subtitle">K3s Pod — Exfiltration Detection</div>
+              <div class="card-subtitle">K3s Pod, Exfiltration Detection</div>
             </div>
           </div>
           <div class="card-body">
@@ -942,37 +943,37 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
           <div class="avatar" style="background: var(--accent-dim); color: var(--accent);">RG</div>
           <div class="member-info">
             <div class="member-name">Rafael Garcia</div>
-            <div class="member-role">Lead — CI/CD, ML, Infra</div>
+            <div class="member-role">Lead, CI/CD and ML</div>
           </div>
         </div>
         <div class="team-member">
           <div class="avatar" style="background: var(--green-dim); color: var(--green);">MK</div>
           <div class="member-info">
             <div class="member-name">Milkias Kassa</div>
-            <div class="member-role">ICAM — Identity & Access</div>
+            <div class="member-role">ICAM, Identity and Access</div>
           </div>
         </div>
         <div class="team-member">
           <div class="avatar" style="background: var(--rose-dim); color: var(--rose);">IB</div>
           <div class="member-info">
             <div class="member-name">Isaiah Bernal</div>
-            <div class="member-role">SecOps — SIEM & IDS</div>
+            <div class="member-role">SecOps, SIEM and IDS</div>
           </div>
         </div>
         <div class="team-member">
           <div class="avatar" style="background: var(--purple-dim); color: var(--purple);">XN</div>
           <div class="member-info">
             <div class="member-name">Xavier Nguyen</div>
-            <div class="member-role">UX — Design & Frontend</div>
+            <div class="member-role">UX, Design and Frontend</div>
           </div>
         </div>
       </div>
     </section>
 
     <footer>
-      <p><strong>GuardQuote</strong> — California State University, Northridge — CIT 480 Senior Design</p>
+      <p><strong>GuardQuote</strong>. California State University, Northridge. CIT 480 Senior Design</p>
       <p style="margin-top: 0.5rem;">Production: <a href="https://guardquote.vandine.us" style="color: var(--accent);">guardquote.vandine.us</a></p>
-      <p style="margin-top: 0.5rem; opacity: 0.7;">Updated March 17, 2026</p>
+      <p style="margin-top: 0.5rem; opacity: 0.7;">Updated April 7, 2026</p>
     </footer>
   </div>
 

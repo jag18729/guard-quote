@@ -503,20 +503,34 @@ export default function TechStack() {
         </div>
 
         {/* ML Section */}
-        <div className="mb-16 p-6 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-800/30 rounded-xl">
-          <div className="flex items-start gap-4">
-            <BarChart3 className="w-8 h-8 text-purple-400 flex-shrink-0" />
+        <div className="mb-16 p-8 bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-800/30 rounded-2xl">
+          <div className="flex items-start gap-4 mb-6">
+            <BarChart3 className="w-8 h-8 text-purple-400 flex-shrink-0 mt-1" />
             <div>
-              <h3 className="text-xl font-semibold mb-2">ML-Powered Pricing Engine</h3>
-              <p className="text-zinc-400 mb-4">
-                Security service pricing is inconsistent and opaque. We trained GradientBoosting models on 1,100 real quotes
-                to make it predictable. Backend communicates via gRPC, chosen for binary efficiency on constrained hardware rather than hype.
+              <h3 className="text-2xl font-bold mb-2">ML-Powered Pricing Engine</h3>
+              <p className="text-zinc-400">
+                Security service pricing is inconsistent and opaque. We trained two models on 1,100 real quotes so the system can answer two questions at once: how much should this cost, and how risky is the job? Here is what that looks like in plain numbers.
               </p>
-              <div className="flex flex-wrap gap-3 text-sm">
-                <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full">R² = 0.932 (price prediction)</span>
-                <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full">86.8% accuracy (risk classification)</span>
-                <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full">&lt;50ms inference</span>
-              </div>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="p-5 bg-zinc-950/50 border border-purple-800/30 rounded-xl">
+              <div className="text-5xl font-bold text-purple-300 mb-3">93%</div>
+              <div className="text-zinc-200 font-medium mb-1">of quote prices land within striking distance of the real number</div>
+              <div className="text-xs text-zinc-500">R² = 0.932 on 1,100 historical quotes</div>
+            </div>
+
+            <div className="p-5 bg-zinc-950/50 border border-purple-800/30 rounded-xl">
+              <div className="text-5xl font-bold text-purple-300 mb-3">87%</div>
+              <div className="text-zinc-200 font-medium mb-1">of jobs get the correct risk tier (low, medium, high, critical)</div>
+              <div className="text-xs text-zinc-500">HistGradientBoosting classifier, 86.8% accuracy</div>
+            </div>
+
+            <div className="p-5 bg-zinc-950/50 border border-purple-800/30 rounded-xl">
+              <div className="text-5xl font-bold text-purple-300 mb-3">&lt;50ms</div>
+              <div className="text-zinc-200 font-medium mb-1">to price a quote, faster than a single page load</div>
+              <div className="text-xs text-zinc-500">gRPC inference on ARM64</div>
             </div>
           </div>
         </div>
@@ -527,8 +541,8 @@ export default function TechStack() {
           <p className="text-zinc-500 text-center mb-8">What solving real problems with intentional architecture looks like in production</p>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             {[
-              { value: "0.932", label: "ML R² Score" },
-              { value: "86.8%", label: "Risk Accuracy" },
+              { value: "93%", label: "Prices on target" },
+              { value: "87%", label: "Risk tier correct" },
               { value: "$0", label: "Monthly Cost" },
               { value: "3", label: "OAuth Providers" },
               { value: "74K", label: "IDS Rules" },

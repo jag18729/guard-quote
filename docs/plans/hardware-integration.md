@@ -1,7 +1,7 @@
 # Hardware Integration Plan — Orange Pi RV2 + SN580 NVMe + Pi3
 
 > **Status**: Planning
-> **Last updated**: 2026-02-18
+> **Last updated**: 2026-04-07
 
 ---
 

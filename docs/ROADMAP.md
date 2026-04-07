@@ -1,6 +1,6 @@
 # GuardQuote Roadmap & UAT Plan
 
-**Last Updated:** 2026-02-09  
+**Last Updated:** 2026-04-07  
 **Target:** Capstone Presentation (TBD - update date)
 
 ---

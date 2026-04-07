@@ -9,13 +9,13 @@
 | Field | Value |
 |-------|-------|
 | **Project Name** | GuardQuote |
-| **Client** | CIT 480 Capstone Program, CSULA |
+| **Client** | CIT 480 Capstone Program, CSUN |
 | **Project Lead** | Rafael Garcia |
-| **CI/CD, ML & Data Engineering** | Rafael Garcia |
-| **Identity & Access Management** | Milkias Kassa |
-| **SIEM & Security Operations** | Isaiah Bernal |
-| **Documentation & Presentation** | Xavier Nguyen |
-| **Project Duration** | 8 weeks |
+| **CI/CD, ML, Data Engineering** | Rafael Garcia |
+| **Identity and Access Management** | Milkias Kassa |
+| **SIEM and Security Operations** | Isaiah Bernal |
+| **UX, Design, Frontend** | Xavier Nguyen |
+| **Project Duration** | 10 weeks |
 | **Project Type** | Academic Capstone - Enterprise Architecture |
 
 ---
@@ -299,4 +299,4 @@ GuardQuote is a secure web application platform enabling businesses to request n
 
 ---
 
-*Last Updated: 2026-02-28*
+*Last Updated: 2026-04-07*

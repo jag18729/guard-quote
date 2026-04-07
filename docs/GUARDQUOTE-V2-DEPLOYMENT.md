@@ -1,7 +1,7 @@
 # GuardQuote v2.0 — Production Deployment
 
 **Status:** ✅ LIVE  
-**Date:** 2026-02-25  
+**Date:** 2026-04-07  
 **URL:** https://guardquote.vandine.us
 
 ---
@@ -242,6 +242,6 @@ Backend automatically uses rule-based pricing if ML engine is down.
 
 | Date | Version | Change |
 |------|---------|--------|
-| 2026-02-25 | v3.3 | OAuth URL fix, production deployment |
+| 2026-04-07 | v3.3 | OAuth URL fix, production deployment |
 | 2026-02-24 | v2-oauth | OAuth SSO, ML integration |
 | 2026-02-20 | v2.1 | DEMO_MODE, trained ML models |

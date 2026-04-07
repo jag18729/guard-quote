@@ -260,7 +260,7 @@ Feb  6 13:45:22 pi1 sshd[1234]: Accepted publickey for user from 10.0.0.x port 5
 
 **GuardQuote API:**
 ```
-[2026-02-06T21:02:12.454Z] POST /api/auth/login 200 - 45ms
+[2026-04-07T21:02:12.454Z] POST /api/auth/login 200 - 45ms
 [AUTH] Login: admin@guardquote.vandine.us (admin)
 [ERROR] Database connection timeout after 30000ms
 ```
@@ -376,4 +376,4 @@ curl -v https://your-siem-webhook/health
 
 ---
 
-*Last updated: 2026-02-06*
+*Last updated: 2026-04-07*

@@ -193,22 +193,24 @@ export function rateLimit(config: RateLimitConfig) {
 }
 
 /**
- * Extract client IP from request
+ * Extract client IP from request.
+ *
+ * Cloudflare Tunnel always sets CF-Connecting-IP and strips any
+ * client-supplied version, so it is the only proxy header we can
+ * actually trust on inbound traffic in production. X-Forwarded-For
+ * and X-Real-IP are spoofable; we keep them as fallbacks for local
+ * dev and direct access. Fixes audit finding #3.
  */
-function getClientIP(c: Context): string {
-  // Check common proxy headers
+export function getClientIP(c: Context): string {
+  const cf = c.req.header("CF-Connecting-IP");
+  if (cf) return cf.trim();
+
   const forwarded = c.req.header("X-Forwarded-For");
-  if (forwarded) {
-    return forwarded.split(",")[0].trim();
-  }
+  if (forwarded) return forwarded.split(",")[0].trim();
 
   const realIP = c.req.header("X-Real-IP");
-  if (realIP) {
-    return realIP;
-  }
+  if (realIP) return realIP;
 
-  // Fallback to connection info (Bun-specific)
-  // In production behind Traefik, X-Forwarded-For will be set
   return "unknown";
 }
 

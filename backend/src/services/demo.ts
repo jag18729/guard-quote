@@ -1,9 +1,9 @@
 /**
  * Demo Mode Service
- * 
- * Provides realistic mock data for SDPS showcase and demos.
+ *
+ * Provides realistic mock data for demos and testing.
  * Enable with DEMO_MODE=true environment variable.
- * 
+ *
  * Features:
  * - Mock clients with realistic company names
  * - Pre-computed quote scenarios with impressive ML results
@@ -14,7 +14,7 @@
 export const DEMO_MODE = process.env.DEMO_MODE === "true" || process.env.DEMO_MODE === "1";
 
 if (DEMO_MODE) {
-  console.log("🎭 DEMO MODE ENABLED — Using mock data for all responses");
+  console.log("[demo] DEMO_MODE enabled, using mock data for all responses");
 }
 
 // =============================================================================

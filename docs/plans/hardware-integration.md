@@ -147,8 +147,6 @@ No changes to `PI3-PLAN.md`. Roles:
 4. Secondary DNS (AdGuard Home)
 5. Wazuh agent
 
-**SDPS context**: Pi3 could also run a **lightweight GuardQuote demo endpoint** if we build the demo mode correctly. A static demo (pre-rendered quotes, no live DB) could serve from a simple HTTP server on pi3, showing SDPS judges the product works even from a remote location. But this is a stretch goal — the primary demo should run on pi2 K3s.
-
 ---
 
 ## Orange Pi RV2 — Software Stack
@@ -217,21 +215,15 @@ host    all    all    10.7.7.0/24        md5    # WireGuard tunnel
 
 ---
 
-## Pi3 (2GB) — Updated Context for SDPS
+## Pi3 (2GB), Remote Monitoring Node
 
-### Demo Mode Support
+### Distributed Architecture Story
 
-For the Senior Design Project Showcase (deadline: March 3, 2026), pi3 could serve as a **proof of distributed architecture**:
+Pi3 sits off-site as proof that the platform runs across three physical locations: the main application on a Raspberry Pi 5, the database on a RISC-V Orange Pi, and a remote monitoring probe connected via WireGuard.
 
-"Our security quoting platform runs across three physical nodes — the main application on a Raspberry Pi 5, the database on a RISC-V Orange Pi, and a remote monitoring probe at an off-site location connected via WireGuard VPN."
+To support this, Pi3 runs a lightweight status dashboard (static HTML served by nginx or python3 http.server) showing WireGuard tunnel status, last heartbeat from the studio, and off-site network health. Total RAM is roughly 85MB for the static site server, node_exporter, and Vector.
 
-That's a compelling story for industry judges. To support it:
-
-- Pi3 runs a **lightweight status dashboard** (static HTML served by nginx or python3 http.server)
-- Shows: WireGuard tunnel status, last heartbeat from studio, off-site network health
-- Total RAM: ~20MB for a static site server + node_exporter + Vector ≈ 85MB
-
-### Memory Budget (Revised for SDPS)
+### Memory Budget
 
 | Service | RAM | Priority |
 |---------|-----|----------|
@@ -241,7 +233,7 @@ That's a compelling story for industry judges. To support it:
 | node_exporter | 15MB | Required |
 | Vector (minimal) | 50MB | Required |
 | blackbox exporter | 20MB | Required |
-| nginx (static demo) | 5MB | SDPS |
+| nginx (static demo) | 5MB | Optional |
 | **Total** | **345MB** | |
 | Available for OS cache | ~1.6GB | |
 

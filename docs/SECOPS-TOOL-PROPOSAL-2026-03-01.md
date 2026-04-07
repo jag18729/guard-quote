@@ -384,7 +384,7 @@ pi2 currently has 16GB RAM and runs K3s. The persistent overhead is well within 
 
 ## 6. Implementation Priority
 
-### Phase 1 — Immediate (Before SDPS Demo, March 3)
+### Phase 1, Immediate
 These can be added quickly and directly support open issues:
 
 | Tool | Effort | Rationale |

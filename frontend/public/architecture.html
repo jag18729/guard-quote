@@ -227,14 +227,17 @@
   .zone-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9rem;
-    margin-top: 1rem;
+    font-size: 0.7rem;
+    margin-top: 0.75rem;
+    table-layout: fixed;
   }
 
   .zone-table th, .zone-table td {
-    padding: 0.75rem;
+    padding: 0.4rem 0.4rem;
     text-align: left;
     border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .zone-table th {
@@ -545,7 +548,7 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
 <g transform="translate(415,382)"><rect x="-60" y="-24" width="120" height="48" class="nr na"/><use href="#i-raspberrypi" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">pi1</text><text y="17" class="t2" fill="#22c55e">Grafana / Prom / Loki</text></g>
 <g transform="translate(560,382)"><rect x="-57" y="-24" width="114" height="48" class="nr nd"/><use href="#i-postgresql" x="-8.5" y="-22" width="17" height="17" color="#7c3aed"/><text y="5" class="t1" fill="#7c3aed">PostgreSQL</text><text y="17" class="t2" fill="#8b5cf6">pi1</text></g>
 <g transform="translate(415,470)"><rect x="-55" y="-24" width="110" height="48" class="nr" style="fill:#f0fdf4;stroke:#16a34a;stroke-width:1.5"/><use href="#i-cloudflare" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">cloudflared</text><text y="17" class="t2" fill="#22c55e">Tunnel Ingress</text></g>
-<g transform="translate(560,470)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><use href="#i-terminal" x="-8.5" y="-22" width="17" height="17" color="#9333ea"/><text y="5" class="t1" fill="#9333ea">User Bastion</text><text y="17" class="t2" fill="#a855f7">nettools.vandine.us</text></g>
+<g transform="translate(560,470)"><rect x="-65" y="-24" width="130" height="48" class="nr nb"/><use href="#i-terminal" x="-8.5" y="-22" width="17" height="17" color="#9333ea"/><text y="5" class="t1" fill="#9333ea">NetEng Bastion</text><text y="17" class="t2" fill="#a855f7">nettools.vandine.us</text></g>
 <!-- K3s: left column -->
 <g transform="translate(760,268)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-react" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">Frontend</text><text y="17" class="t2" fill="#22c55e">React + nginx</text></g>
 <g transform="translate(760,348)"><rect x="-57" y="-24" width="114" height="48" class="nr na"/><use href="#i-bun" x="-8.5" y="-22" width="17" height="17" color="#16a34a"/><text y="5" class="t1" fill="#16a34a">Backend</text><text y="17" class="t2" fill="#22c55e">Bun + Hono</text></g>
@@ -677,22 +680,21 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
           <div class="card-header">
             <div class="card-icon" style="background: var(--purple-dim);">🖥️</div>
             <div>
-              <div class="card-title">User Bastion</div>
+              <div class="card-title">NetEng Bastion</div>
               <div class="card-subtitle">nettools.vandine.us</div>
             </div>
           </div>
           <div class="card-body">
-            Network diagnostic tools for regular users and developers. Provides safe access to troubleshooting utilities.
+            Web-based diagnostics console for network engineers. Lets the team probe the fabric without SSHing into individual hosts or carrying admin credentials.
             <ul>
-              <li>Network diagnostics (ping, traceroute, dig)</li>
-              <li>API health checks</li>
-              <li>Service status monitoring</li>
-              <li>Read-only access, no system changes</li>
+              <li>ping, traceroute, dig, mtr</li>
+              <li>Cross-zone reachability checks</li>
+              <li>SNMP and BGP read views</li>
+              <li>Read-only, no config changes</li>
             </ul>
             <div class="tech-stack">
               <span class="tech-tag">K3s Pod</span>
               <span class="tech-tag">FastAPI</span>
-              <span class="tech-tag">:30880</span>
             </div>
           </div>
         </div>
@@ -727,21 +729,21 @@ text{font-family:'JetBrains Mono','SF Mono',Consolas,monospace}
             <div class="card-icon" style="background: var(--purple-dim);">⚠️</div>
             <div>
               <div class="card-title">Threat Bastion</div>
-              <div class="card-subtitle">Isolated Analysis Environment</div>
+              <div class="card-subtitle">Hosted on Orange Pi RV2</div>
             </div>
           </div>
           <div class="card-body">
-            Isolated environment for security operations and threat analysis. Network-segmented on dmz-security.
+            Sandbox for opening live alerts, packet captures, and suspect binaries. Hosted on the RV2 for two reasons: the RISC-V CPU does not run ARM or x86 malware, so anything that escapes the sandbox cannot pivot into production; and the RV2 already sits on the PA-220 SPAN port, so it sees attack traffic without joining production routing.
             <ul>
               <li>Suricata alert investigation</li>
-              <li>Malware analysis sandbox</li>
-              <li>Packet capture review</li>
-              <li>Isolated from production workloads</li>
+              <li>PCAP review and binary triage</li>
+              <li>Different CPU arch from prod (RISC-V)</li>
+              <li>Sees SPAN traffic, not in-band</li>
             </ul>
             <div class="tech-stack">
               <span class="tech-tag">RV2</span>
+              <span class="tech-tag">RISC-V</span>
               <span class="tech-tag">dmz-security</span>
-              <span class="tech-tag">Air-gapped</span>
             </div>
           </div>
         </div>

@@ -39,26 +39,16 @@ flowchart TD
         CF[CDN + WAF]
     end
 
-    subgraph DC["HOMELAB: PA-220 NGFW (4 DMZ Zones)"]
+    subgraph DC["HOMELAB: PA-220 NGFW (4 zones)"]
         direction LR
 
-        subgraph MGMT["DMZ-MGMT · Pi0"]
-            DNS[DNS/AdGuard]
-            LDAP[LDAP]
+        subgraph MGMT["dmz-mgmt · Pi0"]
+            DNS[AdGuard DNS]
+            LDAP[OpenLDAP]
+            Bastion[Admin Bastion]
         end
 
-        subgraph Apps["DMZ-APPS · Pi2"]
-            direction TB
-            Tunnel[cloudflared Tunnel]
-            subgraph K3s["K3s"]
-                FE[Frontend]
-                BE[Backend]
-                ML[ML Engine]
-            end
-            Wazuh[Wazuh HIDS]
-        end
-
-        subgraph Services["DMZ-SERVICES · Pi1"]
+        subgraph Services["dmz-services · Pi1"]
             direction TB
             DB[(PostgreSQL 17)]
             Graf[Grafana]
@@ -66,8 +56,16 @@ flowchart TD
             Loki[Loki]
         end
 
-        subgraph Security["DMZ-SECURITY · RV2"]
-            IDS[Suricata IDS 74K rules]
+        subgraph Security["dmz-security · Pi2 + RV2"]
+            direction TB
+            Tunnel[cloudflared Tunnel]
+            subgraph K3s["K3s on Pi2"]
+                FE[Frontend]
+                BE[Backend]
+                ML[ML Engine]
+            end
+            Wazuh[Wazuh HIDS]
+            IDS[Suricata IDS, 74k rules]
         end
     end
 
@@ -170,7 +168,7 @@ const techStack = {
     icon: Database,
     color: "text-cyan-400",
     items: [
-      { name: "PostgreSQL 16", desc: "Primary database" },
+      { name: "PostgreSQL 17", desc: "Primary database, native install on Pi1" },
       { name: "pg (postgres.js)", desc: "Native async driver" },
       { name: "argon2id", desc: "Password hashing" },
       { name: "Zod", desc: "Runtime validation" },
@@ -293,8 +291,8 @@ export default function TechStack() {
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Tech Stack</h1>
           <p className="text-zinc-400 max-w-2xl mx-auto">
-            Every technology choice here solves a real problem -- supply chain risk, resource constraints,
-            operational complexity, cost. This is how we think security applications should be
+            Every technology choice here solves a real problem: supply chain risk, resource constraints,
+            operational complexity, and cost. This is how we think security applications should be
             architected in 2026.
           </p>
         </div>
@@ -312,9 +310,10 @@ export default function TechStack() {
             <div className="flex-1 text-center lg:text-left">
               <h2 className="text-3xl font-bold mb-2">Why Bun?</h2>
               <p className="text-zinc-400 text-lg mb-4">
-                Node.js left us dependent on dozens of npm packages for basic operations -- each one a trust boundary
-                that could be compromised. Bun 1.3 ships HTTP serving, password hashing, file I/O, and bundling
-                as <span className="text-emerald-400 font-semibold">runtime built-ins</span>. Fewer dependencies, smaller attack surface, less to go wrong.
+                Node.js left us dependent on dozens of npm packages for basic operations, and each one is a trust
+                boundary that could be compromised. Bun 1.3 ships HTTP serving, password hashing, file I/O, and
+                bundling as <span className="text-emerald-400 font-semibold">runtime built-ins</span>. Fewer
+                dependencies, smaller attack surface, less to go wrong.
               </p>
               <div className="flex flex-wrap justify-center lg:justify-start gap-3 text-sm">
                 <span className="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 rounded-full font-medium">Minimal Dependencies</span>
@@ -329,7 +328,7 @@ export default function TechStack() {
         {/* Bun Benchmarks */}
         <div className="mb-16">
           <h2 className="text-2xl font-bold mb-2 text-center">Why It Matters on Real Hardware</h2>
-          <p className="text-zinc-500 text-center mb-8">We run on a Raspberry Pi 5 -- not a cloud VM. Every millisecond and megabyte counts. Tested on ARM64.</p>
+          <p className="text-zinc-500 text-center mb-8">We run on a Raspberry Pi 5, not a cloud VM. Every millisecond and megabyte counts. Tested on ARM64.</p>
           
           <div className="grid md:grid-cols-2 gap-6">
             {Object.entries(bunBenchmarks).map(([key, benchmark]) => (
@@ -386,8 +385,8 @@ export default function TechStack() {
               <Zap className="w-5 h-5 text-accent" />
               System Architecture
             </h2>
-            <a 
-              href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/jag18729/guard-quote/dev/docs/architecture/guardquote-architecture.html"
+            <a
+              href="/architecture.html"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-emerald-400 transition-colors"
@@ -397,15 +396,15 @@ export default function TechStack() {
           </div>
           <ArchitectureDiagram />
           <p className="text-center text-zinc-500 text-sm mt-4">
-            Zone-based firewall segmentation, mesh VPN for cross-zone routing, and K3s orchestration -- demonstrating
-            enterprise security patterns on commodity hardware
+            Zone-based firewall segmentation, mesh VPN for cross-zone routing, and K3s orchestration. Enterprise
+            security patterns on commodity hardware.
           </p>
         </div>
 
         {/* Tech Grid */}
         <div className="mb-16">
           <h2 className="text-2xl font-bold mb-2 text-center">Full Stack</h2>
-          <p className="text-zinc-500 text-center mb-8">Every layer chosen to solve a specific problem -- not because it's trending</p>
+          <p className="text-zinc-500 text-center mb-8">Every layer chosen to solve a specific problem, not because it is trending.</p>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {Object.entries(techStack).map(([key, category]) => (
               <div key={key} className="p-5 bg-zinc-900 border border-zinc-800 rounded-xl hover:border-zinc-700 transition-colors">
@@ -439,21 +438,21 @@ export default function TechStack() {
             <div>
               <h4 className="font-semibold text-emerald-400 mb-2">Problem: Dependency sprawl</h4>
               <p className="text-sm text-zinc-400">
-                Node.js needed Express, bcrypt, ws, dotenv, and node-fetch just for basics -- each one a
+                Node.js needed Express, bcrypt, ws, dotenv, and node-fetch just for basics, and each one is a
                 maintainer account that could be hijacked. Bun ships these as built-ins. We eliminated the risk.
               </p>
             </div>
             <div>
               <h4 className="font-semibold text-emerald-400 mb-2">Problem: Pod scaling on constrained hardware</h4>
               <p className="text-sm text-zinc-400">
-                Node.js 22 had 89ms cold starts -- too slow for K3s pod autoscaling on a Raspberry Pi.
-                Bun starts in 12ms. That's not a nice-to-have, it's the difference between usable and broken.
+                Node.js 22 had 89ms cold starts, too slow for K3s pod autoscaling on a Raspberry Pi.
+                Bun starts in 12ms. That is not a nice-to-have, it is the difference between usable and broken.
               </p>
             </div>
             <div>
               <h4 className="font-semibold text-emerald-400 mb-2">Problem: Native compilation on ARM64</h4>
               <p className="text-sm text-zinc-400">
-                Packages like <code className="text-emerald-300">bcrypt</code> require native compilation -- fragile on ARM64 Pi hardware.
+                Packages like <code className="text-emerald-300">bcrypt</code> require native compilation, which is fragile on ARM64 Pi hardware.
                 <code className="text-emerald-300"> Bun.password</code> provides argon2id natively. No build step, no breakage.
               </p>
             </div>
@@ -475,8 +474,8 @@ export default function TechStack() {
             <div>
               <h2 className="text-2xl font-bold mb-2">Supply Chain Security</h2>
               <p className="text-zinc-400">
-                On March 31, 2026, <span className="text-red-400 font-semibold">axios</span> -- npm's most popular HTTP client
-                with 100M+ weekly downloads -- was compromised in a supply chain attack. A hijacked maintainer account pushed
+                On March 31, 2026, <span className="text-red-400 font-semibold">axios</span>, npm's most popular HTTP
+                client with 100M+ weekly downloads, was compromised in a supply chain attack. A hijacked maintainer account pushed
                 malicious versions that silently installed a cross-platform RAT on every <code className="text-red-300 bg-red-500/10 px-1 rounded">npm install</code>.
                 GuardQuote was never at risk. Here's why.
               </p>
@@ -501,7 +500,7 @@ export default function TechStack() {
                   <li key={i} className="flex items-center gap-2">
                     <X className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
                     <code className="text-red-300">{item.dep}</code>
-                    <span className="text-zinc-600">-- {item.purpose}</span>
+                    <span className="text-zinc-600">{item.purpose}</span>
                   </li>
                 ))}
               </ul>
@@ -525,7 +524,7 @@ export default function TechStack() {
                   <li key={i} className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
                     <code className="text-emerald-300">{item.builtin}</code>
-                    <span className="text-zinc-600">-- replaces <span className="line-through">{item.replaces}</span></span>
+                    <span className="text-zinc-600">replaces <span className="line-through">{item.replaces}</span></span>
                   </li>
                 ))}
               </ul>
@@ -551,7 +550,7 @@ export default function TechStack() {
               <h3 className="text-xl font-semibold mb-2">ML-Powered Pricing Engine</h3>
               <p className="text-zinc-400 mb-4">
                 Security service pricing is inconsistent and opaque. We trained GradientBoosting models on 1,100 real quotes
-                to make it predictable. Backend communicates via gRPC -- chosen for binary efficiency on constrained hardware, not hype.
+                to make it predictable. Backend communicates via gRPC, chosen for binary efficiency on constrained hardware rather than hype.
               </p>
               <div className="flex flex-wrap gap-3 text-sm">
                 <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full">R² = 0.932 (price prediction)</span>

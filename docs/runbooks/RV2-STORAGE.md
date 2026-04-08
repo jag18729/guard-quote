@@ -107,6 +107,27 @@ Pi0 directory is owned by `rafaeljg:rafaeljg` mode 0775 to allow the rsync write
 
 Retention on Pi0 follows the existing global rule: 30 days, then a Sunday cleanup cron sweeps `.gz` files older than 30 days. The 90-day archive leg to ThinkStation is also handled by the existing fleet cron.
 
+## Phase A.1: Loki query JSON parser fix (live as of 2026-04-07)
+
+After Phase A's logrotate fix went live, the EVE Event Types and Suricata IDS Alerts dashboard panels still showed "no data" even though `sum(count_over_time({job="suricata"}[1m]))` returned ~36 events/min. The actual Loki error from the API was:
+
+```
+pipeline error: 'JSONParserErr' for series: '{__error__="JSONParserErr",
+__error_details__="Value looks like object, but can't find closing } symbol", ...}
+```
+
+**Root cause**: when `logrotate` runs `copytruncate` on `eve.json`, there is a small window where Suricata is mid-write to the file. If a copytruncate fires during a partially-written line, the line gets shipped to Loki as malformed JSON. Loki's `| json` parser is strict, so a single bad line in the time range poisons the entire query result.
+
+**Fix**: any panel query that uses `| json` must include `| __error__=""` immediately after, to drop the parse-error rows from the pipeline. Updated panels 44 and 45 in dashboard `sentinelnet-ops` (now version 6):
+
+```logql
+{job="suricata"} | json | __error__="" | event_type = `alert`
+
+sum by (event_type) (count_over_time({job="suricata"} | json | __error__="" [1h]))
+```
+
+**General rule**: every query against a stream that comes from a copytruncate-rotated file should add `| __error__=""` after `| json`. This applies to anything Suricata, future Wazuh, or any service that uses long-running tailers.
+
 ## Known gaps tracked elsewhere
 
 - **Prometheus rules are not mounted into the container.** `prometheus.yml` declares `rule_files: /etc/prometheus/*-alerts.yml` but the rules directory is not bind-mounted. The existing `pi3-alerts.yml` at `/home/johnmarston/monitoring/rules/` is therefore not loaded. A disk-low alert for RV2 (`node_filesystem_avail_bytes{mountpoint="/"} < 20Gi` warn / `< 5Gi` crit) is the right next step but it cannot fire until the rules mount is fixed upstream. Tracked separately.

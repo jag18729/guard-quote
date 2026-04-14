@@ -143,7 +143,7 @@ app.get("/api/status", async (c) => {
   }
 
   // Determine environment mode
-  const envMode = isLocalDb ? "demo" : "development";
+  const envMode = isLocalDb ? "demo" : (process.env.NODE_ENV || "development");
 
   return c.json({
     mode: envMode,

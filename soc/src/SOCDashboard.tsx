@@ -174,22 +174,22 @@ const SFX = (() => {
 /* ═══════════════════════════════════════════════════════════════
    CONSTANTS
 ═══════════════════════════════════════════════════════════════ */
-const ANON_PHRASES = ["WE ARE ANONYMOUS","WE ARE LEGION","WE DO NOT FORGIVE","WE DO NOT FORGET","EXPECT US"];
-const PHRASE = "We are Anonymous. We are Legion. We do not forgive. We do not forget. Expect us. ";
+const STATUS_PHRASES = ["SYSTEMS NOMINAL","THREAT LEVEL: LOW","ALL AGENTS REPORTING","PERIMETER SECURE","MONITORING ACTIVE"];
+const PHRASE = "GUARDQUOTE SOC // WAZUH SURICATA PA-220 K3S TAILSCALE CLOUDFLARE // VANDINE.US // ";
 const BOOT_LINES = [
-  { text:"INITIALIZING WAZUH SOC COMMAND CENTER v4.7.1...", beep:880 },
-  { text:"Loading kernel modules: [suricata] [wazuh-agent] [wazuh-indexer] [grafana]", beep:660 },
-  { text:"Establishing Tailscale mesh VPN... CONNECTED (47 nodes)", beep:770 },
-  { text:"K3s cluster health check... 3/3 nodes READY", beep:550 },
+  { text:"INITIALIZING WAZUH SOC COMMAND CENTER v4.14.3...", beep:880 },
+  { text:"Loading services: [suricata] [wazuh-manager] [grafana] [prometheus] [loki]", beep:660 },
+  { text:"Establishing Tailscale mesh VPN... CONNECTED (10 nodes)", beep:770 },
+  { text:"K3s cluster health check... sentinel-node READY (v1.34.4)", beep:550 },
   { text:"Mounting encrypted volumes... OK", beep:440 },
-  { text:"ML engine warmup (GradientBoost R²=0.93)... READY", beep:660 },
-  { text:"OpenLDAP bind: isaiah@soc.local... AUTHENTICATED", beep:880 },
-  { text:"Cloudflare WAF sync... RULES UPDATED (rule_set: 2024-Q4)", beep:550 },
-  { text:"Suricata IDS ruleset v7.0.5... 47,291 rules loaded", beep:440 },
-  { text:"Wazuh Indexer cluster: GREEN (3 shards, 0 unassigned)", beep:660 },
-  { text:"Wazuh Manager: 47 agents reporting...", beep:770 },
-  { text:"gRPC FastAPI ML engine: ONLINE (port 50051)", beep:880 },
-  { text:"Zone segmentation: 4 firewall zones ACTIVE", beep:550 },
+  { text:"ML engine warmup (XGBoost + gRPC)... READY", beep:660 },
+  { text:"OpenLDAP bind: rafaeljg@vandine.us... AUTHENTICATED", beep:880 },
+  { text:"Cloudflare Tunnel sync... 4 ingress routes ACTIVE", beep:550 },
+  { text:"Suricata IDS rv2: v7.0.3 — 75,313 rules loaded", beep:440 },
+  { text:"Suricata IDS pi2: v7.0.10 — ET Open ruleset ACTIVE", beep:660 },
+  { text:"Wazuh Manager: 3 agents reporting (pi0, pi2, rv2-syslog)", beep:770 },
+  { text:"gRPC FastAPI ML engine: ONLINE (guardquote-ml:50051)", beep:880 },
+  { text:"PA-220 zone segmentation: 4 firewall zones ACTIVE", beep:550 },
   { text:"", beep:0 },
   { text:"ALL SYSTEMS NOMINAL. CLEARANCE: ALPHA.", beep:1047 },
   { text:">> ACCESS GRANTED — WELCOME, OPERATOR <<", beep:0 },
@@ -279,7 +279,7 @@ function BootSequence({ onDone }) {
       <HexGrid opacity={0.07} />
       <div style={{ position:"relative",zIndex:10,width:"100%",maxWidth:700,padding:"0 36px" }}>
         <div style={{ textAlign:"center",marginBottom:36 }}>
-          <div style={{ fontSize:11,letterSpacing:"7px",color:"#2a2a2a",marginBottom:10 }}>ANON-NET // DEFENSIVE OPERATIONS</div>
+          <div style={{ fontSize:11,letterSpacing:"7px",color:"#2a2a2a",marginBottom:10 }}>VANDINE.US // DEFENSIVE OPERATIONS</div>
           <div style={{ fontSize:24,fontWeight:900,letterSpacing:"5px",color:"#00ff9d",textShadow:"0 0 20px rgba(0,255,157,0.6)" }}>WAZUH SOC COMMAND CENTER</div>
         </div>
         <div style={{ borderLeft:"2px solid rgba(0,255,157,0.35)",paddingLeft:22,minHeight:340 }}>
@@ -923,11 +923,11 @@ function Clock() {
    STACK STATUS
 ═══════════════════════════════════════════════════════════════ */
 const STACK=[
-  {n:"Wazuh SIEM",s:true,v:"4.7.1"},{n:"Suricata IDS",s:true,v:"7.0.5"},
-  {n:"Wazuh Indexer",s:true,v:"4.7.1"},{n:"Grafana",s:true,v:"10.3"},
-  {n:"K3s Cluster",s:true,v:"1.28"},{n:"Tailscale VPN",s:true,v:"1.58"},
-  {n:"ML FastAPI",s:true,v:"0.4.1"},{n:"OpenLDAP",s:true,v:"2.6"},
-  {n:"Cloudflare WAF",s:true,v:"CF-2024"},
+  {n:"Wazuh Manager",s:true,v:"4.14.3"},{n:"Suricata IDS (pi2)",s:true,v:"7.0.10"},
+  {n:"Suricata IDS (rv2)",s:true,v:"7.0.3"},{n:"Grafana",s:true,v:"11.5.2"},
+  {n:"K3s Cluster",s:true,v:"1.34.4"},{n:"Tailscale VPN",s:true,v:"1.96.4"},
+  {n:"ML FastAPI",s:true,v:"0.1.0"},{n:"OpenLDAP",s:true,v:"2.6"},
+  {n:"Cloudflare Tunnel",s:true,v:"2025.4"},
 ];
 
 function StackItem({ item, delay }) {
@@ -965,14 +965,14 @@ const alertData=[12,18,9,24,31,15,42,28,19,35,47,22,38,16,53,41,29,18,44,37];
 const netData=[45,52,38,61,73,44,82,55,67,88,71,59,93,78,62,85,70,55,88,95];
 const mlData=[3,5,2,8,12,4,17,9,6,14,19,8,15,5,22,18,11,7,16,13];
 const AGENTS=[
-  {name:"wazuh-master.soc",ip:"10.0.0.10",status:"ACTIVE",os:"Ubuntu 22.04 LTS",last:"0s"},
-  {name:"k3s-worker-01.soc",ip:"10.0.0.11",status:"ACTIVE",os:"ARM64 / RPi5 16GB",last:"2s"},
-  {name:"win-server-2022.soc",ip:"10.0.0.20",status:"ACTIVE",os:"Windows Server 2022",last:"1s"},
-  {name:"kali-red.soc",ip:"10.0.0.50",status:"ACTIVE",os:"Kali Linux 2024.1",last:"5s"},
-  {name:"ngfw-opnsense.soc",ip:"10.0.0.1",status:"ACTIVE",os:"OPNsense 24.1",last:"3s"},
-  {name:"rpi-sensor-edge.soc",ip:"10.0.0.99",status:"WARN",os:"Raspbian 12 Bookworm",last:"47s"},
-  {name:"wazuh-indexer.soc",ip:"10.0.0.12",status:"ACTIVE",os:"Ubuntu 22.04 LTS",last:"1s"},
-  {name:"grafana-loki.soc",ip:"10.0.0.15",status:"ACTIVE",os:"Docker / Alpine 3.19",last:"4s"},
+  {name:"wazuh-manager",ip:"127.0.0.1",status:"ACTIVE",os:"Docker / Debian (pi2)",last:"0s"},
+  {name:"pi0",ip:"100.96.148.10",status:"ACTIVE",os:"Debian 12 / RPi4",last:"3s"},
+  {name:"pi2 (sentinel-node)",ip:"100.111.113.35",status:"ACTIVE",os:"Debian 12 / RPi5 16GB",last:"1s"},
+  {name:"pi1",ip:"100.77.26.41",status:"OFFLINE",os:"Debian 12 / RPi4",last:"—"},
+  {name:"ThinkStation",ip:"100.64.0.3",status:"OFFLINE",os:"Ubuntu 24.04 LTS",last:"—"},
+  {name:"XPS",ip:"100.64.0.4",status:"OFFLINE",os:"Windows 11 Pro",last:"—"},
+  {name:"isaiah-pi",ip:"—",status:"OFFLINE",os:"Raspbian / RPi",last:"Never"},
+  {name:"rv2 (syslog-fwd)",ip:"100.118.229.114",status:"ACTIVE",os:"Debian / OrangePi RISC-V",last:"12s"},
 ];
 const THREATS=[
   {label:"Brute Force / Auth",value:89,max:200,color:"#ff4466"},
@@ -984,10 +984,10 @@ const THREATS=[
   {label:"Data Exfiltration",value:5,max:200,color:"#00ff9d"},
 ];
 const ML_RISKS=[
-  {host:"10.0.0.47",risk:"CRITICAL",score:0.94,reason:"Unusual auth pattern + lateral movement indicators"},
-  {host:"185.220.101.47",risk:"HIGH",score:0.81,reason:"Known Tor exit node — sustained brute force campaign"},
-  {host:"10.0.0.99",risk:"MEDIUM",score:0.61,reason:"Abnormal DNS query frequency + timing anomaly"},
-  {host:"94.102.61.7",risk:"HIGH",score:0.78,reason:"C2 beacon correlation (GradientBoost R²=0.93)"},
+  {host:"185.220.101.47",risk:"CRITICAL",score:0.94,reason:"Known Tor exit — sustained brute force against PA-220 SSH"},
+  {host:"103.41.220.5",risk:"HIGH",score:0.81,reason:"CN GeoIP — RDP brute force campaign (891 attempts)"},
+  {host:"94.102.61.7",risk:"HIGH",score:0.78,reason:"C2 beacon correlation (XGBoost R²=0.93)"},
+  {host:"100.118.229.114",risk:"LOW",score:0.31,reason:"rv2 syslog burst — Suricata eve.json rotation spike"},
 ];
 const ML_DETECTION_TYPES=[
   {label:"Random Forest",value:42,color:"#dd44ff"},
@@ -1009,16 +1009,16 @@ const ML_FEATURES=[
   {label:"Time-of-Day Deviation",importance:0.65},
 ];
 const ML_DETECTIONS=[
-  {time:"14:23:11",host:"web-prod-03.soc",model:"Random Forest",score:0.94,type:"Priv Escalation"},
-  {time:"14:18:44",host:"ngfw-opnsense.soc",model:"Gradient Boost",score:0.87,type:"Brute Force"},
-  {time:"14:15:02",host:"ws-finance-04.soc",model:"Anomaly Detection",score:0.91,type:"C2 Beacon"},
-  {time:"14:05:18",host:"ws-finance-04.soc",model:"Ensemble",score:0.81,type:"Data Exfil"},
-  {time:"13:48:22",host:"ws-exec-01.soc",model:"Random Forest",score:0.96,type:"Credential Access"},
+  {time:"14:23:11",host:"pi2 (sentinel-node)",model:"XGBoost",score:0.94,type:"Priv Escalation"},
+  {time:"14:18:44",host:"rv2 (suricata-ids)",model:"Gradient Boost",score:0.87,type:"Brute Force"},
+  {time:"14:15:02",host:"pi0 (adguard)",model:"Anomaly Detection",score:0.91,type:"DNS Tunnel"},
+  {time:"14:05:18",host:"pi2 (sentinel-node)",model:"Ensemble",score:0.81,type:"Data Exfil"},
+  {time:"13:48:22",host:"ThinkStation",model:"XGBoost",score:0.96,type:"Credential Access"},
 ];
 const THREAT_FEEDS=[
   {name:"AlienVault OTX",status:"SYNCED",iocs:12847,lastSync:"2m ago",color:"#00ff9d"},
   {name:"Abuse.ch",status:"SYNCED",iocs:8432,lastSync:"5m ago",color:"#00ff9d"},
-  {name:"EmergingThreats",status:"SYNCED",iocs:47291,lastSync:"12m ago",color:"#00ff9d"},
+  {name:"ET Open (Suricata)",status:"SYNCED",iocs:75313,lastSync:"12m ago",color:"#00ff9d"},
   {name:"Tor Exit List",status:"UPDATING",iocs:1247,lastSync:"31m ago",color:"#ff8833"},
 ];
 const THREAT_POLICIES=[
@@ -1029,10 +1029,10 @@ const THREAT_POLICIES=[
   {name:"IDS Strict Mode",scope:"Critical Assets",hits:2341,status:"ENFORCING",color:"#3399ff"},
 ];
 const SOC_ROLES=[
-  {role:"L1 Analyst",user:"j.martinez",perms:"Monitor, Triage, Escalate",active:true},
-  {role:"L2 Analyst",user:"s.chen",perms:"Investigate, Contain, Hunt",active:true},
-  {role:"IR Lead",user:"a.thompson",perms:"Full IR, Forensics, Playbooks",active:true},
-  {role:"CISO",user:"d.williams",perms:"All Access, Policy, Audit",active:false},
+  {role:"Lead / CI-CD / ML",user:"r.garcia",perms:"All Access, Deploy, Audit",active:true},
+  {role:"IAM / Identity",user:"m.kassa",perms:"LDAP, OAuth, Access Control",active:true},
+  {role:"SecOps / SIEM",user:"i.bernal",perms:"Wazuh, Suricata, IR, Forensics",active:true},
+  {role:"UX / Frontend",user:"x.nguyen",perms:"UI Deploy, Feature Flags",active:true},
 ];
 const ENHANCED_IPS=[
   {ip:"185.220.101.47",country:"DE",zone:"WAN",policy:"GeoIP Block",asn:"AS205100",firstSeen:"2026-03-02 12:41",lastSeen:"2026-03-02 14:18",hits:349,color:"#ff4466"},
@@ -1042,10 +1042,10 @@ const ENHANCED_IPS=[
   {ip:"45.33.32.156",country:"US",zone:"WAN",policy:"Rate Limit",asn:"AS63949",firstSeen:"2026-03-02 11:30",lastSeen:"2026-03-02 13:55",hits:47,color:"#ffdd44"},
 ];
 const DOC_TOOLS=[
-  {name:"Wazuh",version:"4.7.1",commands:["wazuh-manager status","wazuh-control restart","agent_control -l"],docs:"https://documentation.wazuh.com"},
-  {name:"Suricata",version:"7.0.5",commands:["suricatasc -c reload-rules","suricata --build-info","suricata -T -c /etc/suricata/suricata.yaml"],docs:"https://docs.suricata.io"},
-  {name:"OPNsense",version:"24.1",commands:["configctl firmware status","pluginctl -s suricata restart","opnsense-update -c"],docs:"https://docs.opnsense.org"},
-  {name:"Cloudflare WAF",version:"CF-2024",commands:["wrangler tail","cf-api /zones/:id/firewall/rules","cf-waf-rules --export"],docs:"https://developers.cloudflare.com/waf"},
+  {name:"Wazuh",version:"4.14.3",commands:["docker exec wazuh-manager /var/ossec/bin/agent_control -l","wazuh-manager status","ossec-control restart"],docs:"https://documentation.wazuh.com"},
+  {name:"Suricata",version:"7.0.10",commands:["suricatasc -c reload-rules","suricata --build-info","suricata -T -c /etc/suricata/suricata.yaml"],docs:"https://docs.suricata.io"},
+  {name:"PA-220",version:"PAN-OS 11.x",commands:["show system info","show running security-policy","show session all"],docs:"https://docs.paloaltonetworks.com"},
+  {name:"Cloudflare Tunnel",version:"2025.4",commands:["cloudflared tunnel info","cloudflared tunnel ingress validate","cloudflared update"],docs:"https://developers.cloudflare.com/cloudflare-one/connections/connect-networks"},
 ];
 const ESCALATION_MATRIX=[
   {level:"L1 → L2",trigger:"Risk Score ≥ 60 or CRITICAL sev",sla:"15 min",action:"Escalate with triage notes"},
@@ -1076,7 +1076,7 @@ export default function SOCDashboard() {
   const [irChecklistOpen,setIrChecklistOpen]=useState(false);
   const alertListRef=useRef(null);
 
-  useEffect(()=>{const iv=setInterval(()=>setPhraseIdx(i=>(i+1)%ANON_PHRASES.length),3800);return()=>clearInterval(iv);},[]);
+  useEffect(()=>{const iv=setInterval(()=>setPhraseIdx(i=>(i+1)%STATUS_PHRASES.length),3800);return()=>clearInterval(iv);},[]);
 
   // Reset selection when leaving alerts tab
   useEffect(()=>{if(tab!=="alerts"){setSelectedEventId(null);setRawLogExpanded(false);}},[tab]);
@@ -1137,10 +1137,10 @@ export default function SOCDashboard() {
               <GlitchText text="SOC // COMMAND" style={{ fontSize:15,fontWeight:900,letterSpacing:"4px",color:"#00ff9d" }}/>
             </div>
             <div style={{ width:1,height:18,background:"rgba(255,255,255,0.07)" }}/>
-            <span style={{ fontSize:11,color:"#444",letterSpacing:"2px" }}>WAZUH 4.7.1 · CLEARANCE:ALPHA · ISAIAH@SOC.LOCAL</span>
+            <span style={{ fontSize:11,color:"#444",letterSpacing:"2px" }}>WAZUH 4.14.3 · CLEARANCE:ALPHA · RAFAELJG@VANDINE.US</span>
           </div>
           <div style={{ textAlign:"center" }}>
-            <div style={{ fontSize:12,letterSpacing:"5px",fontWeight:700,color:"#ff4466",textShadow:"0 0 14px rgba(255,60,80,0.55)",animation:"sevBlink 3.5s ease-in-out infinite" }}>{ANON_PHRASES[phraseIdx]}</div>
+            <div style={{ fontSize:12,letterSpacing:"5px",fontWeight:700,color:"#ff4466",textShadow:"0 0 14px rgba(255,60,80,0.55)",animation:"sevBlink 3.5s ease-in-out infinite" }}>{STATUS_PHRASES[phraseIdx]}</div>
           </div>
           <div style={{ display:"flex",alignItems:"center",gap:12 }}>
             <MuteBtn/>
@@ -1152,7 +1152,7 @@ export default function SOCDashboard() {
         <div style={{ position:"relative",zIndex:50,height:34,borderBottom:"1px solid rgba(255,255,255,0.03)",background:"rgba(2,3,5,0.97)",padding:"0 24px",display:"flex",alignItems:"center",gap:12 }}>
           <span style={{ fontSize:10,padding:"2px 7px",fontWeight:700,letterSpacing:2,color:"#ff4466",border:"1px solid rgba(255,60,80,0.4)",background:"rgba(255,60,80,0.08)",animation:"sevBlink 0.9s step-end infinite",flexShrink:0 }}>LIVE</span>
           <div style={{ flex:1,overflow:"hidden" }}><LiveTicker/></div>
-          <span style={{ fontSize:10,color:"#333",letterSpacing:2,flexShrink:0 }}>47 AGENTS · 3,841 EPS</span>
+          <span style={{ fontSize:10,color:"#333",letterSpacing:2,flexShrink:0 }}>8 AGENTS · 4 ZONES</span>
         </div>
 
         {/* ── BODY ── */}
@@ -1160,11 +1160,6 @@ export default function SOCDashboard() {
 
           {/* SIDEBAR */}
           <div style={{ width:220,flexShrink:0,borderRight:"1px solid rgba(0,255,157,0.05)",background:"rgba(2,3,5,0.97)",display:"flex",flexDirection:"column",overflowY:"auto" }}>
-            <div style={{ height:200,position:"relative",overflow:"hidden",flexShrink:0 }}>
-              <TextPortrait/>
-              <div style={{ position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 50%,#020305 100%)" }}/>
-              <div style={{ position:"absolute",bottom:8,left:0,right:0,textAlign:"center",fontSize:9,letterSpacing:"5px",color:"rgba(255,255,255,0.18)" }}>WE ARE ANONYMOUS</div>
-            </div>
             <div style={{ padding:"6px 0" }}>
               {[
                 {id:"overview",label:"// OVERVIEW"},
@@ -1190,8 +1185,8 @@ export default function SOCDashboard() {
                 <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20 }}>
                   <StatCard label="ACTIVE ALERTS" value="247" color="#ff4466" crit sub="↑ 18% last hour"/>
                   <StatCard label="EVENTS / SEC" value="3841" color="#ff8833" sub="Wazuh ingestion"/>
-                  <StatCard label="AGENTS ONLINE" value="47" color="#00ff9d" sub="8 zones monitored"/>
-                  <StatCard label="THREATS BLOCKED" value="1293" color="#3399ff" sub="Cloudflare WAF today"/>
+                  <StatCard label="AGENTS ONLINE" value="4" color="#00ff9d" sub="4 zones monitored"/>
+                  <StatCard label="THREATS BLOCKED" value="1293" color="#3399ff" sub="PA-220 + CF Tunnel"/>
                 </div>
                 <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,marginBottom:20 }}>
                   <ChartCard title="ALERT VOLUME" value="247" badge="CRITICAL" badgeColor="#ff4466" color="#ff4466" data={alertData}/>
@@ -1413,10 +1408,10 @@ export default function SOCDashboard() {
             {tab==="agents" && (
               <div style={{ animation:"fadeSlideIn 0.4s ease both" }}>
                 <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:16 }}>
-                  <StatCard label="TOTAL AGENTS" value="47" color="#00ff9d"/>
-                  <StatCard label="ACTIVE" value="46" color="#00ff9d"/>
-                  <StatCard label="WARNING" value="1" color="#ff9933"/>
-                  <StatCard label="OFFLINE" value="0" color="#555"/>
+                  <StatCard label="TOTAL AGENTS" value="8" color="#00ff9d"/>
+                  <StatCard label="ACTIVE" value="4" color="#00ff9d"/>
+                  <StatCard label="WARNING" value="0" color="#ff9933"/>
+                  <StatCard label="OFFLINE" value="4" color="#555"/>
                 </div>
                 <div style={{ padding:20,border:"1px solid rgba(255,255,255,0.05)",background:"rgba(4,8,5,0.97)" }}>
                   <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:14 }}>ALL NODES — {AGENTS.length} REGISTERED</div>
@@ -1609,12 +1604,12 @@ export default function SOCDashboard() {
                   <div style={{ padding:20,border:"1px solid rgba(255,255,255,0.05)",background:"rgba(4,8,5,0.97)" }}>
                     <div style={{ fontSize:11,letterSpacing:"3px",color:"#666",marginBottom:16 }}>RECENT BLOCKED CONNECTIONS</div>
                     {[
-                      {src:"185.220.101.47",dst:"10.0.0.1:22",proto:"SSH",action:"BLOCKED",color:"#ff4466",time:"2s ago"},
-                      {src:"94.102.61.7",dst:"10.0.0.10:443",proto:"HTTPS",action:"RATE-LTD",color:"#ff8833",time:"8s ago"},
-                      {src:"34.102.88.1",dst:"10.0.0.20:3389",proto:"RDP",action:"BLOCKED",color:"#ff4466",time:"14s ago"},
-                      {src:"192.168.1.99",dst:"10.0.0.55:8080",proto:"HTTP",action:"FLAGGED",color:"#ffdd44",time:"31s ago"},
-                      {src:"10.0.0.47",dst:"94.102.61.7:443",proto:"HTTPS",action:"SINKHOLED",color:"#dd44ff",time:"45s ago"},
-                      {src:"45.33.32.156",dst:"10.0.0.1:80",proto:"HTTP",action:"BLOCKED",color:"#ff4466",time:"52s ago"},
+                      {src:"185.220.101.47",dst:"PA-220:22",proto:"SSH",action:"BLOCKED",color:"#ff4466",time:"2s ago"},
+                      {src:"94.102.61.7",dst:"pi2:30522",proto:"HTTPS",action:"RATE-LTD",color:"#ff8833",time:"8s ago"},
+                      {src:"103.41.220.5",dst:"PA-220:3389",proto:"RDP",action:"BLOCKED",color:"#ff4466",time:"14s ago"},
+                      {src:"45.33.32.156",dst:"pi2:30523",proto:"HTTP",action:"FLAGGED",color:"#ffdd44",time:"31s ago"},
+                      {src:"rv2-syslog",dst:"pi2:514/UDP",proto:"SYSLOG",action:"INGESTED",color:"#00ff9d",time:"12s ago"},
+                      {src:"192.168.1.99",dst:"pi0:53",proto:"DNS",action:"SINKHOLED",color:"#dd44ff",time:"45s ago"},
                     ].map((conn,i)=>(
                       <div key={i} onMouseEnter={()=>SFX.hover()} className="agent-row" style={{ display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid rgba(255,255,255,0.03)",fontFamily:"'JetBrains Mono',monospace",fontSize:12,animation:`fadeSlideIn 0.3s ease ${i*40}ms both`,cursor:"default" }}>
                         <div style={{ display:"flex",alignItems:"center",gap:8 }}>
@@ -1669,28 +1664,28 @@ export default function SOCDashboard() {
   INTERNET
      │
      ▼
-┌─────────────┐
-│ CLOUDFLARE  │  WAF · DDoS · GeoIP Block
-│   WAF/CDN   │  CF-2024 Rule Set
-└──────┬──────┘
-       │ HTTPS/443
-       ▼
-┌─────────────┐
-│  OPNsense   │  NGFW · Suricata IDS · 332 Rules
-│  NGFW 24.1  │  10.0.0.1
-└──┬───┬───┬──┘
-   │   │   │
-   ▼   ▼   ▼
-┌────┐┌────┐┌────────────┐┌───────────┐
-│DMZ ││INT ││ MANAGEMENT ││ IoT/EDGE  │
-│ 8h ││23h ││    6h      ││   10h     │
-│142r││89r ││   67r      ││   34r     │
-└────┘└────┘└────────────┘└───────────┘
-  │     │         │             │
-  ▼     ▼         ▼             ▼
- Web   Corp    Wazuh Mgr     Sensors
- Prod  Users   K3s Cluster   RPi Edge
-                              Nodes
+┌──────────────────┐
+│  CLOUDFLARE      │  Tunnel · WAF · DDoS · Access
+│  Tunnel 2025.4   │  guardquote / soc / heirloom
+└────────┬─────────┘
+         │ HTTPS/443
+         ▼
+┌──────────────────┐
+│    PA-220        │  NGFW · 4 DMZ Zones
+│  PAN-OS 11.x    │  Cross-zone via Tailscale
+└──┬───┬───┬───┬──┘
+   │   │   │   │
+   ▼   ▼   ▼   ▼
+┌─────┐┌─────┐┌──────────┐┌──────────┐
+│ DMZ ││SRVR ││   MGMT   ││   LAB    │
+│     ││     ││          ││          │
+│ pi2 ││ pi1 ││   pi0    ││   rv2    │
+└─────┘└─────┘└──────────┘└──────────┘
+  │       │         │            │
+  ▼       ▼         ▼            ▼
+ K3s    Postgres  AdGuard     Suricata
+ Wazuh  Grafana   LDAP/NFS   IDS/RISC-V
+ ML     Prom/Loki SNMP       75K rules
 `}</pre>
                 </div>
 
@@ -1733,7 +1728,7 @@ export default function SOCDashboard() {
             )}
 
             <div style={{ marginTop:28,paddingTop:14,borderTop:"1px solid rgba(255,255,255,0.03)",textAlign:"center" }}>
-              <div style={{ fontSize:10,letterSpacing:"5px",color:"#222" }}>WE ARE ANONYMOUS · WE ARE LEGION · WE DO NOT FORGIVE · WE DO NOT FORGET · EXPECT US</div>
+              <div style={{ fontSize:10,letterSpacing:"5px",color:"#222" }}>GUARDQUOTE SOC · VANDINE.US · WAZUH 4.14.3 · SURICATA · PA-220</div>
             </div>
           </div>
         </div>

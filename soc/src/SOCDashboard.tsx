@@ -1137,7 +1137,7 @@ export default function SOCDashboard() {
               <GlitchText text="SOC // COMMAND" style={{ fontSize:15,fontWeight:900,letterSpacing:"4px",color:"#00ff9d" }}/>
             </div>
             <div style={{ width:1,height:18,background:"rgba(255,255,255,0.07)" }}/>
-            <span style={{ fontSize:11,color:"#444",letterSpacing:"2px" }}>WAZUH 4.14.3 · CLEARANCE:ALPHA · RAFAELJG@VANDINE.US</span>
+            <span style={{ fontSize:11,color:"#444",letterSpacing:"2px" }}>WAZUH 4.14.3 · CLEARANCE:ALPHA</span>
           </div>
           <div style={{ textAlign:"center" }}>
             <div style={{ fontSize:12,letterSpacing:"5px",fontWeight:700,color:"#ff4466",textShadow:"0 0 14px rgba(255,60,80,0.55)",animation:"sevBlink 3.5s ease-in-out infinite" }}>{STATUS_PHRASES[phraseIdx]}</div>

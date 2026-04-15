@@ -4,6 +4,47 @@
 **Spring Break:** March 16-22, 2026
 **Final Presentation:** Last weekend of April (April 25-26)
 
+```mermaid
+gantt
+    title GuardQuote v2 — CIT 480 Capstone (Feb–Apr 2026)
+    dateFormat YYYY-MM-DD
+    axisFormat %b %d
+
+    section Phase 1 · Infrastructure
+    Pi cluster + PA-220 firewall        :done, 2026-02-03, 2026-02-10
+    Cloudflare Tunnel + Zero Trust      :done, 2026-02-04, 2026-02-11
+    PostgreSQL 17 + Tailscale mesh      :done, 2026-02-05, 2026-02-12
+    Bun + Hono API + CI/CD              :done, 2026-02-07, 2026-02-14
+
+    section Phase 2 · Frontend
+    React 18 + Vite + Tailwind          :done, 2026-02-10, 2026-02-17
+    Admin dashboard + RBAC              :done, 2026-02-12, 2026-02-19
+    Quote management + ML controls      :done, 2026-02-14, 2026-02-21
+
+    section Phase 3 · Monitoring + SIEM
+    Prometheus + Grafana + Loki         :done, 2026-02-17, 2026-02-24
+    Wazuh SIEM + Bastion (LDAP/pi0)     :done, 2026-02-19, 2026-02-26
+    Suricata IDS — 74K rules (RV2)      :done, 2026-02-21, 2026-02-28
+
+    section Phase 4 · Identity + ML
+    OpenLDAP + IAM roles (5 tiers)      :done, 2026-02-24, 2026-03-03
+    XGBoost ML engine + gRPC on K3s     :done, 2026-02-26, 2026-03-05
+    OAuth SSO — GitHub, Google, MSFT    :done, 2026-02-28, 2026-03-07
+
+    section Phase 5 · UAT + Hardening
+    UAT Round 1 — Functional            :done, 2026-03-03, 2026-03-10
+    21 new endpoints + mobile admin     :done, 2026-03-07, 2026-03-17
+    UAT Round 2 — Security (Kali)       :done, 2026-03-10, 2026-03-21
+    Audit fixes — PRs 203, 204, 205     :done, 2026-03-28, 2026-04-07
+
+    section Phase 6 · Demo Prep
+    Architecture + tech-stack pages     :done, 2026-03-17, 2026-03-28
+    SOW + docs sweep (38 files)         :done, 2026-03-28, 2026-04-07
+    Presentation decks — 4 speakers     :done, 2026-04-01, 2026-04-12
+    On-site rehearsal                   :milestone, done, 2026-04-12, 1d
+    Demo Day — CIT 480                  :milestone, crit, 2026-04-18, 1d
+```
+
 ---
 
 ## Bi-Weekly Sprint Overview

@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GuardQuote v2 — Project Timeline — CIT 480</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --surface2: #f4f4f5;
+    --border: #e4e4e7;
+    --border-strong: #d4d4d8;
+    --text: #18181b;
+    --text-dim: #71717a;
+    --text-muted: #a1a1aa;
+
+    --blue:   #2563eb; --blue-dim:   rgba(37,99,235,0.10);   --blue-bar:   rgba(37,99,235,0.18);
+    --purple: #7c3aed; --purple-dim: rgba(124,58,237,0.10);  --purple-bar: rgba(124,58,237,0.18);
+    --rose:   #e11d48; --rose-dim:   rgba(225,29,72,0.10);   --rose-bar:   rgba(225,29,72,0.18);
+    --orange: #ea580c; --orange-dim: rgba(234,88,12,0.10);   --orange-bar: rgba(234,88,12,0.18);
+    --green:  #16a34a; --green-dim:  rgba(22,163,74,0.10);   --green-bar:  rgba(22,163,74,0.18);
+    --amber:  #d97706; --amber-dim:  rgba(217,119,6,0.10);   --amber-bar:  rgba(217,119,6,0.18);
+
+    --row-h: 32px;
+    --label-w: 260px;
+    --timeline-start: 2025-09-01;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 3rem 2rem 5rem;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "calt","liga";
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; }
+
+  /* ── Header ── */
+  header {
+    margin-bottom: 3.5rem;
+    padding-bottom: 1.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.4rem;
+  }
+  .subtitle { color: var(--text-dim); font-size: 0.875rem; }
+  .meta {
+    display: flex;
+    gap: 1.25rem;
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .meta-sep { color: var(--border-strong); }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .badge-complete { background: var(--green-dim); color: var(--green); }
+  .badge-live    { background: var(--blue-dim);  color: var(--blue);  }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    align-items: center;
+  }
+  .legend-item { display: flex; align-items: center; gap: 0.5rem; }
+  .legend-swatch {
+    width: 28px;
+    height: 10px;
+    border-radius: 3px;
+  }
+  .legend-diamond {
+    width: 10px; height: 10px;
+    background: var(--text);
+    transform: rotate(45deg);
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+
+  /* ── Gantt wrapper ── */
+  .gantt-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .gantt {
+    min-width: 860px;
+    width: 100%;
+  }
+
+  /* ── Timeline header ── */
+  .tl-header {
+    display: flex;
+    margin-left: var(--label-w);
+    border-bottom: 1px solid var(--border-strong);
+    margin-bottom: 0;
+  }
+  .tl-week {
+    flex: 1;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.35rem 0.4rem 0.35rem;
+    border-left: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tl-week:first-child { border-left: none; }
+  .tl-week.demo-col {
+    color: var(--rose);
+    font-weight: 700;
+  }
+
+  /* ── Phase group ── */
+  .phase-group { margin-bottom: 0; }
+
+  .phase-header-row {
+    display: flex;
+    align-items: center;
+    height: 38px;
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-label {
+    width: var(--label-w);
+    flex-shrink: 0;
+    padding: 0 0.75rem 0 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .phase-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .phase-name {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .phase-track {
+    flex: 1;
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+  /* alternating column shading drawn via the track background */
+  .phase-track::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to right,
+      transparent 0%,
+      transparent calc(100% / 11 - 1px),
+      var(--border) calc(100% / 11 - 1px),
+      var(--border) calc(100% / 11)
+    );
+    pointer-events: none;
+  }
+
+  /* Phase summary bar */
+  .phase-bar {
+    position: absolute;
+    height: 10px;
+    border-radius: 9999px;
+    opacity: 0.35;
+  }
+
+  /* ── Task rows ── */
+  .task-row {
+    display: flex;
+    align-items: center;
+    height: var(--row-h);
+    border-bottom: 1px solid var(--border);
+  }
+  .task-row:last-child { border-bottom: 1px solid var(--border); }
+
+  .task-label {
+    width: var(--label-w);
+    flex-shrink: 0;
+    padding: 0 0.75rem 0 1.25rem;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .check {
+    width: 12px; height: 12px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--green);
+  }
+  .task-track {
+    flex: 1;
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+  .task-track::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to right,
+      transparent 0%,
+      transparent calc(100% / 11 - 1px),
+      var(--border) calc(100% / 11 - 1px),
+      var(--border) calc(100% / 11)
+    );
+    pointer-events: none;
+  }
+  .task-bar {
+    position: absolute;
+    height: 14px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    cursor: default;
+    transition: filter 0.15s;
+    z-index: 1;
+  }
+  .task-bar:hover { filter: brightness(1.15); z-index: 2; }
+
+  /* ── Milestone markers ── */
+  .milestone {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    transform: rotate(45deg) translateY(-50%);
+    top: 50%;
+    margin-top: -1px;
+    border-radius: 2px;
+    z-index: 3;
+  }
+
+  /* ── Today line ── */
+  .today-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--rose);
+    opacity: 0.7;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .today-label {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: var(--rose);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: var(--bg);
+    padding: 1px 3px;
+    white-space: nowrap;
+  }
+
+  /* Spacer rows between phases */
+  .spacer {
+    height: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+  }
+  .spacer-label { width: var(--label-w); flex-shrink: 0; }
+  .spacer-track { flex: 1; position: relative; }
+  .spacer-track::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to right,
+      transparent 0%,
+      transparent calc(100% / 11 - 1px),
+      var(--border) calc(100% / 11 - 1px),
+      var(--border) calc(100% / 11)
+    );
+    pointer-events: none;
+  }
+
+  /* ── Stats row at the bottom ── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+  }
+  .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem; }
+  .stat-value { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.03em; }
+  .stat-sub   { font-size: 0.65rem; color: var(--text-dim); margin-top: 0.2rem; }
+
+  @media (max-width: 600px) {
+    body { padding: 1.5rem 1rem 3rem; }
+    h1 { font-size: 1.25rem; }
+    :root { --label-w: 160px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>GuardQuote v2 &mdash; Project Timeline</h1>
+    <p class="subtitle">CIT 480 Capstone &middot; CSUN &middot; 10-Week Build Sprint &middot; Feb &ndash; Apr 2026</p>
+    <div class="meta">
+      <span>Rafael Garcia &middot; Milkias Kassa &middot; Isaiah Bernal &middot; Xavier Nguyen</span>
+      <span class="meta-sep">/</span>
+      <span class="badge badge-complete">&#10003; All Phases Complete</span>
+      <span class="badge badge-live">&#9679; Live at guardquote.vandine.us</span>
+    </div>
+  </header>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--blue)"></div>Phase 1 &mdash; Infrastructure</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--purple)"></div>Phase 2 &mdash; Frontend</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--rose)"></div>Phase 3 &mdash; Monitoring &amp; Security</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--orange)"></div>Phase 4 &mdash; Identity &amp; ML</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--green)"></div>Phase 5 &mdash; UAT &amp; Hardening</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--amber)"></div>Phase 6 &mdash; Demo Prep</div>
+    <div class="legend-item"><div class="legend-diamond"></div>Milestone</div>
+  </div>
+
+  <div class="gantt-wrap">
+    <div class="gantt" id="gantt">
+
+      <!-- Timeline header: 11 columns = Feb 3, Feb 10, Feb 17, Feb 24, Mar 3, Mar 10, Mar 17, Mar 24, Mar 31, Apr 7, Apr 18 -->
+      <div class="tl-header">
+        <div class="tl-week">Feb 3</div>
+        <div class="tl-week">Feb 10</div>
+        <div class="tl-week">Feb 17</div>
+        <div class="tl-week">Feb 24</div>
+        <div class="tl-week">Mar 3</div>
+        <div class="tl-week">Mar 10</div>
+        <div class="tl-week">Mar 17</div>
+        <div class="tl-week">Mar 24</div>
+        <div class="tl-week">Mar 31</div>
+        <div class="tl-week">Apr 7</div>
+        <div class="tl-week demo-col">Apr 18 &#9679;</div>
+      </div>
+
+      <!-- ═══════════════ PHASE 1 — Infrastructure ═══════════════ -->
+      <div class="phase-group">
+        <div class="phase-header-row">
+          <div class="phase-label">
+            <div class="phase-dot" style="background:var(--blue)"></div>
+            <span class="phase-name" style="color:var(--blue)">Phase 1 &mdash; Infrastructure</span>
+          </div>
+          <div class="phase-track">
+            <!-- span days 0-11 of 74 = 0% to 14.86% -->
+            <div class="phase-bar" style="left:0%;width:14.9%;background:var(--blue)"></div>
+          </div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>Pi cluster + PA-220 firewall</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:0%;width:9.5%;background:var(--blue-bar);color:var(--blue)">cluster</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>Cloudflare Tunnel + Zero Trust</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:2.7%;width:9.5%;background:var(--blue-bar);color:var(--blue)">CF tunnel</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>PostgreSQL + Tailscale mesh</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:4.1%;width:9.5%;background:var(--blue-bar);color:var(--blue)">db + vpn</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>Backend API (Bun + Hono) + CI/CD</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:5.4%;width:9.5%;background:var(--blue-bar);color:var(--blue)">api + cicd</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spacer"><div class="spacer-label"></div><div class="spacer-track"></div></div>
+
+      <!-- ═══════════════ PHASE 2 — Frontend ═══════════════ -->
+      <div class="phase-group">
+        <div class="phase-header-row">
+          <div class="phase-label">
+            <div class="phase-dot" style="background:var(--purple)"></div>
+            <span class="phase-name" style="color:var(--purple)">Phase 2 &mdash; Frontend &amp; Admin</span>
+          </div>
+          <div class="phase-track">
+            <!-- days 7-18 = 9.46% to 24.32% -->
+            <div class="phase-bar" style="left:9.5%;width:14.9%;background:var(--purple)"></div>
+          </div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>React 18 + Vite + Tailwind</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:9.5%;width:9.5%;background:var(--purple-bar);color:var(--purple)">frontend</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>Admin dashboard + RBAC</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:12.2%;width:9.5%;background:var(--purple-bar);color:var(--purple)">dashboard</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>Quote management + ML controls</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:14.9%;width:9.5%;background:var(--purple-bar);color:var(--purple)">quote ui</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spacer"><div class="spacer-label"></div><div class="spacer-track"></div></div>
+
+      <!-- ═══════════════ PHASE 3 — Monitoring & Security ═══════════════ -->
+      <div class="phase-group">
+        <div class="phase-header-row">
+          <div class="phase-label">
+            <div class="phase-dot" style="background:var(--rose)"></div>
+            <span class="phase-name" style="color:var(--rose)">Phase 3 &mdash; Monitoring &amp; SIEM</span>
+          </div>
+          <div class="phase-track">
+            <!-- days 14-25 = 18.92% to 33.78% -->
+            <div class="phase-bar" style="left:18.9%;width:14.9%;background:var(--rose)"></div>
+          </div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>Prometheus + Grafana + Loki</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:18.9%;width:9.5%;background:var(--rose-bar);color:var(--rose)">observability</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>Wazuh SIEM + Bastion (LDAP/pi0)</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:21.6%;width:9.5%;background:var(--rose-bar);color:var(--rose)">wazuh</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>Suricata IDS (74,096 rules)</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:24.3%;width:9.5%;background:var(--rose-bar);color:var(--rose)">IDS</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spacer"><div class="spacer-label"></div><div class="spacer-track"></div></div>
+
+      <!-- ═══════════════ PHASE 4 — Identity & ML ═══════════════ -->
+      <div class="phase-group">
+        <div class="phase-header-row">
+          <div class="phase-label">
+            <div class="phase-dot" style="background:var(--orange)"></div>
+            <span class="phase-name" style="color:var(--orange)">Phase 4 &mdash; Identity &amp; ML</span>
+          </div>
+          <div class="phase-track">
+            <!-- days 21-32 = 28.38% to 43.24% -->
+            <div class="phase-bar" style="left:28.4%;width:14.9%;background:var(--orange)"></div>
+          </div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>OpenLDAP + IAM roles (5 tiers)</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:28.4%;width:9.5%;background:var(--orange-bar);color:var(--orange)">LDAP + IAM</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>XGBoost ML engine + gRPC (K3s)</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:31.1%;width:9.5%;background:var(--orange-bar);color:var(--orange)">ML engine</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>OAuth SSO: GitHub, Google, Microsoft</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:33.8%;width:9.5%;background:var(--orange-bar);color:var(--orange)">OAuth 2.0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spacer"><div class="spacer-label"></div><div class="spacer-track"></div></div>
+
+      <!-- ═══════════════ PHASE 5 — UAT & Hardening ═══════════════ -->
+      <div class="phase-group">
+        <div class="phase-header-row">
+          <div class="phase-label">
+            <div class="phase-dot" style="background:var(--green)"></div>
+            <span class="phase-name" style="color:var(--green)">Phase 5 &mdash; UAT &amp; Hardening</span>
+          </div>
+          <div class="phase-track">
+            <!-- days 28-46 = 37.84% to 62.16% -->
+            <div class="phase-bar" style="left:37.8%;width:24.3%;background:var(--green)"></div>
+          </div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>UAT Round 1 &mdash; Functional</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:37.8%;width:9.5%;background:var(--green-bar);color:var(--green)">UAT R1</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>UAT Round 2 &mdash; Security (Kali)</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:47.3%;width:14.9%;background:var(--green-bar);color:var(--green)">UAT R2 &mdash; pentest</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>21 new endpoints + mobile admin</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:43.2%;width:14.9%;background:var(--green-bar);color:var(--green)">endpoint expansion</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>Security audit fixes (PRs #203-205)</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:50%;width:12.2%;background:var(--green-bar);color:var(--green)">audit fixes</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spacer"><div class="spacer-label"></div><div class="spacer-track"></div></div>
+
+      <!-- ═══════════════ PHASE 6 — Demo Prep ═══════════════ -->
+      <div class="phase-group">
+        <div class="phase-header-row">
+          <div class="phase-label">
+            <div class="phase-dot" style="background:var(--amber)"></div>
+            <span class="phase-name" style="color:var(--amber)">Phase 6 &mdash; Demo Prep</span>
+          </div>
+          <div class="phase-track">
+            <!-- days 42-74 = 56.76% to 100% -->
+            <div class="phase-bar" style="left:56.8%;width:43.2%;background:var(--amber)"></div>
+            <!-- Milestone: on-site rehearsal Apr 12 = day 68 = 91.9% -->
+            <div class="milestone" style="left:calc(91.9% - 5px);background:var(--text)" title="On-site rehearsal — Apr 12"></div>
+            <!-- Milestone: Demo Day Apr 18 = day 74 = 100% -->
+            <div class="milestone" style="left:calc(100% - 8px);background:var(--rose)" title="Demo Day — Apr 18"></div>
+          </div>
+        </div>
+
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>Architecture + tech-stack pages</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:56.8%;width:20.3%;background:var(--amber-bar);color:var(--amber)">architecture.html</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>SOW + documentation sweep (38 docs)</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:56.8%;width:17.6%;background:var(--amber-bar);color:var(--amber)">docs</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>Presentation decks (all 4 speakers)</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:64.9%;width:24.3%;background:var(--amber-bar);color:var(--amber)">slides + review</div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label"><span class="check">&#10003;</span>On-site rehearsal + final lock</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:88%;width:4%;background:var(--amber-bar);color:var(--amber)">Apr 12</div>
+            <div class="milestone" style="left:calc(91.9% - 5px);background:var(--text)" title="Apr 12 — Rehearsal"></div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-label" style="font-weight:700;color:var(--rose)">&#9679; Demo Day</div>
+          <div class="task-track">
+            <div class="task-bar" style="left:calc(100% - 44px);width:44px;background:rgba(225,29,72,0.18);color:var(--rose);font-weight:700">Apr 18</div>
+            <div class="milestone" style="left:calc(100% - 8px);background:var(--rose)" title="Demo Day — Apr 18"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /gantt -->
+  </div><!-- /gantt-wrap -->
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Duration</div>
+      <div class="stat-value">10 wks</div>
+      <div class="stat-sub">Feb 3 &mdash; Apr 18, 2026</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">API Endpoints</div>
+      <div class="stat-value">40+</div>
+      <div class="stat-sub">Bun + Hono, K3s</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ML Accuracy</div>
+      <div class="stat-value">93%</div>
+      <div class="stat-sub">XGBoost &middot; &lt;50ms inference</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">IDS Rules</div>
+      <div class="stat-value">74K</div>
+      <div class="stat-sub">Suricata on RV2</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Hosting Cost</div>
+      <div class="stat-value">~$5/mo</div>
+      <div class="stat-sub">$750 hardware &middot; CF free tier</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Phases Complete</div>
+      <div class="stat-value">6 / 6</div>
+      <div class="stat-sub">All UAT signed off</div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+</body>
+</html>

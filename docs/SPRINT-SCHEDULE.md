@@ -38,9 +38,10 @@ gantt
     Audit fixes — PRs 203, 204, 205     :done, 2026-03-28, 2026-04-07
 
     section Phase 6 · Demo Prep
-    Architecture + tech-stack pages     :done, 2026-03-17, 2026-03-28
-    SOW + docs sweep (38 files)         :done, 2026-03-28, 2026-04-07
-    Presentation decks — 4 speakers     :done, 2026-04-01, 2026-04-12
+    Architecture + tech-stack pages     :done, 2026-03-17, 2026-03-31
+    SOW + docs sweep (38 files)         :done, 2026-03-24, 2026-04-07
+    Presentation decks — 4 speakers     :done, 2026-04-01, 2026-04-15
+    Final polish + demo rehearsal       :done, 2026-04-12, 2026-04-18
     On-site rehearsal                   :milestone, done, 2026-04-12, 1d
     Demo Day — CIT 480                  :milestone, crit, 2026-04-18, 1d
 ```

@@ -65,6 +65,7 @@ export default function PublicLayout() {
                 <li><Link to="/quote/individual" className="hover:text-accent">Personal Security</Link></li>
                 <li><Link to="/quote/business" className="hover:text-accent">Business Security</Link></li>
                 <li><Link to="/quote/security" className="hover:text-accent">Event Security</Link></li>
+                <li><Link to="/quote/cyber" className="hover:text-accent">Cybersecurity / Online</Link></li>
               </ul>
             </div>
             <div>

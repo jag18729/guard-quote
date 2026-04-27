@@ -12,7 +12,7 @@
   "dependencies": {
     "@xyflow/react": "^12.10.1",
     "framer-motion": "^12.38.0",
-    "lucide-react": "^0.577.0",
+    "lucide-react": "^1.11.0",
     "mermaid": "^11.14.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",

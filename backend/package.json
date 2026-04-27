@@ -20,10 +20,10 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
     "@grpc/proto-loader": "^0.8.0",
-    "@hono/node-server": "^1.19.14",
+    "@hono/node-server": "^2.0.0",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
-    "hono": "^4.12.14",
+    "hono": "^4.12.15",
     "postgres": "3.3.5",
     "resend": "^6.10.0"
   },

@@ -14,14 +14,14 @@
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.577.0",
     "mermaid": "^11.14.0",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "react-router-dom": "^7.14.2"
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^6.0.5",
     "autoprefixer": "^10.5.4",

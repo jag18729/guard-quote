@@ -1,4 +1,4 @@
-FROM oven/bun:1.3.14-debian
+FROM oven/bun:1.4.0-debian
 WORKDIR /app
 
 # Install dependencies
